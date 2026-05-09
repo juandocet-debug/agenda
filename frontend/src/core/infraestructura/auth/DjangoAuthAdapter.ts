@@ -1,0 +1,61 @@
+import { AuthRepository, Credenciales, TokenJWT, RegistroData } from '../../dominio/auth/AuthRepository';
+
+// Usaremos esta IP base para que el simulador o web llegue a localhost.
+// En Android emulator se usaría 10.0.2.2. En Web o iOS simulator: 127.0.0.1
+const BASE_URL = 'http://127.0.0.1:8001/api';
+
+export class DjangoAuthAdapter implements AuthRepository {
+  
+  async login(credenciales: Credenciales): Promise<TokenJWT> {
+    const response = await fetch(`${BASE_URL}/auth/login/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: credenciales.email,
+        password: credenciales.password,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Credenciales inválidas o error en el servidor');
+    }
+
+    const responseData = await response.json();
+    if (!responseData.ok) {
+      throw new Error(responseData.error || 'Credenciales inválidas o error en el servidor');
+    }
+    return {
+      access: responseData.datos?.access_token || responseData.access,
+      refresh: responseData.datos?.refresh_token || responseData.refresh,
+      rol: responseData.datos?.rol || 'empresa',
+    };
+  }
+
+  async register(datos: RegistroData): Promise<string> {
+    const response = await fetch(`${BASE_URL}/auth/register/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        nombre_empresa: datos.nombre_empresa,
+        email: datos.email,
+        username: datos.username,
+        password: datos.password,
+      }),
+    });
+
+    const responseData = await response.json();
+    if (!response.ok || !responseData.ok) {
+      throw new Error(responseData.error || 'Error al registrar la empresa');
+    }
+
+    return responseData.id;
+  }
+
+  async logout(): Promise<void> {
+    return Promise.resolve();
+  }
+}
