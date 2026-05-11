@@ -1,8 +1,8 @@
 import { AuthRepository, Credenciales, TokenJWT, RegistroData } from '../../dominio/auth/AuthRepository';
 
 // Usaremos esta IP base para que el simulador o web llegue a localhost.
-// En Android emulator se usaría 10.0.2.2. En Web o iOS simulator: 127.0.0.1
-const BASE_URL = 'http://127.0.0.1:8001/api';
+// En Android emulator se usaría 10.0.2.2. En Web o iOS simulator: localhost
+const BASE_URL = 'http://localhost:8001/api';
 
 export class DjangoAuthAdapter implements AuthRepository {
   

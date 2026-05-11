@@ -1,7 +1,9 @@
 import { Profesional, ProfesionalRepository } from '../../dominio/profesionales/Profesional';
 import { obtenerTokenLocal } from '../auth/TokenStorageAdapter';
 
-const API_URL = 'http://localhost:8000/api/profesionales'; // Debería venir de variable de entorno
+// Puerto 8001 — mismo que DjangoAuthAdapter (el punto único de configuración)
+const BASE_URL = 'http://127.0.0.1:8001/api';
+const API_URL = `${BASE_URL}/profesionales`;
 
 export class ApiProfesionalRepository implements ProfesionalRepository {
   

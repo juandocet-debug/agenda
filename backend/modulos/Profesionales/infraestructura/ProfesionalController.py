@@ -2,7 +2,6 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .DjangoProfesionalRepository import DjangoProfesionalRepository
 from ..aplicacion.CrearProfesional import CrearProfesionalUseCase
@@ -10,7 +9,6 @@ from ..aplicacion.ListarProfesionales import ListarProfesionalesUseCase
 
 class CrearProfesionalController(APIView):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -43,7 +41,6 @@ class CrearProfesionalController(APIView):
 
 class ListarProfesionalesController(APIView):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
