@@ -7,12 +7,23 @@ import { colors } from '../theme/colors';
 import { FloatingButton } from '../components/FloatingButton';
 import { EmpresaHomeScreen } from '../screens/EmpresaHomeScreen';
 import { CrearProfesionalScreen } from '../screens/CrearProfesionalScreen';
+import { ProfesionalesListScreen } from '../screens/ProfesionalesListScreen';
+import { CrearPublicacionScreen } from '../screens/CrearPublicacionScreen';
+import { MuroPublicacionesScreen } from '../screens/MuroPublicacionesScreen';
+import { ComentariosScreen } from '../screens/ComentariosScreen';
+import { ReservarScreen } from '../screens/ReservarScreen';
+import { ConfirmacionReservaScreen } from '../screens/ConfirmacionReservaScreen';
+import { EmpresaProfileScreen } from '../screens/EmpresaProfileScreen';
+import { ServiciosListScreen } from '../screens/ServiciosListScreen';
+import { CrearEditarServicioScreen } from '../screens/CrearEditarServicioScreen';
+import { AgendaScreen } from '../screens/AgendaScreen';
+import { ConfigurarPagosScreen } from '../screens/ConfigurarPagosScreen';
 
 // Pantallas placeholder
-const AgendaScreen = () => <View style={{ flex: 1, backgroundColor: colors.background }}><Text>Agenda</Text></View>;
 const ClientesScreen = () => <View style={{ flex: 1, backgroundColor: colors.background }}><Text>Clientes</Text></View>;
-const EmpresaProfileScreen = () => <View style={{ flex: 1, backgroundColor: colors.background }}><Text>Perfil Empresa</Text></View>;
 const AddActionScreen = () => null;
+
+const PublicacionesTabScreen = () => <MuroPublicacionesScreen isOwner={true} />;
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -47,7 +58,7 @@ const EmpresaTabs = ({ navigation }: any) => {
             let iconName: any = 'home';
             if (route.name === 'Inicio') iconName = 'home';
             else if (route.name === 'Agenda') iconName = 'calendar';
-            else if (route.name === 'Clientes') iconName = 'users';
+            else if (route.name === 'Muro') iconName = 'image';
             else if (route.name === 'Perfil') iconName = 'user';
             
             return <Feather name={iconName} size={22} color={color} />;
@@ -63,14 +74,22 @@ const EmpresaTabs = ({ navigation }: any) => {
           options={{
             tabBarLabel: () => null,
             tabBarIcon: () => null,
-            tabBarButton: () => (
-              <FloatingButton onPress={() => navigation.navigate('CrearProfesional')} />
+            tabBarButton: (props) => (
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <FloatingButton onPress={() => navigation.navigate('CrearPublicacion')} />
+              </View>
             )
           }}
         />
         
-        <Tab.Screen name="Clientes" component={ClientesScreen} />
-        <Tab.Screen name="Perfil" component={EmpresaProfileScreen} />
+        <Tab.Screen 
+          name="Muro" 
+          component={PublicacionesTabScreen} 
+        />
+        <Tab.Screen 
+          name="Perfil" 
+          component={EmpresaProfileScreen} 
+        />
       </Tab.Navigator>
   );
 };
@@ -80,6 +99,25 @@ export const EmpresaNavigator = () => {
     <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_bottom' }}>
       <Stack.Screen name="EmpresaTabs" component={EmpresaTabs} />
       <Stack.Screen name="CrearProfesional" component={CrearProfesionalScreen} />
+      <Stack.Screen name="ProfesionalesList" component={ProfesionalesListScreen} />
+      <Stack.Screen name="CrearPublicacion" component={CrearPublicacionScreen} />
+      <Stack.Screen
+        name="MuroPublicaciones"
+        component={({ navigation }: any) => (
+          <MuroPublicacionesScreen isOwner={true} />
+        )}
+      />
+      <Stack.Screen
+        name="Comentarios"
+        component={ComentariosScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen name="CrearCita" component={ReservarScreen} />
+      <Stack.Screen name="ConfirmacionReserva" component={ConfirmacionReservaScreen} options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="ServiciosList" component={ServiciosListScreen} options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen name="CrearEditarServicio" component={CrearEditarServicioScreen} options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="Perfil" component={EmpresaProfileScreen} options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen name="ConfigurarPagos" component={ConfigurarPagosScreen} options={{ animation: 'slide_from_bottom' }} />
     </Stack.Navigator>
   );
 };

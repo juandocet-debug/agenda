@@ -27,4 +27,5 @@ urlpatterns = [
     path('api/servicios/', include('modulos.Servicios.infraestructura.urls')),
     path('api/usuarios/', include('modulos.Usuarios.infraestructura.urls')),
     path('api/profesionales/', include('modulos.Profesionales.infraestructura.urls')),
+    path('api/publicaciones/', include('modulos.Publicaciones.infraestructura.urls')),
 ]

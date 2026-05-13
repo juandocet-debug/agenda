@@ -11,10 +11,15 @@ class LoginController(APIView):
     permission_classes = [AllowAny] # El login debe ser público
 
     def post(self, request):
+        print("=== DEBUG LOGIN ===")
+        print("request.data:", request.data)
         email = request.data.get('email')
         password = request.data.get('password')
+        print(f"email recibido: '{email}'")
+        print(f"password recibido: '{password}'")
 
         if not email or not password:
+            print("ERROR: Faltan campos")
             return Response({'ok': False, 'error': 'Email y password requeridos'}, status=400)
 
         repo = DjangoAutenticacionRepository()
@@ -23,6 +28,7 @@ class LoginController(APIView):
 
         try:
             usuario_id, rol = caso_uso.run(identificador=email, password_plano=password)
+            print(f"Login exitoso: usuario_id={usuario_id}, rol={rol}")
             
             # Generar JWT con claims personalizados (usuario_id + rol)
             refresh = RefreshToken()
@@ -41,6 +47,8 @@ class LoginController(APIView):
             }, status=200)
 
         except ValueError as e:
+            print(f"ValueError: {e}")
             return Response({'ok': False, 'error': str(e)}, status=401)
         except Exception as e:
+            print(f"Exception: {e}")
             return Response({'ok': False, 'error': f"Error interno: {str(e)}"}, status=500)

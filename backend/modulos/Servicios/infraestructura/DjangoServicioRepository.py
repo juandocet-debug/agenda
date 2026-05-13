@@ -13,8 +13,10 @@ class DjangoServicioRepository(ServicioRepositoryPort):
                 'empresa_id': servicio.empresa_id,
                 'nombre': servicio.nombre,
                 'descripcion': servicio.descripcion,
+                'tipo_servicio': servicio.tipo_servicio,
                 'precio_valor': servicio.precio.valor,
-                'duracion_minutos': servicio.duracion.valor,
+                'duracion_minutos': servicio.duracion.valor if servicio.duracion else None,
+                'imagen_url': servicio.imagen_url,
                 'activo': servicio.activo
             }
         )
@@ -39,6 +41,8 @@ class DjangoServicioRepository(ServicioRepositoryPort):
             nombre=model.nombre,
             descripcion=model.descripcion,
             precio=Precio(valor=model.precio_valor),
-            duracion=DuracionMinutos(valor=model.duracion_minutos),
+            tipo_servicio=model.tipo_servicio,
+            duracion=DuracionMinutos(valor=model.duracion_minutos) if model.duracion_minutos else None,
+            imagen_url=model.imagen_url,
             activo=model.activo
         )

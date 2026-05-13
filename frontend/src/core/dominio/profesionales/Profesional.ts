@@ -12,4 +12,5 @@ export interface Profesional {
 export interface ProfesionalRepository {
   crear(profesional: Profesional): Promise<Profesional>;
   listar(): Promise<Profesional[]>;
+  actualizar(id: string, datos: Partial<Profesional>): Promise<Profesional>;
 }

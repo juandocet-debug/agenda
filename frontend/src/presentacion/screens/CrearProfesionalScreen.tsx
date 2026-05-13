@@ -6,13 +6,16 @@ import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { ApiProfesionalRepository } from '../../core/infraestructura/profesionales/ApiProfesionalRepository';
 import { CrearProfesionalUseCase } from '../../core/aplicacion/profesionales/ProfesionalesUseCases';
+import { ActualizarProfesionalUseCase } from '../../core/aplicacion/profesionales/ActualizarProfesionalUseCase';
 
-export const CrearProfesionalScreen = ({ navigation }: any) => {
-  const [nombre, setNombre] = useState('');
-  const [especialidad, setEspecialidad] = useState('');
-  const [email, setEmail] = useState('');
-  const [telefono, setTelefono] = useState('');
-  const [fotoUrl, setFotoUrl] = useState('');
+export const CrearProfesionalScreen = ({ route, navigation }: any) => {
+  const profesionalToEdit = route.params?.profesionalToEdit;
+
+  const [nombre, setNombre] = useState(profesionalToEdit?.nombre || '');
+  const [especialidad, setEspecialidad] = useState(profesionalToEdit?.especialidad || '');
+  const [email, setEmail] = useState(profesionalToEdit?.email || '');
+  const [telefono, setTelefono] = useState(profesionalToEdit?.telefono || '');
+  const [fotoUrl, setFotoUrl] = useState(profesionalToEdit?.foto_url || '');
   
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState('');
@@ -52,15 +55,26 @@ export const CrearProfesionalScreen = ({ navigation }: any) => {
       setError('');
       
       const repo = new ApiProfesionalRepository();
-      const useCase = new CrearProfesionalUseCase(repo);
       
-      await useCase.ejecutar({
-        nombre,
-        especialidad,
-        email,
-        telefono,
-        foto_url: fotoUrl
-      });
+      if (profesionalToEdit) {
+        const useCase = new ActualizarProfesionalUseCase(repo);
+        await useCase.ejecutar(profesionalToEdit.id, {
+          nombre,
+          especialidad,
+          email,
+          telefono,
+          foto_url: fotoUrl
+        });
+      } else {
+        const useCase = new CrearProfesionalUseCase(repo);
+        await useCase.ejecutar({
+          nombre,
+          especialidad,
+          email,
+          telefono,
+          foto_url: fotoUrl
+        });
+      }
 
       // Vuelve al dashboard si tuvo éxito
       navigation.goBack();
@@ -77,7 +91,9 @@ export const CrearProfesionalScreen = ({ navigation }: any) => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Feather name="arrow-left" size={24} color={colors.primary} />
         </TouchableOpacity>
-        <Text style={[typography.h2, { color: colors.primary }]}>Nuevo Profesional</Text>
+        <Text style={[typography.h2, { color: colors.primary }]}>
+          {profesionalToEdit ? 'Editar Profesional' : 'Nuevo Profesional'}
+        </Text>
         <View style={{ width: 24 }} /> {/* Spacer */}
       </View>
 

@@ -51,4 +51,27 @@ export class ApiProfesionalRepository implements ProfesionalRepository {
 
     return data.datos;
   }
+
+  async actualizar(id: string, datos: Partial<Profesional>): Promise<Profesional> {
+    const tokenData = await obtenerTokenLocal();
+    if (!tokenData || !tokenData.access) {
+      throw new Error("No hay sesión activa");
+    }
+
+    const response = await fetch(`${API_URL}/${id}/actualizar/`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${tokenData.access}`,
+      },
+      body: JSON.stringify(datos),
+    });
+
+    const data = await response.json();
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error || 'Error al actualizar profesional');
+    }
+
+    return data.datos;
+  }
 }

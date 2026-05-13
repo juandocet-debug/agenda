@@ -21,6 +21,16 @@ export const shadows = {
     shadowRadius: 25,
     elevation: 3,
   },
+  medium: {
+    shadowColor: '#0B2A56',
+    shadowOffset: {
+      width: 0,
+      height: 12,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 30,
+    elevation: 5,
+  },
   strong: {
     shadowColor: '#0B2A56',
     shadowOffset: {

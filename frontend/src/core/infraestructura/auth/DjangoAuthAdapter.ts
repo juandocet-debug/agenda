@@ -18,18 +18,20 @@ export class DjangoAuthAdapter implements AuthRepository {
       }),
     });
 
-    if (!response.ok) {
-      throw new Error('Credenciales inválidas o error en el servidor');
+    // Siempre leer el body antes de evaluar el status
+    const responseData = await response.json();
+    
+    console.log('=== LOGIN RESPONSE ===', response.status, JSON.stringify(responseData));
+
+    if (!response.ok || !responseData.ok) {
+      throw new Error(responseData.error || `Error ${response.status}: Credenciales invalidas`);
     }
 
-    const responseData = await response.json();
-    if (!responseData.ok) {
-      throw new Error(responseData.error || 'Credenciales inválidas o error en el servidor');
-    }
     return {
       access: responseData.datos?.access_token || responseData.access,
       refresh: responseData.datos?.refresh_token || responseData.refresh,
       rol: responseData.datos?.rol || 'empresa',
+      usuario_id: responseData.datos?.usuario_id || undefined,
     };
   }
 

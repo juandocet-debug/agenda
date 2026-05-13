@@ -4,9 +4,21 @@ class EmpresaModel(models.Model):
     id = models.CharField(max_length=36, primary_key=True)
     nombre = models.CharField(max_length=100)
     slug = models.SlugField(max_length=100, unique=True)
-    logo_url = models.URLField(max_length=500, blank=True, null=True)
+    logo_url = models.TextField(blank=True, null=True)
+    foto_portada_url = models.TextField(blank=True, null=True)
     color_primario = models.CharField(max_length=7, default='#000000')
     color_secundario = models.CharField(max_length=7, default='#FFFFFF')
+    ciudad = models.CharField(max_length=100, blank=True, null=True)
+    pais = models.CharField(max_length=100, blank=True, null=True)
+    direccion = models.CharField(max_length=255, blank=True, null=True)
+    telefono = models.CharField(max_length=20, blank=True, null=True)
+    correo_contacto = models.EmailField(blank=True, null=True)
+    moneda = models.CharField(max_length=3, default='COP')
+    
+    # Credenciales de Wompi (BYOG)
+    wompi_public_key = models.CharField(max_length=100, blank=True, null=True)
+    wompi_integrity_key = models.CharField(max_length=100, blank=True, null=True)
+    wompi_events_secret = models.CharField(max_length=100, blank=True, null=True)
     
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 

@@ -1,149 +1,146 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, SafeAreaView, TouchableOpacity, Platform, Alert } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TextInput, SafeAreaView, TouchableOpacity, Platform, Image, Dimensions } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect } from '@react-navigation/native';
 import { colors, shadows } from '../theme/colors';
-import { typography } from '../theme/typography';
-import { Card } from '../components/Card';
-import { eliminarTokenLocal } from '../../core/infraestructura/auth/TokenStorageAdapter';
+import { eliminarTokenLocal, obtenerTokenLocal } from '../../core/infraestructura/auth/TokenStorageAdapter';
 import { ApiProfesionalRepository } from '../../core/infraestructura/profesionales/ApiProfesionalRepository';
 import { ListarProfesionalesUseCase } from '../../core/aplicacion/profesionales/ProfesionalesUseCases';
+import { DjangoEmpresaRepository } from '../../core/infraestructura/empresas/DjangoEmpresaRepository';
 
-const GradientMetricCard = ({ title, value, icon, gradientColors, onPress }: any) => (
-  <TouchableOpacity style={styles.gradientCardWrapper} onPress={onPress} activeOpacity={0.8}>
-    <LinearGradient colors={gradientColors} style={styles.gradientCard} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-      {/* Decorative background shapes simulating waves */}
-      <View style={styles.decoCircle1} />
-      <View style={styles.decoCircle2} />
-      
-      <View style={styles.whiteCircle}>
-        <Feather name={icon} size={28} color={gradientColors[1]} />
-      </View>
-      <View style={styles.textContainer}>
-        {value !== undefined && <Text style={styles.gradientCardValue}>{value}</Text>}
-        <Text style={styles.gradientCardTitle}>{title}</Text>
-      </View>
-    </LinearGradient>
+const { width } = Dimensions.get('window');
+const CARD_W = Math.min(width * 0.42, 180);
+
+// --- Acción rápida ---
+const QuickAction = ({ icon, label, onPress }: any) => (
+  <TouchableOpacity style={st.qaCard} onPress={onPress} activeOpacity={0.82}>
+    <View style={st.qaIcon}>
+      <Feather name={icon} size={22} color={colors.primary} />
+    </View>
+    <Text style={st.qaLabel}>{label}</Text>
   </TouchableOpacity>
 );
 
+// --- Stat card ---
+const StatCard = ({ icon, value, label, onPress }: any) => (
+  <TouchableOpacity style={st.statCard} onPress={onPress} activeOpacity={0.85}>
+    <View style={st.statIcon}>
+      <Feather name={icon} size={20} color={colors.primary} />
+    </View>
+    <Text style={st.statValue}>{value}</Text>
+    <Text style={st.statLabel}>{label}</Text>
+  </TouchableOpacity>
+);
+
+const empresaRepo = new DjangoEmpresaRepository();
+
 export const EmpresaHomeScreen = ({ navigation }: any) => {
-  const [totalProfesionales, setTotalProfesionales] = React.useState(0);
+  const [empresaData, setEmpresaData] = useState<any>(null);
+  const [totalProfesionales, setTotalProfesionales] = useState(0);
 
-  React.useEffect(() => {
-    const fetchProfesionales = async () => {
-      try {
-        const repo = new ApiProfesionalRepository();
-        const useCase = new ListarProfesionalesUseCase(repo);
-        const lista = await useCase.ejecutar();
-        setTotalProfesionales(lista.length);
-      } catch (error) {
-        console.error("Error cargando profesionales:", error);
-      }
-    };
+  useFocusEffect(
+    useCallback(() => {
+      const load = async () => {
+        try {
+          const token = await obtenerTokenLocal();
+          if (token?.access) {
+            const p = JSON.parse(atob(token.access.split('.')[1]));
+            const id = p.user_id;
+            const data = await empresaRepo.obtenerEmpresaPrivada(id);
+            if (data) setEmpresaData(data);
+          }
+          const repo = new ApiProfesionalRepository();
+          const lista = await new ListarProfesionalesUseCase(repo).ejecutar();
+          setTotalProfesionales(lista.length);
+        } catch {}
+      };
+      load();
+    }, [])
+  );
 
-    // Agregar un listener para que recargue cuando la pantalla vuelve a tener el foco
-    const unsubscribe = navigation.addListener('focus', () => {
-      fetchProfesionales();
-    });
-
-    return unsubscribe;
-  }, [navigation]);
-
-  const handleLogout = async () => {
-    const confirmar = Platform.OS === 'web'
-      ? window.confirm('¿Estás seguro que deseas cerrar sesión?')
-      : await new Promise((resolve) => {
-          Alert.alert('Cerrar Sesión', '¿Estás seguro?', [
-            { text: 'Cancelar', style: 'cancel', onPress: () => resolve(false) },
-            { text: 'Salir', style: 'destructive', onPress: () => resolve(true) }
-          ]);
-        });
-
-    if (confirmar) {
-      await eliminarTokenLocal();
-      navigation.replace('Login');
-    }
-  };
+  const nombreEmpresa = empresaData?.nombre_empresa || 'Mi Empresa';
+  const logoUrl = empresaData?.logo_url;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        
-        {/* Top Header with Menu and Bell */}
-        <View style={styles.topBar}>
-          <TouchableOpacity onPress={handleLogout}>
-            <Feather name="log-out" size={24} color="#FF4B4B" />
-          </TouchableOpacity>
-          <View style={styles.bellContainer}>
-            <Feather name="bell" size={24} color={colors.primary} />
-            <View style={styles.notificationDot} />
+    <SafeAreaView style={st.root}>
+      <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>
+
+        {/* ── HEADER con gradiente ── */}
+        <LinearGradient
+          colors={[colors.primary, '#1a3a6b']}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+          style={st.header}
+        >
+          {/* Círculos decorativos */}
+          <View style={st.decoBig} />
+          <View style={st.decoSmall} />
+
+          {/* Row logo + greeting + campana */}
+          <View style={st.headerRow}>
+            <TouchableOpacity onPress={() => navigation.navigate('Perfil')} style={st.avatarWrap}>
+              {logoUrl
+                ? <Image source={{ uri: logoUrl }} style={st.avatar} />
+                : <View style={st.avatarFallback}><Feather name="briefcase" size={22} color={colors.primary} /></View>
+              }
+            </TouchableOpacity>
+
+            <View style={{ flex: 1, marginLeft: 14 }}>
+              <Text style={st.greeting}>¡Hola, bienvenido! 👋</Text>
+              <Text style={st.companyName} numberOfLines={1}>{nombreEmpresa}</Text>
+            </View>
+
+            <TouchableOpacity style={st.bellBtn} onPress={() => {}}>
+              <Feather name="bell" size={20} color="#FFF" />
+              <View style={st.bellDot} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Search bar dentro del header */}
+          <View style={st.searchRow}>
+            <View style={st.searchBox}>
+              <Feather name="search" size={16} color="#888" />
+              <TextInput
+                placeholder="Buscar servicios, citas..."
+                placeholderTextColor="#AAA"
+                style={st.searchInput}
+              />
+            </View>
+            <TouchableOpacity style={st.filterBtn} onPress={() => navigation.navigate('ServiciosList')}>
+              <Feather name="sliders" size={18} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+        </LinearGradient>
+
+        {/* ── BANNER HERO ── */}
+        <View style={st.heroCard}>
+          <View style={{ flex: 1 }}>
+            <Text style={st.heroTag}>Plan Básico</Text>
+            <Text style={st.heroTitle}>Gestiona tu{'\n'}negocio fácil</Text>
+            <TouchableOpacity style={st.heroBtn} onPress={() => navigation.navigate('Perfil')}>
+              <Text style={st.heroBtnText}>Configurar</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={st.heroIcon}>
+            <Feather name="briefcase" size={52} color={colors.primary} />
           </View>
         </View>
 
-        {/* Header Titles */}
-        <View style={styles.header}>
-          <Text style={[typography.h1, { color: colors.primary }]}>¡Bienvenido!</Text>
-          <Text style={[typography.body, { color: colors.textSubtitle, marginTop: 4 }]}>Buenos días, Administrador</Text>
+        {/* ── ACCIONES RÁPIDAS ── */}
+        <Text style={st.sectionTitle}>Acciones rápidas</Text>
+        <View style={st.qaRow}>
+          <QuickAction icon="calendar" label="Agenda" onPress={() => navigation.navigate('Agenda')} />
+          <QuickAction icon="users" label="Equipo" onPress={() => navigation.navigate('ProfesionalesList')} />
+          <QuickAction icon="grid" label="Servicios" onPress={() => navigation.navigate('ServiciosList')} />
+          <QuickAction icon="image" label="Muro" onPress={() => navigation.navigate('EmpresaTabs', { screen: 'Muro' })} />
         </View>
 
-        {/* Search Bar */}
-        <View style={[styles.searchBar, shadows.soft]}>
-          <Feather name="search" size={20} color={colors.textSubtitle} style={{ marginRight: 12 }} />
-          <TextInput 
-            placeholder="Buscar..."
-            placeholderTextColor={colors.textSubtitle}
-            style={styles.searchInput}
-          />
-        </View>
-
-        {/* Banner Card */}
-        <Card style={styles.bannerCard}>
-          <View style={styles.bannerTextContainer}>
-            <Text style={[typography.h3, { color: colors.primary, marginBottom: 8 }]}>Mi Empresa</Text>
-            <Text style={[typography.caption, { color: colors.textSubtitle, lineHeight: 18 }]}>
-              Plan Actual: Básico{'\n'}Gestión local de tus servicios
-            </Text>
-          </View>
-          <View style={styles.bannerIllustrationPlaceholder}>
-            <Feather name="briefcase" size={40} color={colors.primary} />
-          </View>
-        </Card>
-
-        {/* Ongoing Projects Grid */}
-        <View style={styles.sectionHeader}>
-          <Text style={[typography.h3, { color: colors.primary }]}>Métricas</Text>
-        </View>
-
-        {/* Color Grid Section */}
-        <View style={styles.grid}>
-          <GradientMetricCard 
-            title="Profesionales" 
-            value={totalProfesionales.toString()} 
-            icon="users" 
-            gradientColors={['#4287f5', '#2b6fd9']} 
-            onPress={() => {}} 
-          />
-          <GradientMetricCard 
-            title="Clientes" 
-            value="15" 
-            icon="user-check" 
-            gradientColors={['#2b6fd9', '#1c52a5']} 
-            onPress={() => {}} 
-          />
-          <GradientMetricCard 
-            title="Citas hoy" 
-            value="0" 
-            icon="calendar" 
-            gradientColors={['#1c52a5', colors.primaryLight]} 
-            onPress={() => {}} 
-          />
-          <GradientMetricCard 
-            title="Agregar Profesional" 
-            icon="plus" 
-            gradientColors={[colors.primaryLight, colors.primary]} 
-            onPress={() => navigation.navigate('CrearProfesional')} 
-          />
+        {/* ── ESTADÍSTICAS ── */}
+        <Text style={st.sectionTitle}>Estadísticas</Text>
+        <View style={st.statsRow}>
+          <StatCard icon="users" value={totalProfesionales} label="Profesionales" onPress={() => navigation.navigate('ProfesionalesList')} />
+          <StatCard icon="user-check" value="15" label="Clientes" onPress={() => {}} />
+          <StatCard icon="calendar" value="0" label="Citas hoy" onPress={() => {}} />
         </View>
 
       </ScrollView>
@@ -151,153 +148,141 @@ export const EmpresaHomeScreen = ({ navigation }: any) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scrollContent: {
-    padding: 24,
-    paddingBottom: 120, // Aumentado un poco más para los tabs inferiores
-  },
-  topBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-    marginTop: 10,
-  },
-  bellContainer: {
-    position: 'relative',
-  },
-  notificationDot: {
-    position: 'absolute',
-    top: 0,
-    right: 2,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#FF4B4B',
-    borderWidth: 1.5,
-    borderColor: colors.background,
-  },
+const st = StyleSheet.create({
+  root: { flex: 1, backgroundColor: '#F8FAFC' },
+  scroll: { paddingBottom: 120 },
+
+  /* Header */
   header: {
-    marginBottom: 25,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 20,
+    paddingTop: Platform.OS === 'web' ? 24 : 16,
+    paddingBottom: 32,
     paddingHorizontal: 20,
-    paddingVertical: 18,
-    marginBottom: 30,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: colors.primary,
-    fontWeight: '500',
-  },
-  bannerCard: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 35,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 25,
-  },
-  bannerTextContainer: {
-    flex: 1,
-  },
-  bannerIllustrationPlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.accent,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    overflow: 'hidden',
     marginBottom: 20,
   },
-  grid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
+  decoBig: {
+    position: 'absolute', width: 200, height: 200, borderRadius: 100,
+    backgroundColor: 'rgba(255,255,255,0.08)', top: -60, right: -40,
   },
-  
-  /* Nuevos estilos para Gradient Cards */
-  gradientCardWrapper: {
-    width: '48%',
-    marginBottom: 15,
-    borderRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
+  decoSmall: {
+    position: 'absolute', width: 120, height: 120, borderRadius: 60,
+    backgroundColor: 'rgba(255,255,255,0.06)', bottom: 10, left: -30,
   },
-  gradientCard: {
-    width: '100%',
-    padding: 20,
-    borderRadius: 24,
+  headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
+
+  avatarWrap: {
+    width: 50, height: 50, borderRadius: 25,
+    borderWidth: 2, borderColor: 'rgba(255,255,255,0.6)',
     overflow: 'hidden',
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-    aspectRatio: 1, // Para hacerlas completamente cuadradas
   },
-  decoCircle1: {
-    position: 'absolute',
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+  avatar: { width: '100%', height: '100%' },
+  avatarFallback: {
+    width: '100%', height: '100%',
+    backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center',
+  },
+
+  greeting: { fontSize: 12, color: 'rgba(255,255,255,0.75)', fontWeight: '500' },
+  companyName: { fontSize: 18, color: '#FFF', fontWeight: '800', marginTop: 1 },
+
+  bellBtn: {
+    width: 42, height: 42, borderRadius: 21,
     backgroundColor: 'rgba(255,255,255,0.15)',
-    top: -20,
-    right: -20,
+    justifyContent: 'center', alignItems: 'center',
   },
-  decoCircle2: {
-    position: 'absolute',
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    bottom: -50,
-    left: -30,
+  bellDot: {
+    position: 'absolute', top: 8, right: 9,
+    width: 8, height: 8, borderRadius: 4,
+    backgroundColor: '#F87171', borderWidth: 1.5, borderColor: 'transparent',
   },
-  whiteCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+
+  searchRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  searchBox: {
+    flex: 1, flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#FFF', borderRadius: 14,
+    paddingHorizontal: 14, paddingVertical: 11, gap: 8,
+  },
+  searchInput: { flex: 1, fontSize: 14, color: '#333' },
+  filterBtn: {
+    width: 46, height: 46, borderRadius: 14,
     backgroundColor: '#FFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 4,
+    justifyContent: 'center', alignItems: 'center',
   },
-  textContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
+
+  /* Hero */
+  heroCard: {
+    marginHorizontal: 20, marginBottom: 24,
+    backgroundColor: '#EFF6FF',
+    borderRadius: 20, padding: 20,
+    flexDirection: 'row', alignItems: 'center',
+    borderWidth: 1, borderColor: '#DBEAFE',
   },
-  gradientCardValue: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#FFF',
-    marginBottom: 4,
+  heroTag: {
+    fontSize: 11, fontWeight: '700', color: colors.primary,
+    backgroundColor: '#DBEAFE', paddingHorizontal: 10, paddingVertical: 3,
+    borderRadius: 20, alignSelf: 'flex-start', marginBottom: 8,
+    overflow: 'hidden',
   },
-  gradientCardTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#FFF',
-    textAlign: 'center',
+  heroTitle: { fontSize: 20, fontWeight: '800', color: '#1E3A5F', lineHeight: 26, marginBottom: 14 },
+  heroBtn: {
+    backgroundColor: colors.primary, paddingHorizontal: 20, paddingVertical: 9,
+    borderRadius: 12, alignSelf: 'flex-start',
   },
+  heroBtnText: { color: '#FFF', fontWeight: '700', fontSize: 13 },
+  heroIcon: { width: 80, alignItems: 'center' },
+
+  /* Quick actions */
+  sectionTitle: {
+    fontSize: 16, fontWeight: '800', color: '#1E293B',
+    marginHorizontal: 20, marginBottom: 12,
+  },
+  qaRow: {
+    flexDirection: 'row', flexWrap: 'wrap',
+    gap: 12, paddingHorizontal: 20, marginBottom: 24,
+    justifyContent: 'space-between',
+  },
+  qaCard: {
+    width: '48%', borderRadius: 16, padding: 16,
+    alignItems: 'center', gap: 10,
+    backgroundColor: '#FFF',
+    borderWidth: 1, borderColor: '#E2E8F0',
+    ...shadows.soft,
+  },
+  qaIcon: {
+    width: 46, height: 46, borderRadius: 12,
+    justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1, borderColor: '#F1F5F9',
+  },
+  qaLabel: { fontSize: 13, fontWeight: '700', color: colors.primary },
+
+  /* Stats */
+  statsRow: {
+    flexDirection: 'row', gap: 10,
+    paddingHorizontal: 20, marginBottom: 28,
+  },
+  statCard: {
+    flex: 1, backgroundColor: '#FFF', borderRadius: 16,
+    padding: 14, alignItems: 'center', gap: 6,
+    borderWidth: 1, borderColor: '#E2E8F0',
+    ...shadows.soft,
+  },
+  statIcon: {
+    width: 38, height: 38, borderRadius: 10,
+    justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1, borderColor: '#F1F5F9',
+  },
+  statValue: { fontSize: 22, fontWeight: '800', color: colors.primary },
+  statLabel: { fontSize: 11, color: '#64748B', fontWeight: '500', textAlign: 'center' },
+
+  /* Logout */
+  logoutBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    alignSelf: 'center', paddingVertical: 12, paddingHorizontal: 20,
+    borderRadius: 12, borderWidth: 1, borderColor: '#FCA5A5',
+    backgroundColor: '#FFF5F5',
+  },
+  logoutText: { color: '#E53E3E', fontWeight: '700', fontSize: 14 },
 });

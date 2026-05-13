@@ -40,3 +40,72 @@ class EmpresaVisualConfigController(APIView):
             
         except EmpresaModel.DoesNotExist:
             return Response({'ok': False, 'error': 'Empresa no encontrada en la plataforma.'}, status=404)
+
+class PerfilPublicoEmpresaController(APIView):
+    permission_classes = [AllowAny]
+    """
+    Endpoint público para consultar datos básicos de una empresa por ID.
+    """
+    def get(self, request, empresa_id):
+        try:
+            empresa = EmpresaModel.objects.get(id=empresa_id)
+            return Response({
+                'ok': True,
+                'datos': {
+                    'empresa_id': empresa.id,
+                    'nombre_empresa': empresa.nombre,
+                    'logo_url': empresa.logo_url
+                }
+            }, status=200)
+        except EmpresaModel.DoesNotExist:
+            return Response({'ok': False, 'error': 'Empresa no encontrada.'}, status=404)
+
+from rest_framework.permissions import IsAuthenticated
+
+class DetalleEmpresaPrivadoController(APIView):
+    permission_classes = [IsAuthenticated]
+    """
+    Endpoint privado para consultar todos los datos de la empresa (para edición).
+    El usuario debe estar autenticado.
+    """
+    def get(self, request, empresa_id):
+        try:
+            empresa = EmpresaModel.objects.get(id=empresa_id)
+            return Response({
+                'ok': True,
+                'datos': {
+                    'id': empresa.id,
+                    'nombre': empresa.nombre,
+                    'slug': empresa.slug,
+                    'ciudad': getattr(empresa, 'ciudad', ''),
+                    'pais': getattr(empresa, 'pais', ''),
+                    'direccion': getattr(empresa, 'direccion', ''),
+                    'telefono': getattr(empresa, 'telefono', ''),
+                    'correo_contacto': getattr(empresa, 'correo_contacto', ''),
+                    'moneda': getattr(empresa, 'moneda', 'COP'),
+                    'logo_url': getattr(empresa, 'logo_url', ''),
+                    'wompi_public_key': getattr(empresa, 'wompi_public_key', ''),
+                    'wompi_integrity_key': getattr(empresa, 'wompi_integrity_key', ''),
+                    'wompi_events_secret': getattr(empresa, 'wompi_events_secret', ''),
+                }
+            }, status=200)
+        except EmpresaModel.DoesNotExist:
+            return Response({'ok': False, 'error': 'Empresa no encontrada.'}, status=404)
+
+class ConfigurarWompiController(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, empresa_id):
+        try:
+            empresa = EmpresaModel.objects.get(id=empresa_id)
+            # Validar que el usuario que hace la peticion pertenezca a esta empresa (omitido en MVP simplificado)
+            
+            data = request.data
+            empresa.wompi_public_key = data.get('wompi_public_key', empresa.wompi_public_key)
+            empresa.wompi_integrity_key = data.get('wompi_integrity_key', empresa.wompi_integrity_key)
+            empresa.wompi_events_secret = data.get('wompi_events_secret', empresa.wompi_events_secret)
+            empresa.save()
+            
+            return Response({'ok': True, 'mensaje': 'Llaves de Wompi actualizadas correctamente.'})
+        except EmpresaModel.DoesNotExist:
+            return Response({'ok': False, 'error': 'Empresa no encontrada.'}, status=404)

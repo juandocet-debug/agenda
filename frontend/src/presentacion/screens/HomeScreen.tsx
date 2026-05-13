@@ -1,11 +1,103 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, SafeAreaView, ActivityIndicator, Alert, TouchableOpacity, Platform, Image } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, TextInput, SafeAreaView, ActivityIndicator, Alert, TouchableOpacity, Platform, Image, Animated, PanResponder } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import { colors, shadows } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { Card } from '../components/Card';
+import { DjangoEmpresaRepository } from '../../core/infraestructura/empresas/DjangoEmpresaRepository';
+import { eliminarTokenLocal } from '../../core/infraestructura/auth/TokenStorageAdapter';
 
-const BASE_URL = 'http://127.0.0.1:8001/api';
+const empresaRepository = new DjangoEmpresaRepository();
+
+const EmpresaCardItem = ({ empresa, isPrimary, navigation, toggleEmpresa, deleteEmpresa }: any) => {
+  return (
+    <View style={styles.newCard}>
+      {/* TOP AREA: Clickable for Navigation */}
+      <TouchableOpacity 
+        activeOpacity={0.9} 
+        onPress={() => navigation.navigate('EmpresaDetail', { empresa })}
+      >
+        {/* TOP: COVER */}
+        <View style={styles.newCardCoverContainer}>
+          {empresa.foto_portada_url ? (
+            <Image source={{ uri: empresa.foto_portada_url }} style={styles.newCardCover} resizeMode="cover" />
+          ) : (
+            <View style={[styles.newCardCover, { backgroundColor: isPrimary ? colors.primary : '#4A90E2' }]} />
+          )}
+        </View>
+
+        {/* LOGO OVERLAP */}
+        <View style={styles.newCardAvatarContainer}>
+          {empresa.logo_url ? (
+            <Image source={{ uri: empresa.logo_url }} style={styles.newCardAvatar} />
+          ) : (
+            <View style={[styles.newCardAvatar, { backgroundColor: '#F0F4F8', justifyContent: 'center', alignItems: 'center' }]}>
+              <Text style={{ fontSize: 20, fontWeight: 'bold', color: colors.primary }}>
+                {empresa.nombre.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+      
+      {/* BADGE OVERLAP (Clickable to Toggle Status) */}
+      <TouchableOpacity 
+        style={styles.newCardBadge} 
+        onPress={() => toggleEmpresa(empresa.id, empresa.activa)}
+        activeOpacity={0.8}
+      >
+        <Feather name={empresa.activa ? "check-circle" : "x-circle"} size={10} color={empresa.activa ? "#F5A623" : "#FF4B4B"} />
+        <Text style={styles.newCardBadgeText}>{empresa.activa ? 'Activa' : 'Inactiva'}</Text>
+      </TouchableOpacity>
+
+      {/* INFO SECTION */}
+      <View style={styles.newCardInfo}>
+        <View style={styles.newCardTitleRow}>
+          <TouchableOpacity 
+            style={{flex: 1, paddingRight: 8}}
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate('EmpresaDetail', { empresa })}
+          >
+            <Text style={styles.newCardTitle} numberOfLines={1}>{empresa.nombre}</Text>
+            <Text style={styles.newCardSubtitle} numberOfLines={1}>{empresa.ciudad || `@${empresa.slug}`}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.newCardCircleBtn} onPress={() => deleteEmpresa(empresa.id, empresa.nombre)}>
+            <Feather name="trash-2" size={14} color="#888" />
+          </TouchableOpacity>
+        </View>
+
+        {/* CONTACT INFO ROW (Replaces Stats) */}
+        <View style={styles.newCardContactRow}>
+          <View style={styles.newCardContactTextCol}>
+            <View style={styles.newCardContactLine}>
+              <Feather name="map-pin" size={10} color="#888" />
+              <Text style={styles.newCardContactText} numberOfLines={1}>
+                {empresa.direccion || 'Sin dirección'}
+              </Text>
+            </View>
+            <View style={styles.newCardContactLine}>
+              <Feather name="phone" size={10} color="#888" />
+              <Text style={styles.newCardContactText} numberOfLines={1}>
+                {empresa.telefono || 'Sin teléfono'}
+              </Text>
+            </View>
+          </View>
+          
+          <TouchableOpacity style={styles.newCardWspBtn} onPress={() => {}}>
+            <Feather name="message-circle" size={16} color="#FFF" />
+          </TouchableOpacity>
+        </View>
+
+        {/* ACTION BUTTON */}
+        <TouchableOpacity style={styles.newCardActionBtn} onPress={() => navigation.navigate('EmpresaDetail', { empresa })}>
+          <Text style={styles.newCardActionBtnText}>Reservar</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
 
 export const HomeScreen = ({ navigation }: any) => {
   const [empresas, setEmpresas] = useState<any[]>([]);
@@ -13,11 +105,8 @@ export const HomeScreen = ({ navigation }: any) => {
 
   const fetchEmpresas = async () => {
     try {
-      const response = await fetch(`${BASE_URL}/empresas/admin/lista/`);
-      const data = await response.json();
-      if (data.ok) {
-        setEmpresas(data.datos);
-      }
+      const datos = await empresaRepository.obtenerEmpresas();
+      setEmpresas(datos);
     } catch (error) {
       console.error(error);
     } finally {
@@ -25,68 +114,60 @@ export const HomeScreen = ({ navigation }: any) => {
     }
   };
 
-  useEffect(() => {
-    fetchEmpresas();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchEmpresas();
+    }, [])
+  );
 
   const toggleEmpresa = async (id: string, estadoActual: boolean) => {
     try {
-      const response = await fetch(`${BASE_URL}/empresas/admin/${id}/activar/`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ activo: !estadoActual })
-      });
-      const data = await response.json();
-      if (data.ok) {
-        Alert.alert('Éxito', data.mensaje);
-        fetchEmpresas(); // Refrescar lista
+      const nuevoEstado = !estadoActual;
+      const ok = await empresaRepository.cambiarEstado(id, nuevoEstado);
+      
+      if (ok) {
+        setEmpresas(empresas.map(emp => 
+          emp.id === id ? { ...emp, activa: nuevoEstado } : emp
+        ));
+      } else {
+        Alert.alert('Error', 'No se pudo cambiar el estado de la empresa');
       }
     } catch (error) {
-      Alert.alert('Error', 'No se pudo cambiar el estado');
+      Alert.alert('Error', 'Problema de conexión al cambiar el estado');
     }
   };
 
-  const deleteEmpresa = async (id: string, nombre: string) => {
-    const confirmar = Platform.OS === 'web' 
-      ? window.confirm(`¿Estás seguro que deseas eliminar la empresa "${nombre}" de manera PERMANENTE?`) 
-      : await new Promise((resolve) => {
-          Alert.alert(
-            "Eliminar Empresa",
-            `¿Estás seguro que deseas eliminar la empresa "${nombre}" de manera PERMANENTE?`,
-            [
-              { text: "Cancelar", style: "cancel", onPress: () => resolve(false) },
-              { text: "Eliminar", style: "destructive", onPress: () => resolve(true) }
-            ]
-          );
-        });
-
-    if (confirmar) {
-      try {
-        const response = await fetch(`${BASE_URL}/empresas/admin/${id}/eliminar/`, {
-          method: 'DELETE'
-        });
-        const data = await response.json();
-        if (data.ok) {
-          if (Platform.OS === 'web') {
-            window.alert('Empresa eliminada correctamente.');
-          } else {
-            Alert.alert('Éxito', data.mensaje);
+  const deleteEmpresa = (id: string, nombre: string) => {
+    Alert.alert(
+      "Eliminar Empresa",
+      `¿Estás seguro que deseas eliminar a "${nombre}"? Esta acción no se puede deshacer.`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        { 
+          text: "Eliminar", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const ok = await empresaRepository.eliminarEmpresa(id);
+              if (ok) {
+                setEmpresas(empresas.filter(emp => emp.id !== id));
+              } else {
+                Alert.alert('Error', 'No se pudo eliminar la empresa');
+              }
+            } catch (error) {
+              Alert.alert('Error', 'Problema de conexión al eliminar');
+            }
           }
-          fetchEmpresas();
-        } else {
-          Alert.alert('Error', data.error || 'No se pudo eliminar la empresa');
         }
-      } catch (error) {
-        Alert.alert('Error', 'Hubo un error de conexión al eliminar');
-      }
-    }
+      ]
+    );
   };
 
   const handleLogout = () => {
     if (Platform.OS === 'web') {
       const confirm = window.confirm("¿Estás seguro que deseas salir?");
       if (confirm) {
-        navigation.replace('Login');
+        eliminarTokenLocal().then(() => navigation.replace('Login'));
       }
     } else {
       Alert.alert(
@@ -97,7 +178,9 @@ export const HomeScreen = ({ navigation }: any) => {
           { 
             text: "Salir", 
             style: "destructive",
-            onPress: () => navigation.replace('Login')
+            onPress: () => {
+              eliminarTokenLocal().then(() => navigation.replace('Login'));
+            }
           }
         ]
       );
@@ -165,60 +248,15 @@ export const HomeScreen = ({ navigation }: any) => {
               const textColor = isPrimary ? colors.surface : colors.primary;
               const bgColor = isPrimary ? colors.primary : colors.surface;
               const subTextColor = isPrimary ? 'rgba(255,255,255,0.7)' : colors.textSubtitle;
-              
               return (
-                <Card key={empresa.id} variant={isPrimary ? "primary" : "surface"} style={styles.gridCard}>
-                  <View style={styles.cardHeader}>
-                    <Text style={[typography.caption, { color: subTextColor }]}>
-                      {empresa.activa ? 'Activa' : 'Inactiva'}
-                    </Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <TouchableOpacity onPress={() => toggleEmpresa(empresa.id, empresa.activa)} style={{ marginRight: 15 }}>
-                        <Feather 
-                          name={empresa.activa ? "toggle-right" : "toggle-left"} 
-                          size={20} 
-                          color={empresa.activa ? (isPrimary ? '#00FF00' : '#00C48C') : (isPrimary ? '#FF4B4B' : '#FF4B4B')} 
-                        />
-                      </TouchableOpacity>
-                      <TouchableOpacity onPress={() => deleteEmpresa(empresa.id, empresa.nombre)}>
-                        <Feather name="trash-2" size={18} color={isPrimary ? '#FF4B4B' : '#FF4B4B'} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                  <View style={styles.cardContentHeader}>
-                    {empresa.logo_url ? (
-                      <Image source={{ uri: empresa.logo_url }} style={styles.logoImage} />
-                    ) : (
-                      <View style={isPrimary ? styles.iconContainerPrimary : styles.iconContainerSecondary}>
-                        <Text style={[typography.h2, { color: textColor }]}>
-                          {empresa.nombre.substring(0, 1).toUpperCase()}
-                        </Text>
-                      </View>
-                    )}
-                    <View style={styles.cardTitleContainer}>
-                      <Text style={[typography.h3, { color: textColor }]} numberOfLines={1}>{empresa.nombre}</Text>
-                      <Text style={[typography.caption, { color: subTextColor }]}>
-                        {empresa.slug}
-                      </Text>
-                    </View>
-                  </View>
-                  
-                  <View style={styles.subscriptionContainer}>
-                    <Feather name="calendar" size={14} color={subTextColor} style={{ marginRight: 6 }} />
-                    <Text style={[typography.caption, { color: subTextColor }]}>
-                      Suscripción: {empresa.fecha_suscripcion || 'N/A'}
-                    </Text>
-                  </View>
-                  
-                  <View style={styles.progressContainer}>
-                    <Text style={[typography.caption, { color: textColor }]}>Profesionales</Text>
-                    <Text style={[typography.caption, { color: textColor, fontWeight: 'bold' }]}>{empresa.profesionales}</Text>
-                  </View>
-                  <View style={styles.progressContainer}>
-                    <Text style={[typography.caption, { color: textColor }]}>Usuarios</Text>
-                    <Text style={[typography.caption, { color: textColor, fontWeight: 'bold' }]}>{empresa.usuarios}</Text>
-                  </View>
-                </Card>
+                <EmpresaCardItem 
+                  key={empresa.id}
+                  empresa={empresa}
+                  isPrimary={isPrimary}
+                  navigation={navigation}
+                  toggleEmpresa={toggleEmpresa}
+                  deleteEmpresa={deleteEmpresa}
+                />
               );
             })
           )}
@@ -312,63 +350,133 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 28,
   },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  newCard: {
+    width: '48%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    marginBottom: 16,
+    ...shadows.soft,
   },
-  cardContentHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 15,
+  newCardCoverContainer: {
+    width: '100%',
+    height: 130, // Increased from 90 to show more image
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: 'hidden',
   },
-  logoImage: {
-    width: 45,
-    height: 45,
-    borderRadius: 12,
-    backgroundColor: '#fff',
-    marginRight: 12,
-  },
-  cardTitleContainer: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  iconContainerPrimary: {
-    width: 45,
-    height: 45,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  iconContainerSecondary: {
-    width: 45,
-    height: 45,
-    borderRadius: 12,
-    backgroundColor: 'rgba(0,196,140,0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  subscriptionContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  progressContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  progressBarBg: {
-    height: 4,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 2,
-  },
-  progressBarFill: {
+  newCardCover: {
+    width: '100%',
     height: '100%',
-    borderRadius: 2,
-  }
+    backgroundColor: '#EEE',
+  },
+  newCardAvatarContainer: {
+    position: 'absolute',
+    top: 104, // 130 (image height) - 26 (half of avatar height)
+    left: 12,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#FFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 2,
+    ...shadows.soft,
+  },
+  newCardAvatar: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 26,
+  },
+  newCardBadge: {
+    position: 'absolute',
+    top: 118, // overlaps exactly at the bottom edge of the 130px cover
+    right: 12,
+    backgroundColor: '#FFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    ...shadows.soft,
+    gap: 4,
+  },
+  newCardBadgeText: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  newCardInfo: {
+    paddingTop: 32, // space for avatar
+    paddingHorizontal: 12,
+    paddingBottom: 16,
+  },
+  newCardTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  newCardTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#111',
+  },
+  newCardSubtitle: {
+    fontSize: 10,
+    color: '#888',
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  newCardCircleBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  newCardContactRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 14,
+    marginBottom: 16,
+  },
+  newCardContactTextCol: {
+    flex: 1,
+    paddingRight: 8,
+    gap: 6,
+  },
+  newCardContactLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  newCardContactText: {
+    fontSize: 9,
+    color: '#555',
+    flex: 1,
+  },
+  newCardWspBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#25D366',
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...shadows.soft,
+  },
+  newCardActionBtn: {
+    width: '100%',
+    paddingVertical: 10,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#EAEAEA',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  newCardActionBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#111',
+  },
 });

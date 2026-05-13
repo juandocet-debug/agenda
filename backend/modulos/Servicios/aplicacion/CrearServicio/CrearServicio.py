@@ -13,24 +13,26 @@ class CrearServicio:
         empresa_id: str, 
         nombre: str, 
         precio_valor: float, 
-        duracion_minutos: int, 
-        descripcion: Optional[str] = None
+        tipo_servicio: str = 'CITA',
+        duracion_minutos: Optional[int] = None, 
+        descripcion: Optional[str] = None,
+        imagen_url: Optional[str] = None
     ) -> Servicio:
         
-        # 1. Crear Value Objects (Validarán que precio no sea negativo y duración sea > 0)
         precio = Precio(valor=Decimal(str(precio_valor)))
-        duracion = DuracionMinutos(valor=duracion_minutos)
+        duracion = DuracionMinutos(valor=duracion_minutos) if duracion_minutos else None
         
-        # 2. Crear Entidad
         nuevo_servicio = Servicio.crear(
             empresa_id=empresa_id,
             nombre=nombre,
             precio=precio,
+            tipo_servicio=tipo_servicio,
             duracion=duracion,
-            descripcion=descripcion
+            descripcion=descripcion,
+            imagen_url=imagen_url
         )
         
-        # 3. Guardar en el repositorio
         self.servicio_repository.guardar(nuevo_servicio)
         
         return nuevo_servicio
+
