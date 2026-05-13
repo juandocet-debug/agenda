@@ -137,7 +137,7 @@ export const LoginScreen = ({ navigation }: any) => {
           <SafeAreaView style={styles.welcomeContent}>
             
             <View style={styles.welcomeTextContainer}>
-              <Text style={[typography.h1, { color: '#FFF', fontSize: 26, textAlign: 'center', fontWeight: '800' }]} numberOfLines={1} adjustsFontSizeToFit>
+              <Text style={[typography.h1, { color: '#FFF', fontSize: 20, textAlign: 'center', fontWeight: '800' }]}>
                 Agenda tu servicio <Text style={{ color: colors.textTitle }}>en segundos.</Text>
               </Text>
             </View>
