@@ -266,7 +266,7 @@ export const MuroPublicacionesScreen = ({ isOwner = false, empresaId }: { isOwne
     } catch {}
   };
 
-  const handleEliminar = (pub: any) => {
+  const handleEliminar = useCallback((pub: any) => {
     Alert.alert('Eliminar publicación', '¿Seguro?', [
       { text: 'Cancelar', style: 'cancel' },
       {
@@ -277,102 +277,26 @@ export const MuroPublicacionesScreen = ({ isOwner = false, empresaId }: { isOwne
         }
       }
     ]);
-  };
+  }, []);
 
-  const renderPost = ({ item }: { item: any }) => {
-    const imgs: string[] = item.imagenes?.length > 0
-      ? item.imagenes
-      : item.imagen_url ? [item.imagen_url] : [];
+  const handleLikeCb = useCallback((pub: any) => handleLike(pub), [handleLike]);
+  const handleCompartirCb = useCallback((pub: any) => handleCompartir(pub), [handleCompartir]);
 
+  const renderPost = useCallback(({ item }: { item: any }) => {
     return (
-      <View style={s.card}>
-        {/* ── Header ── */}
-        <View style={s.header}>
-          {/* Avatar con anillo estilo Instagram Stories */}
-          <View style={s.avatarRing}>
-            <View style={s.avatarInner}>
-              {empresaLogo ? (
-                <Image source={{ uri: empresaLogo }} style={{ width: '100%', height: '100%', borderRadius: 18 }} />
-              ) : (
-                <Feather name="briefcase" size={16} color={colors.primary} />
-              )}
-            </View>
-          </View>
-          <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Text style={s.autor}>{empresaNombre}</Text>
-              <View style={s.verified}><Feather name="check" size={9} color="#FFF" /></View>
-            </View>
-          </View>
-          {isOwner ? (
-            <TouchableOpacity onPress={() => handleEliminar(item)} style={{ padding: 8 }}>
-              <Feather name="more-horizontal" size={22} color="#262626" />
-            </TouchableOpacity>
-          ) : (
-            <View style={{ padding: 8 }}>
-              <Feather name="more-horizontal" size={22} color="#262626" />
-            </View>
-          )}
-        </View>
-
-        {/* ── Imágenes ── */}
-        {imgs.length > 0 && <ImageCarousel imagenes={imgs} />}
-
-        {/* ── Barra de acciones ── */}
-        <View style={s.actionsBar}>
-          {/* Izquierda: Like, Comentar, Compartir */}
-          <View style={s.actionsLeft}>
-            <TouchableOpacity style={s.actionGroup} onPress={() => handleLike(item)}>
-              <Feather
-                name="heart"
-                size={24}
-                color={item.usuario_dio_like ? '#ED4956' : '#262626'}
-              />
-              {item.total_likes > 0 && (
-                <Text style={[s.actionCount, item.usuario_dio_like && { color: '#ED4956' }]}>
-                  {item.total_likes}
-                </Text>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={s.actionGroup}
-              onPress={() => navigation.navigate('Comentarios', { publicacion: item })}
-            >
-              <Feather name="message-circle" size={23} color="#262626" />
-              {item.total_comentarios > 0 && (
-                <Text style={s.actionCount}>{item.total_comentarios}</Text>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity style={s.actionGroup} onPress={() => handleCompartir(item)}>
-              <Feather name="send" size={22} color="#262626" />
-            </TouchableOpacity>
-          </View>
-
-          {/* Derecha: Botón Reservar */}
-          <TouchableOpacity
-            style={s.reservarBtn}
-            onPress={() => navigation.navigate('CrearCita', {
-              empresaId: resolvedEmpresaId || item.empresa_id,
-              empresa_id: resolvedEmpresaId || item.empresa_id,
-              origen: 'publicacion',
-            })}
-            activeOpacity={0.8}
-          >
-            <Feather name="calendar" size={14} color="#FFF" />
-            <Text style={s.reservarText}>Reservar</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* ── Caption ── */}
-        <Caption autor={empresaNombre} texto={item.descripcion || item.titulo} />
-
-        {/* ── Timestamp ── */}
-        <Text style={s.fecha}>{formatFecha(item.fecha_creacion)}</Text>
-      </View>
+      <PostCard
+        item={item}
+        empresaLogo={empresaLogo}
+        empresaNombre={empresaNombre}
+        isOwner={isOwner}
+        resolvedEmpresaId={resolvedEmpresaId}
+        onLike={handleLikeCb}
+        onCompartir={handleCompartirCb}
+        onEliminar={handleEliminar}
+        navigation={navigation}
+      />
     );
-  };
+  }, [empresaLogo, empresaNombre, isOwner, resolvedEmpresaId, handleLikeCb, handleCompartirCb, handleEliminar, navigation]);
 
   return (
     <SafeAreaView style={s.container}>
@@ -420,6 +344,10 @@ export const MuroPublicacionesScreen = ({ isOwner = false, empresaId }: { isOwne
           refreshing={refreshing}
           onEndReached={loadMore}
           onEndReachedThreshold={0.5}
+          initialNumToRender={5}
+          maxToRenderPerBatch={5}
+          windowSize={7}
+          removeClippedSubviews={true}
           ListFooterComponent={() => 
             isFetchingMore ? (
               <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: 20 }} />
@@ -432,6 +360,104 @@ export const MuroPublicacionesScreen = ({ isOwner = false, empresaId }: { isOwne
     </SafeAreaView>
   );
 };
+
+// --- PostCard Memoizado para evitar re-renders masivos ---
+const PostCard = React.memo(({ item, empresaLogo, empresaNombre, isOwner, resolvedEmpresaId, onLike, onCompartir, onEliminar, navigation }: any) => {
+  const imgs: string[] = item.imagenes?.length > 0
+    ? item.imagenes
+    : item.imagen_url ? [item.imagen_url] : [];
+
+  return (
+    <View style={s.card}>
+      {/* ── Header ── */}
+      <View style={s.header}>
+        <View style={s.avatarRing}>
+          <View style={s.avatarInner}>
+            {empresaLogo ? (
+              <Image source={{ uri: empresaLogo }} style={{ width: '100%', height: '100%', borderRadius: 18 }} />
+            ) : (
+              <Feather name="briefcase" size={16} color={colors.primary} />
+            )}
+          </View>
+        </View>
+        <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Text style={s.autor}>{empresaNombre}</Text>
+            <View style={s.verified}><Feather name="check" size={9} color="#FFF" /></View>
+          </View>
+        </View>
+        {isOwner ? (
+          <TouchableOpacity onPress={() => onEliminar(item)} style={{ padding: 8 }}>
+            <Feather name="more-horizontal" size={22} color="#262626" />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ padding: 8 }}>
+            <Feather name="more-horizontal" size={22} color="#262626" />
+          </View>
+        )}
+      </View>
+
+      {/* ── Imágenes ── */}
+      {imgs.length > 0 && <ImageCarousel imagenes={imgs} />}
+
+      {/* ── Barra de acciones ── */}
+      <View style={s.actionsBar}>
+        <View style={s.actionsLeft}>
+          <TouchableOpacity style={s.actionGroup} onPress={() => onLike(item)}>
+            <Feather
+              name="heart"
+              size={24}
+              color={item.usuario_dio_like ? '#ED4956' : '#262626'}
+            />
+            {item.total_likes > 0 && (
+              <Text style={[s.actionCount, item.usuario_dio_like && { color: '#ED4956' }]}>
+                {item.total_likes}
+              </Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={s.actionGroup}
+            onPress={() => navigation.navigate('Comentarios', { publicacion: item })}
+          >
+            <Feather name="message-circle" size={23} color="#262626" />
+            {item.total_comentarios > 0 && (
+              <Text style={s.actionCount}>{item.total_comentarios}</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity style={s.actionGroup} onPress={() => onCompartir(item)}>
+            <Feather name="send" size={22} color="#262626" />
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity
+          style={s.reservarBtn}
+          onPress={() => navigation.navigate('CrearCita', {
+            empresaId: resolvedEmpresaId || item.empresa_id,
+            empresa_id: resolvedEmpresaId || item.empresa_id,
+            origen: 'publicacion',
+          })}
+          activeOpacity={0.8}
+        >
+          <Feather name="calendar" size={14} color="#FFF" />
+          <Text style={s.reservarText}>Reservar</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Caption autor={empresaNombre} texto={item.descripcion || item.titulo} />
+      <Text style={s.fecha}>{formatFecha(item.fecha_creacion)}</Text>
+    </View>
+  );
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.item.total_likes === nextProps.item.total_likes &&
+    prevProps.item.usuario_dio_like === nextProps.item.usuario_dio_like &&
+    prevProps.item.total_comentarios === nextProps.item.total_comentarios &&
+    prevProps.empresaLogo === nextProps.empresaLogo &&
+    prevProps.empresaNombre === nextProps.empresaNombre
+  );
+});
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FAFAFA' },

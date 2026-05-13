@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { colors, shadows } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { ApiPublicacionRepository } from '../../core/infraestructura/publicaciones/ApiPublicacionRepository';
@@ -34,15 +35,31 @@ export const CrearPublicacionScreen = ({ navigation }: any) => {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: false,
       allowsMultipleSelection: true,
-      quality: 0.6,
-      base64: true,
+      quality: 1,
     });
 
     if (!result.canceled && result.assets?.length > 0) {
-      const nuevas = result.assets
-        .slice(0, 10 - imagenes.length)
-        .map(a => `data:image/jpeg;base64,${a.base64}`);
+      setCargando(true);
+      const nuevas: string[] = [];
+      const seleccionadas = result.assets.slice(0, 10 - imagenes.length);
+      
+      for (const asset of seleccionadas) {
+        try {
+          const manipResult = await ImageManipulator.manipulateAsync(
+            asset.uri,
+            [{ resize: { width: 1080 } }],
+            { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+          );
+          if (manipResult.base64) {
+            nuevas.push(`data:image/jpeg;base64,${manipResult.base64}`);
+          }
+        } catch (error) {
+          console.error("Error comprimiendo imagen", error);
+        }
+      }
+      
       setImagenes(prev => [...prev, ...nuevas]);
+      setCargando(false);
     }
   };
 
