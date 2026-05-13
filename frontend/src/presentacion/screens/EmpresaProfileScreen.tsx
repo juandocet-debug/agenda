@@ -216,7 +216,7 @@ export const EmpresaProfileScreen = ({ navigation }: any) => {
           </TouchableOpacity>
         </View>
         
-        <View style={{ height: 40 }} />
+        <View style={{ height: 120 }} />
       </ScrollView>
     </SafeAreaView>
   );
