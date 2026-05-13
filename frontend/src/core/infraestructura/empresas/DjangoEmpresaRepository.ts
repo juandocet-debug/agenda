@@ -2,7 +2,7 @@ import { Empresa } from '../../dominio/empresas/Empresa';
 import { EmpresaRepository } from '../../dominio/empresas/EmpresaRepository';
 import { obtenerTokenLocal } from '../auth/TokenStorageAdapter';
 
-const BASE_URL = 'http://127.0.0.1:8001/api';
+const BASE_URL = 'https://agenda-production-ae37.up.railway.app/api';
 
 export class DjangoEmpresaRepository implements EmpresaRepository {
   async obtenerEmpresas(): Promise<Empresa[]> {

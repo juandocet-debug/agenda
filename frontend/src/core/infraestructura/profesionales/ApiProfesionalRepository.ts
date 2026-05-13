@@ -2,7 +2,7 @@ import { Profesional, ProfesionalRepository } from '../../dominio/profesionales/
 import { obtenerTokenLocal } from '../auth/TokenStorageAdapter';
 
 // Puerto 8001 — mismo que DjangoAuthAdapter (el punto único de configuración)
-const BASE_URL = 'http://127.0.0.1:8001/api';
+const BASE_URL = 'https://agenda-production-ae37.up.railway.app/api';
 const API_URL = `${BASE_URL}/profesionales`;
 
 export class ApiProfesionalRepository implements ProfesionalRepository {
