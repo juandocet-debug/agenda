@@ -22,7 +22,7 @@ export const ServiciosListScreen = () => {
       const p = JSON.parse(atob(token.access.split('.')[1]));
       const empresaId = p.user_id;
 
-      const res = await fetch(`http://localhost:8001/api/servicios/?empresa_id=${empresaId}`);
+      const res = await fetch(`https://agenda-production-ae37.up.railway.app/api/servicios/?empresa_id=${empresaId}`);
       const data = await res.json();
       if (data.ok) {
         setServicios(data.datos);

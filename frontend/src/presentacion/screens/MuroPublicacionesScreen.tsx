@@ -11,7 +11,7 @@ import { ListarPublicacionesUseCase, EliminarPublicacionUseCase } from '../../co
 import { obtenerTokenLocal } from '../../core/infraestructura/auth/TokenStorageAdapter';
 import { useWindowDimensions } from 'react-native';
 
-const BASE_URL = 'http://localhost:8001/api/publicaciones';
+const BASE_URL = 'https://agenda-production-ae37.up.railway.app/api/publicaciones';
 
 // --- Helpers ---
 const formatFecha = (f?: string) => {
@@ -189,7 +189,7 @@ export const MuroPublicacionesScreen = ({ isOwner = false, empresaId }: { isOwne
       // Cargar nombre y logo (solo en carga inicial)
       if (isInitial) {
         try {
-          const perfilRes = await fetch(`http://localhost:8001/api/empresas/${idEmpresa}/publico/`);
+          const perfilRes = await fetch(`https://agenda-production-ae37.up.railway.app/api/empresas/${idEmpresa}/publico/`);
           const perfilData = await perfilRes.json();
           if (perfilData.ok && perfilData.datos) {
             if (perfilData.datos.nombre_empresa) setEmpresaNombre(perfilData.datos.nombre_empresa);

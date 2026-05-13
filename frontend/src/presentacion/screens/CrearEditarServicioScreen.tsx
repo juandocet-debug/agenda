@@ -36,7 +36,7 @@ export const CrearEditarServicioScreen = ({ route, navigation }: any) => {
       const empresaId = p.user_id;
 
       // Obtener la lista y filtrar (temporal, idealmente tener GET por ID)
-      const res = await fetch(`http://localhost:8001/api/servicios/?empresa_id=${empresaId}`);
+      const res = await fetch(`https://agenda-production-ae37.up.railway.app/api/servicios/?empresa_id=${empresaId}`);
       const data = await res.json();
       if (data.ok) {
         const serv = data.datos.find((s: any) => s.id === servicioId);
@@ -104,8 +104,8 @@ export const CrearEditarServicioScreen = ({ route, navigation }: any) => {
       };
 
       const url = isEditing 
-        ? `http://localhost:8001/api/servicios/${servicioId}/`
-        : `http://localhost:8001/api/servicios/`;
+        ? `https://agenda-production-ae37.up.railway.app/api/servicios/${servicioId}/`
+        : `https://agenda-production-ae37.up.railway.app/api/servicios/`;
       
       const method = isEditing ? 'PUT' : 'POST';
 
@@ -139,7 +139,7 @@ export const CrearEditarServicioScreen = ({ route, navigation }: any) => {
           try {
             setCargando(true);
             const token = await obtenerTokenLocal();
-            await fetch(`http://localhost:8001/api/servicios/${servicioId}/`, {
+            await fetch(`https://agenda-production-ae37.up.railway.app/api/servicios/${servicioId}/`, {
               method: 'DELETE',
               headers: { 'Authorization': `Bearer ${token?.access}` }
             });

@@ -9,7 +9,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { colors } from '../theme/colors';
 import { obtenerTokenLocal } from '../../core/infraestructura/auth/TokenStorageAdapter';
 
-const BASE_URL = 'http://localhost:8001/api/publicaciones';
+const BASE_URL = 'https://agenda-production-ae37.up.railway.app/api/publicaciones';
 const { width } = Dimensions.get('window');
 
 export const ComentariosScreen = () => {

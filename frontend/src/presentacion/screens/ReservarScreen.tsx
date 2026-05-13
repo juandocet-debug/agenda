@@ -45,7 +45,7 @@ export const ReservarScreen = ({ route, navigation }: any) => {
   const cargarServicios = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`http://localhost:8001/api/servicios/?empresa_id=${idToUse}`);
+      const res = await fetch(`https://agenda-production-ae37.up.railway.app/api/servicios/?empresa_id=${idToUse}`);
       const data = await res.json();
       if (data.ok) {
         setServicios(data.datos);
@@ -61,7 +61,7 @@ export const ReservarScreen = ({ route, navigation }: any) => {
   const cargarProfesionales = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`http://localhost:8001/api/profesionales/publico/${idToUse}/`);
+      const res = await fetch(`https://agenda-production-ae37.up.railway.app/api/profesionales/publico/${idToUse}/`);
       const data = await res.json();
       if (data.ok) setProfesionales(data.datos);
     } catch (e) {
@@ -76,7 +76,7 @@ export const ReservarScreen = ({ route, navigation }: any) => {
     try {
       setLoading(true);
       const profId = profesionalSeleccionado ? `&profesional_id=${profesionalSeleccionado.id}` : '';
-      const res = await fetch(`http://localhost:8001/api/citas/slots/?empresa_id=${idToUse}&fecha=${fecha}&servicio_id=${servicioSeleccionado.id}${profId}`);
+      const res = await fetch(`https://agenda-production-ae37.up.railway.app/api/citas/slots/?empresa_id=${idToUse}&fecha=${fecha}&servicio_id=${servicioSeleccionado.id}${profId}`);
       const data = await res.json();
       if (data.ok) setSlots(data.datos);
     } catch (e) {
@@ -94,7 +94,7 @@ export const ReservarScreen = ({ route, navigation }: any) => {
     
     try {
       setLoading(true);
-      const res = await fetch(`http://localhost:8001/api/citas/reservar-guest/`, {
+      const res = await fetch(`https://agenda-production-ae37.up.railway.app/api/citas/reservar-guest/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

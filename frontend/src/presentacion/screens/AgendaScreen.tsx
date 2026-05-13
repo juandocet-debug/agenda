@@ -46,7 +46,7 @@ export const AgendaScreen = () => {
       const token = await obtenerTokenLocal();
       if (!token) return;
 
-      const res = await fetch('http://localhost:8001/api/citas/mis-citas/', {
+      const res = await fetch('https://agenda-production-ae37.up.railway.app/api/citas/mis-citas/', {
         headers: {
           'Authorization': `Bearer ${token.access}`
         }

@@ -1,7 +1,7 @@
 import { Publicacion, PublicacionRepository } from '../../dominio/publicaciones/Publicacion';
 import { obtenerTokenLocal } from '../auth/TokenStorageAdapter';
 
-const BASE_URL = 'http://localhost:8001/api/publicaciones';
+const BASE_URL = 'https://agenda-production-ae37.up.railway.app/api/publicaciones';
 
 export class ApiPublicacionRepository implements PublicacionRepository {
 

@@ -2,7 +2,7 @@ import { AuthRepository, Credenciales, TokenJWT, RegistroData } from '../../domi
 
 // Usaremos esta IP base para que el simulador o web llegue a localhost.
 // En Android emulator se usaría 10.0.2.2. En Web o iOS simulator: localhost
-const BASE_URL = 'http://localhost:8001/api';
+const BASE_URL = 'https://agenda-production-ae37.up.railway.app/api';
 
 export class DjangoAuthAdapter implements AuthRepository {
   
