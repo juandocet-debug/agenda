@@ -40,8 +40,7 @@ export const LoginScreen = ({ navigation }: any) => {
   const [correoEmpresa, setCorreoEmpresa] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
-  // Swipe up gesture
+  // Swipe up gesture para abrir
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
@@ -51,6 +50,21 @@ export const LoginScreen = ({ navigation }: any) => {
       onPanResponderRelease: (_, gestureState) => {
         if (gestureState.dy < -40) {
           switchView('login');
+        }
+      },
+    })
+  ).current;
+
+  // Swipe down gesture para cerrar la tarjeta blanca
+  const panResponderDown = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return gestureState.dy > 20; // Only capture if swiping down
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy > 40) {
+          switchView('welcome');
         }
       },
     })
@@ -125,7 +139,7 @@ export const LoginScreen = ({ navigation }: any) => {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.background}>
         
         {/* PANTALLA 1: WELCOME (Flowy Style) */}
@@ -176,7 +190,10 @@ export const LoginScreen = ({ navigation }: any) => {
               </TouchableOpacity>
             </SafeAreaView>
 
-            <Animated.View style={[styles.bottomSheet, { transform: [{ translateY: slideAnim }] }]}>
+            <Animated.View 
+              style={[styles.bottomSheet, { transform: [{ translateY: slideAnim }] }]}
+              {...panResponderDown.panHandlers}
+            >
               <View style={{ flex: 1, paddingBottom: 10 }}>
                 
                 <Text style={[typography.h1, styles.title]}>
@@ -339,6 +356,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginVertical: 5,
+    marginTop: 40,
     width: '100%',
     alignSelf: 'center',
   },
