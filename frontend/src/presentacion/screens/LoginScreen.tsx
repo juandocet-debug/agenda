@@ -117,11 +117,6 @@ export const LoginScreen = ({ navigation }: any) => {
           <SafeAreaView style={styles.welcomeContent}>
             
             <View style={styles.welcomeTextContainer}>
-              <Image 
-                source={require('../../../assets/images/logo.png')} 
-                style={{ width: 140, height: 50, marginBottom: 20, alignSelf: 'flex-start' }} 
-                resizeMode="contain" 
-              />
               <Text style={[typography.h1, { color: '#FFF', fontSize: 38, textAlign: 'left', fontWeight: '800' }]}>
                 Organízate.
               </Text>
@@ -132,7 +127,7 @@ export const LoginScreen = ({ navigation }: any) => {
 
             <View style={styles.illustrationContainer}>
                <Image 
-                 source={require('../../../assets/images/flowy_illustration.png')} 
+                 source={require('../../../assets/images/logo.png')} 
                  style={styles.illustration} 
                  resizeMode="contain" 
                />
