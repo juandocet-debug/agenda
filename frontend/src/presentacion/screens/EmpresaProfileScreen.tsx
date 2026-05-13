@@ -112,7 +112,7 @@ export const EmpresaProfileScreen = ({ navigation }: any) => {
 
   return (
     <SafeAreaView style={s.safeArea}>
-      <ScrollView style={s.container} showsVerticalScrollIndicator={false}>
+      <ScrollView style={s.container} contentContainerStyle={{ paddingBottom: 150 }} showsVerticalScrollIndicator={false}>
         
         {/* Top Header */}
         <View style={s.topHeader}>
@@ -216,7 +216,6 @@ export const EmpresaProfileScreen = ({ navigation }: any) => {
           </TouchableOpacity>
         </View>
         
-        <View style={{ height: 120 }} />
       </ScrollView>
     </SafeAreaView>
   );
