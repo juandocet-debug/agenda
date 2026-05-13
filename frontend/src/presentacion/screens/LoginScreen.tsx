@@ -127,7 +127,7 @@ export const LoginScreen = ({ navigation }: any) => {
 
             <View style={styles.illustrationContainer}>
                <Image 
-                 source={require('../../../assets/images/logo.png')} 
+                 source={require('../../../assets/images/logo2.png')} 
                  style={styles.illustration} 
                  resizeMode="contain" 
                />
@@ -321,12 +321,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 20,
+    marginVertical: 5,
+    width: '125%',
+    alignSelf: 'center',
   },
   illustration: {
     width: '100%',
     height: '100%',
-    maxHeight: 350,
+    maxHeight: 480,
   },
   welcomeBottomBar: {
     width: '100%',
