@@ -118,10 +118,10 @@ export const LoginScreen = ({ navigation }: any) => {
             
             <View style={styles.welcomeTextContainer}>
               <Text style={[typography.h1, { color: '#FFF', fontSize: 38, textAlign: 'left', fontWeight: '800' }]}>
-                Be organized.
+                Organízate.
               </Text>
               <Text style={[typography.h1, { color: colors.textTitle, fontSize: 38, textAlign: 'left', fontWeight: '800' }]}>
-                Start Now.
+                Empieza ya.
               </Text>
             </View>
 
@@ -135,15 +135,15 @@ export const LoginScreen = ({ navigation }: any) => {
 
             <View style={styles.welcomeBottomBar}>
               <TouchableOpacity style={styles.pillButtonDark} onPress={() => switchView('login')}>
-                <Text style={[typography.h3, { color: '#FFF', fontSize: 16, fontWeight: '700', letterSpacing: 1 }]}>LOG IN</Text>
+                <Text style={[typography.h3, { color: '#FFF', fontSize: 16, fontWeight: '700', letterSpacing: 1 }]}>INGRESAR</Text>
               </TouchableOpacity>
               
               <Text style={[typography.body, { color: 'rgba(255,255,255,0.8)', textAlign: 'center', marginVertical: 15, fontSize: 14 }]}>
-                Don't have an account?
+                ¿No tienes una cuenta?
               </Text>
 
               <TouchableOpacity style={styles.pillButtonDark} onPress={() => switchView('register')}>
-                <Text style={[typography.h3, { color: '#FFF', fontSize: 16, fontWeight: '700', letterSpacing: 1 }]}>SIGN UP</Text>
+                <Text style={[typography.h3, { color: '#FFF', fontSize: 16, fontWeight: '700', letterSpacing: 1 }]}>REGISTRARSE</Text>
               </TouchableOpacity>
             </View>
           </SafeAreaView>
@@ -155,7 +155,7 @@ export const LoginScreen = ({ navigation }: any) => {
             <SafeAreaView style={{ paddingTop: 10 }}>
               <TouchableOpacity style={styles.backButton} onPress={() => switchView('welcome')}>
                 <Feather name="chevron-left" size={20} color="#FFF" />
-                <Text style={[typography.body, { color: '#FFF', marginLeft: 2, fontSize: 14, fontWeight: '600' }]}>Back</Text>
+                <Text style={[typography.body, { color: '#FFF', marginLeft: 2, fontSize: 14, fontWeight: '600' }]}>Atrás</Text>
               </TouchableOpacity>
             </SafeAreaView>
 
@@ -163,18 +163,18 @@ export const LoginScreen = ({ navigation }: any) => {
               <View style={{ flex: 1, paddingBottom: 10 }}>
                 
                 <Text style={[typography.h1, styles.title]}>
-                  {viewState === 'login' ? 'Log In' : 'Create Account'}
+                  {viewState === 'login' ? 'Ingresar' : 'Crear Cuenta'}
                 </Text>
 
                 {/* Formulario Registro */}
                 {viewState === 'register' && (
                   <>
                     <View style={styles.inputContainer}>
-                      <Text style={styles.inputLabel}>Empresa Name</Text>
+                      <Text style={styles.inputLabel}>Nombre de la Empresa</Text>
                       <View style={styles.inputWrapper}>
                         <TextInput
                           style={styles.input}
-                          placeholder="E.g. Barbería VIP"
+                          placeholder="Ej. Barbería VIP"
                           placeholderTextColor={colors.textSubtitle}
                           value={nombreEmpresa}
                           onChangeText={setNombreEmpresa}
@@ -183,11 +183,11 @@ export const LoginScreen = ({ navigation }: any) => {
                     </View>
 
                     <View style={[styles.inputContainer, { marginTop: 15 }]}>
-                      <Text style={styles.inputLabel}>Email Address</Text>
+                      <Text style={styles.inputLabel}>Correo Electrónico</Text>
                       <View style={styles.inputWrapper}>
                         <TextInput
                           style={styles.input}
-                          placeholder="hello@flowy.com"
+                          placeholder="hola@flowy.com"
                           placeholderTextColor={colors.textSubtitle}
                           keyboardType="email-address"
                           autoCapitalize="none"
@@ -198,11 +198,11 @@ export const LoginScreen = ({ navigation }: any) => {
                     </View>
 
                     <View style={[styles.inputContainer, { marginTop: 15 }]}>
-                      <Text style={styles.inputLabel}>Username</Text>
+                      <Text style={styles.inputLabel}>Nombre de Usuario</Text>
                       <View style={styles.inputWrapper}>
                         <TextInput
                           style={styles.input}
-                          placeholder="flowy_user"
+                          placeholder="usuario_flowy"
                           placeholderTextColor={colors.textSubtitle}
                           autoCapitalize="none"
                           value={username}
@@ -216,7 +216,7 @@ export const LoginScreen = ({ navigation }: any) => {
                 {/* Formulario Login */}
                 {viewState === 'login' && (
                   <View style={[styles.inputContainer, { marginTop: 25 }]}>
-                    <Text style={styles.inputLabel}>Username or Email</Text>
+                    <Text style={styles.inputLabel}>Usuario o Correo</Text>
                     <View style={styles.inputWrapper}>
                       <TextInput
                         style={styles.input}
@@ -232,7 +232,7 @@ export const LoginScreen = ({ navigation }: any) => {
 
                 {/* Password Input */}
                 <View style={[styles.inputContainer, { marginTop: 15 }]}>
-                  <Text style={styles.inputLabel}>Password</Text>
+                  <Text style={styles.inputLabel}>Contraseña</Text>
                   <View style={styles.inputWrapper}>
                     <TextInput
                       style={styles.input}
@@ -252,12 +252,12 @@ export const LoginScreen = ({ navigation }: any) => {
                       <Feather name="check" size={12} color="#FFF" />
                     </View>
                     <Text style={[typography.caption, { color: colors.textSubtitle, marginLeft: 8, fontSize: 12 }]}>
-                      {viewState === 'login' ? 'Remember me' : 'I agree to the Terms'}
+                      {viewState === 'login' ? 'Recordarme' : 'Acepto los términos'}
                     </Text>
                   </TouchableOpacity>
                   {viewState === 'login' && (
                     <TouchableOpacity>
-                      <Text style={[typography.caption, { color: colors.primary, fontWeight: '600', fontSize: 12 }]}>Forgot password?</Text>
+                      <Text style={[typography.caption, { color: colors.primary, fontWeight: '600', fontSize: 12 }]}>¿Olvidó su contraseña?</Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -270,7 +270,7 @@ export const LoginScreen = ({ navigation }: any) => {
                 >
                   {isLoading ? <ActivityIndicator color="#FFF" /> : (
                     <Text style={[typography.h3, { color: '#FFF', fontSize: 16 }]}>
-                      {viewState === 'login' ? 'Log In' : 'Sign Up'}
+                      {viewState === 'login' ? 'Ingresar' : 'Registrarse'}
                     </Text>
                   )}
                 </TouchableOpacity>
@@ -279,7 +279,7 @@ export const LoginScreen = ({ navigation }: any) => {
                 <View style={styles.separatorContainer}>
                   <View style={styles.separatorLine} />
                   <Text style={[typography.caption, { color: colors.textSubtitle, marginHorizontal: 15, fontSize: 11 }]}>
-                    Or continue with
+                    O continúa con
                   </Text>
                   <View style={styles.separatorLine} />
                 </View>
