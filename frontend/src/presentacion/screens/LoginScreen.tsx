@@ -11,7 +11,8 @@ import {
   ActivityIndicator,
   Alert,
   Dimensions,
-  Image
+  Image,
+  PanResponder
 } from 'react-native';
 import { Feather, FontAwesome5 } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
@@ -39,6 +40,21 @@ export const LoginScreen = ({ navigation }: any) => {
   const [correoEmpresa, setCorreoEmpresa] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Swipe up gesture
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return gestureState.dy < -20; // Only capture if swiping up
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy < -40) {
+          switchView('login');
+        }
+      },
+    })
+  ).current;
 
   // Animaciones
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
@@ -113,7 +129,11 @@ export const LoginScreen = ({ navigation }: any) => {
       <View style={styles.background}>
         
         {/* PANTALLA 1: WELCOME (Flowy Style) */}
-        <Animated.View style={[styles.welcomeLayer, { opacity: fadeAnim }]} pointerEvents={viewState === 'welcome' ? 'auto' : 'none'}>
+        <Animated.View 
+          style={[styles.welcomeLayer, { opacity: fadeAnim }]} 
+          pointerEvents={viewState === 'welcome' ? 'auto' : 'none'}
+          {...panResponder.panHandlers}
+        >
           <SafeAreaView style={styles.welcomeContent}>
             
             <View style={styles.welcomeTextContainer}>
@@ -322,13 +342,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginVertical: 5,
-    width: '125%',
+    width: '100%',
     alignSelf: 'center',
   },
   illustration: {
     width: '100%',
     height: '100%',
-    maxHeight: 480,
+    maxHeight: 500,
+    transform: [{ scale: 1.4 }]
   },
   welcomeBottomBar: {
     width: '100%',
