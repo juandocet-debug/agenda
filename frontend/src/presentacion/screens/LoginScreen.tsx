@@ -40,6 +40,8 @@ export const LoginScreen = ({ navigation }: any) => {
   const [correoEmpresa, setCorreoEmpresa] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  
   // Swipe up gesture para abrir
   const panResponder = useRef(
     PanResponder.create({
@@ -76,6 +78,7 @@ export const LoginScreen = ({ navigation }: any) => {
 
   // Cambiar de vista con animación
   const switchView = (newState: 'welcome' | 'login' | 'register') => {
+    setErrorMessage('');
     if (newState === 'welcome') {
       Animated.parallel([
         Animated.timing(slideAnim, { toValue: SCREEN_HEIGHT, duration: 400, useNativeDriver: true }),
@@ -91,8 +94,9 @@ export const LoginScreen = ({ navigation }: any) => {
   };
 
   const handleLogin = async () => {
+    setErrorMessage('');
     if (!email || !password) {
-      Alert.alert('Error', 'Completa todos los campos.');
+      setErrorMessage('Completa todos los campos.');
       return;
     }
     setIsLoading(true);
@@ -106,13 +110,14 @@ export const LoginScreen = ({ navigation }: any) => {
       }
     } catch (error: any) {
       setIsLoading(false);
-      Alert.alert('Error', error.message || 'Credenciales incorrectas');
+      setErrorMessage(error.message || 'Credenciales incorrectas');
     }
   };
 
   const handleRegister = async () => {
+    setErrorMessage('');
     if (!nombreEmpresa || !username || !correoEmpresa || !password) {
-      Alert.alert('Error', 'Completa todos los campos para registrar tu empresa.');
+      setErrorMessage('Completa todos los campos para registrar tu empresa.');
       return;
     }
     setIsLoading(true);
@@ -134,7 +139,7 @@ export const LoginScreen = ({ navigation }: any) => {
       }
     } catch (error: any) {
       setIsLoading(false);
-      Alert.alert('Error', error.message || 'No se pudo registrar la empresa.');
+      setErrorMessage(error.message || 'No se pudo registrar la empresa.');
     }
   };
 
@@ -199,6 +204,12 @@ export const LoginScreen = ({ navigation }: any) => {
                 <Text style={[typography.h1, styles.title]}>
                   {viewState === 'login' ? 'Ingresar' : 'Crear Cuenta'}
                 </Text>
+
+                {errorMessage ? (
+                  <Text style={{ color: '#FF3B30', fontSize: 13, marginBottom: 10, fontWeight: '600', backgroundColor: '#FFEBEA', padding: 10, borderRadius: 8, overflow: 'hidden', textAlign: 'center' }}>
+                    {errorMessage}
+                  </Text>
+                ) : null}
 
                 {/* Formulario Registro */}
                 {viewState === 'register' && (
