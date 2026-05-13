@@ -137,11 +137,11 @@ export const LoginScreen = ({ navigation }: any) => {
           <SafeAreaView style={styles.welcomeContent}>
             
             <View style={styles.welcomeTextContainer}>
-              <Text style={[typography.h1, { color: '#FFF', fontSize: 38, textAlign: 'left', fontWeight: '800' }]}>
-                Organízate.
+              <Text style={[typography.h1, { color: '#FFF', fontSize: 28, textAlign: 'left', fontWeight: '800' }]}>
+                Agenda tu servicio
               </Text>
-              <Text style={[typography.h1, { color: colors.textTitle, fontSize: 38, textAlign: 'left', fontWeight: '800' }]}>
-                Empieza ya.
+              <Text style={[typography.h1, { color: colors.textTitle, fontSize: 28, textAlign: 'left', fontWeight: '800' }]}>
+                en segundos.
               </Text>
             </View>
 
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     maxHeight: 500,
-    transform: [{ scale: 1.4 }]
+    transform: [{ scale: 1.25 }]
   },
   welcomeBottomBar: {
     width: '100%',
