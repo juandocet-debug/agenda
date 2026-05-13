@@ -1,12 +1,13 @@
 export const colors = {
-  primary: '#0B2A56', // Azul profundo oscuro (como en la tarjeta principal)
-  primaryLight: '#144186', // Azul para estados activos
+  primary: '#4C5BEE', // Azul vibrante del diseño Flowy
+  primaryLight: '#6A78FF', // Azul claro
+  primaryDark: '#000000', // Negro para los botones estilo pastilla
   background: '#F4F6F9', // Gris/azul extra claro para el fondo de la app
   surface: '#FFFFFF', // Blanco puro para tarjetas
   textTitle: '#1E2532', // Gris oscuro casi negro
   textSubtitle: '#828C9A', // Gris medio para subtítulos y placeholders
   accent: '#E6EFFF', // Azul muy clarito para las tarjetas secundarias
-  accentIcon: '#3B73F2', // Azul vibrante para los iconos en tarjetas blancas
+  accentIcon: '#4C5BEE', // Azul vibrante para los iconos
   border: '#E8ECF2', // Bordes sutiles
 };
 

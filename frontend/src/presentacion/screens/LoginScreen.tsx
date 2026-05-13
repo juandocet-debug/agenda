@@ -1,18 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   View, 
   Text, 
   TextInput, 
   TouchableOpacity, 
   StyleSheet, 
-  ImageBackground, 
   Animated, 
   KeyboardAvoidingView, 
   Platform,
   ActivityIndicator,
   Alert,
-  ScrollView,
-  Dimensions
+  Dimensions,
+  Image
 } from 'react-native';
 import { Feather, FontAwesome5 } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
@@ -111,26 +110,43 @@ export const LoginScreen = ({ navigation }: any) => {
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <ImageBackground source={require('../../../assets/images/bg_login.png')} style={styles.background} resizeMode="cover">
+      <View style={styles.background}>
         
-        {/* PANTALLA 1: WELCOME (Solo se ve si la tarjeta no ha subido) */}
+        {/* PANTALLA 1: WELCOME (Flowy Style) */}
         <Animated.View style={[styles.welcomeLayer, { opacity: fadeAnim }]} pointerEvents={viewState === 'welcome' ? 'auto' : 'none'}>
-          <View style={styles.welcomeTextContainer}>
-            <Text style={[typography.h1, { color: '#FFF', fontSize: 36, textAlign: 'center' }]}>¡Bienvenido!</Text>
-            <Text style={[typography.body, { color: 'rgba(255,255,255,0.8)', textAlign: 'center', marginTop: 15, paddingHorizontal: 30 }]}>
-              Ingresa tus datos personales a tu cuenta de empleado
-            </Text>
-          </View>
+          <SafeAreaView style={styles.welcomeContent}>
+            
+            <View style={styles.welcomeTextContainer}>
+              <Text style={[typography.h1, { color: '#FFF', fontSize: 38, textAlign: 'left', fontWeight: '800' }]}>
+                Be organized.
+              </Text>
+              <Text style={[typography.h1, { color: colors.textTitle, fontSize: 38, textAlign: 'left', fontWeight: '800' }]}>
+                Start Now.
+              </Text>
+            </View>
 
-          {/* Botones inferiores de la Pestaña 1 (Píldora flotante pequeña) */}
-          <View style={styles.welcomeBottomBar}>
-            <TouchableOpacity style={styles.welcomeBtnDark} onPress={() => switchView('login')}>
-              <Text style={[typography.h3, { color: '#FFF', fontSize: 14 }]}>Ingresar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.welcomeBtnLight} onPress={() => switchView('register')}>
-              <Text style={[typography.h3, { color: '#4A72FF', fontSize: 14 }]}>Registrarse</Text>
-            </TouchableOpacity>
-          </View>
+            <View style={styles.illustrationContainer}>
+               <Image 
+                 source={require('../../../assets/images/flowy_illustration.png')} 
+                 style={styles.illustration} 
+                 resizeMode="contain" 
+               />
+            </View>
+
+            <View style={styles.welcomeBottomBar}>
+              <TouchableOpacity style={styles.pillButtonDark} onPress={() => switchView('login')}>
+                <Text style={[typography.h3, { color: '#FFF', fontSize: 16, fontWeight: '700', letterSpacing: 1 }]}>LOG IN</Text>
+              </TouchableOpacity>
+              
+              <Text style={[typography.body, { color: 'rgba(255,255,255,0.8)', textAlign: 'center', marginVertical: 15, fontSize: 14 }]}>
+                Don't have an account?
+              </Text>
+
+              <TouchableOpacity style={styles.pillButtonDark} onPress={() => switchView('register')}>
+                <Text style={[typography.h3, { color: '#FFF', fontSize: 16, fontWeight: '700', letterSpacing: 1 }]}>SIGN UP</Text>
+              </TouchableOpacity>
+            </View>
+          </SafeAreaView>
         </Animated.View>
 
         {/* PANTALLAS 2 Y 3: TARJETA BLANCA */}
@@ -147,18 +163,18 @@ export const LoginScreen = ({ navigation }: any) => {
               <View style={{ flex: 1, paddingBottom: 10 }}>
                 
                 <Text style={[typography.h1, styles.title]}>
-                  {viewState === 'login' ? 'Bienvenido de vuelta' : 'Comenzar'}
+                  {viewState === 'login' ? 'Log In' : 'Create Account'}
                 </Text>
 
-                {/* Formulario Registro Extra Fields */}
+                {/* Formulario Registro */}
                 {viewState === 'register' && (
                   <>
                     <View style={styles.inputContainer}>
-                      <Text style={styles.inputLabel}>Nombre de la Empresa</Text>
+                      <Text style={styles.inputLabel}>Empresa Name</Text>
                       <View style={styles.inputWrapper}>
                         <TextInput
                           style={styles.input}
-                          placeholder="Ej. Barbería VIP"
+                          placeholder="E.g. Barbería VIP"
                           placeholderTextColor={colors.textSubtitle}
                           value={nombreEmpresa}
                           onChangeText={setNombreEmpresa}
@@ -166,12 +182,12 @@ export const LoginScreen = ({ navigation }: any) => {
                       </View>
                     </View>
 
-                    <View style={[styles.inputContainer, { marginTop: 10 }]}>
-                      <Text style={styles.inputLabel}>Correo Electrónico</Text>
+                    <View style={[styles.inputContainer, { marginTop: 15 }]}>
+                      <Text style={styles.inputLabel}>Email Address</Text>
                       <View style={styles.inputWrapper}>
                         <TextInput
                           style={styles.input}
-                          placeholder="barberia@ejemplo.com"
+                          placeholder="hello@flowy.com"
                           placeholderTextColor={colors.textSubtitle}
                           keyboardType="email-address"
                           autoCapitalize="none"
@@ -181,12 +197,12 @@ export const LoginScreen = ({ navigation }: any) => {
                       </View>
                     </View>
 
-                    <View style={[styles.inputContainer, { marginTop: 10 }]}>
-                      <Text style={styles.inputLabel}>Nombre de Usuario (Para ingresar)</Text>
+                    <View style={[styles.inputContainer, { marginTop: 15 }]}>
+                      <Text style={styles.inputLabel}>Username</Text>
                       <View style={styles.inputWrapper}>
                         <TextInput
                           style={styles.input}
-                          placeholder="ej. barberia_vip"
+                          placeholder="flowy_user"
                           placeholderTextColor={colors.textSubtitle}
                           autoCapitalize="none"
                           value={username}
@@ -197,14 +213,14 @@ export const LoginScreen = ({ navigation }: any) => {
                   </>
                 )}
 
-                {/* Input Email/Username para Login */}
+                {/* Formulario Login */}
                 {viewState === 'login' && (
-                  <View style={[styles.inputContainer, { marginTop: 15 }]}>
-                    <Text style={styles.inputLabel}>Usuario o Correo</Text>
+                  <View style={[styles.inputContainer, { marginTop: 25 }]}>
+                    <Text style={styles.inputLabel}>Username or Email</Text>
                     <View style={styles.inputWrapper}>
                       <TextInput
                         style={styles.input}
-                        placeholder="ej. barberia_vip o admin@agendapro.com"
+                        placeholder="admin@flowy.com"
                         placeholderTextColor={colors.textSubtitle}
                         autoCapitalize="none"
                         value={email}
@@ -214,9 +230,9 @@ export const LoginScreen = ({ navigation }: any) => {
                   </View>
                 )}
 
-                {/* Input Password */}
-                <View style={[styles.inputContainer, { marginTop: 10 }]}>
-                  <Text style={styles.inputLabel}>Contraseña</Text>
+                {/* Password Input */}
+                <View style={[styles.inputContainer, { marginTop: 15 }]}>
+                  <Text style={styles.inputLabel}>Password</Text>
                   <View style={styles.inputWrapper}>
                     <TextInput
                       style={styles.input}
@@ -235,13 +251,13 @@ export const LoginScreen = ({ navigation }: any) => {
                     <View style={styles.checkbox}>
                       <Feather name="check" size={12} color="#FFF" />
                     </View>
-                    <Text style={[typography.caption, { color: colors.textSubtitle, marginLeft: 6, fontSize: 11 }]}>
-                      {viewState === 'login' ? 'Recordarme' : 'Acepto el uso de datos personales'}
+                    <Text style={[typography.caption, { color: colors.textSubtitle, marginLeft: 8, fontSize: 12 }]}>
+                      {viewState === 'login' ? 'Remember me' : 'I agree to the Terms'}
                     </Text>
                   </TouchableOpacity>
                   {viewState === 'login' && (
                     <TouchableOpacity>
-                      <Text style={[typography.caption, { color: '#4A72FF', fontWeight: '600', fontSize: 11 }]}>¿Olvidó la contraseña?</Text>
+                      <Text style={[typography.caption, { color: colors.primary, fontWeight: '600', fontSize: 12 }]}>Forgot password?</Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -253,97 +269,84 @@ export const LoginScreen = ({ navigation }: any) => {
                   disabled={isLoading}
                 >
                   {isLoading ? <ActivityIndicator color="#FFF" /> : (
-                    <Text style={[typography.h3, { color: '#FFF' }]}>
-                      {viewState === 'login' ? 'Ingresar' : 'Registrarse'}
+                    <Text style={[typography.h3, { color: '#FFF', fontSize: 16 }]}>
+                      {viewState === 'login' ? 'Log In' : 'Sign Up'}
                     </Text>
                   )}
                 </TouchableOpacity>
 
-                {/* Social Login Section */}
+                {/* Social Login */}
                 <View style={styles.separatorContainer}>
                   <View style={styles.separatorLine} />
-                  <Text style={[typography.caption, { color: colors.textSubtitle, marginHorizontal: 10, fontSize: 10 }]}>
-                    {viewState === 'login' ? 'O ingresa con' : 'O regístrate con'}
+                  <Text style={[typography.caption, { color: colors.textSubtitle, marginHorizontal: 15, fontSize: 11 }]}>
+                    Or continue with
                   </Text>
                   <View style={styles.separatorLine} />
                 </View>
 
                 <View style={styles.socialRow}>
-                  <TouchableOpacity style={styles.socialButton}><FontAwesome5 name="facebook" size={20} color="#1877F2" /></TouchableOpacity>
-                  <TouchableOpacity style={styles.socialButton}><FontAwesome5 name="twitter" size={20} color="#1DA1F2" /></TouchableOpacity>
-                  <TouchableOpacity style={styles.socialButton}>
-                    <ImageBackground source={{uri: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png'}} style={{width: 20, height: 20}} />
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.socialButton}><FontAwesome5 name="apple" size={20} color="#000" /></TouchableOpacity>
-                </View>
-
-                <View style={styles.footerRow}>
-                  <Text style={[typography.caption, { color: colors.textSubtitle, fontSize: 11 }]}>
-                    {viewState === 'login' ? "¿No tienes cuenta? " : "¿Ya tienes cuenta? "}
-                  </Text>
-                  <TouchableOpacity onPress={() => switchView(viewState === 'login' ? 'register' : 'login')}>
-                    <Text style={[typography.caption, { color: '#4A72FF', fontWeight: '700', fontSize: 11 }]}>
-                      {viewState === 'login' ? 'Registrarse' : 'Ingresar'}
-                    </Text>
-                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.socialButton}><FontAwesome5 name="google" size={20} color="#DB4437" /></TouchableOpacity>
+                  <TouchableOpacity style={styles.socialButton}><FontAwesome5 name="apple" size={22} color="#000" /></TouchableOpacity>
                 </View>
 
               </View>
             </Animated.View>
           </View>
         )}
-      </ImageBackground>
+      </View>
     </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0B2A56', height: '100%' }, // height 100% para asegurar llenado en web
-  background: { flex: 1, width: '100%', height: '100%', backgroundColor: '#0B2A56' }, // Quitamos scale y obligamos al height 100%
+  container: { flex: 1, backgroundColor: colors.primary, height: '100%' },
+  background: { flex: 1, width: '100%', height: '100%', backgroundColor: colors.primary },
   
-  // Capa 1: Welcome
+  // Welcome Layer
   welcomeLayer: {
     ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.1)'
+    backgroundColor: colors.primary
+  },
+  welcomeContent: {
+    flex: 1,
+    paddingHorizontal: 35,
+    justifyContent: 'space-between',
+    paddingBottom: 40,
+    paddingTop: 20
   },
   welcomeTextContainer: {
-    position: 'absolute',
-    top: '35%',
+    marginTop: 20,
+  },
+  illustrationContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  illustration: {
     width: '100%',
-    alignItems: 'center'
+    height: '100%',
+    maxHeight: 350,
   },
   welcomeBottomBar: {
-    position: 'absolute',
-    bottom: 50,
-    width: '80%', // un poco más pequeña
-    height: 50, // de 65 a 50 para botones mas finos y pequeños
-    flexDirection: 'row',
-    backgroundColor: '#0A1E3F',
-    borderRadius: 25,
-    overflow: 'hidden',
+    width: '100%',
+    alignItems: 'center',
+  },
+  pillButtonDark: {
+    width: '100%',
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.primaryDark,
+    justifyContent: 'center',
+    alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.2,
-    shadowRadius: 15,
-    elevation: 10,
-  },
-  welcomeBtnDark: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'transparent'
-  },
-  welcomeBtnLight: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
-    borderRadius: 25,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 8,
   },
 
-  // Capa 2: Tarjeta
+  // Card Layer
   cardOverlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'flex-start',
@@ -351,11 +354,11 @@ const styles = StyleSheet.create({
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    backgroundColor: 'rgba(50, 70, 110, 0.8)', // Fondo translúcido similar a la referencia
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)', 
     alignSelf: 'flex-start',
-    borderRadius: 25,
+    borderRadius: 20,
     marginLeft: 20,
     marginTop: 10
   },
@@ -363,8 +366,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     borderTopLeftRadius: 35,
     borderTopRightRadius: 35,
-    paddingHorizontal: 25,
-    paddingTop: 25,
+    paddingHorizontal: 30,
+    paddingTop: 35,
     flex: 1,
     marginTop: 20, 
     shadowColor: '#000',
@@ -374,85 +377,83 @@ const styles = StyleSheet.create({
     elevation: 30,
   },
   title: {
-    color: '#4A72FF',
-    textAlign: 'center',
-    fontSize: 24,
-    marginBottom: 15,
+    color: colors.primary,
+    textAlign: 'left',
+    fontSize: 28,
+    marginBottom: 10,
     fontWeight: '800'
   },
   inputContainer: { width: '100%' },
   inputLabel: {
     color: '#888',
-    marginBottom: 4,
+    marginBottom: 6,
     marginLeft: 5,
     fontWeight: '600',
-    fontSize: 11,
+    fontSize: 12,
   },
   inputWrapper: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#E5E9F2',
-    borderRadius: 12,
+    borderRadius: 14,
     paddingHorizontal: 15,
-    height: 45,
-    backgroundColor: '#FFF',
+    height: 52,
+    backgroundColor: '#FAFAFC',
     justifyContent: 'center'
   },
   input: {
     flex: 1,
     color: '#333',
-    fontSize: 13,
+    fontSize: 14,
   },
   optionsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 15,
-    marginBottom: 20,
+    marginTop: 20,
+    marginBottom: 30,
   },
   rememberMe: { flexDirection: 'row', alignItems: 'center' },
   checkbox: {
-    width: 16,
-    height: 16,
-    borderRadius: 4,
-    backgroundColor: '#4A72FF',
+    width: 18,
+    height: 18,
+    borderRadius: 5,
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   primaryButton: {
-    backgroundColor: '#4A72FF',
-    height: 50,
+    backgroundColor: colors.primary,
+    height: 56,
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#4A72FF',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
     shadowRadius: 10,
-    elevation: 5,
+    elevation: 6,
   },
   separatorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 15,
+    marginTop: 30,
+    marginBottom: 20,
   },
   separatorLine: { flex: 1, height: 1, backgroundColor: '#E5E9F2' },
   socialRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 30,
+    gap: 25,
     marginBottom: 20
   },
   socialButton: {
-    width: 35,
-    height: 35,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: '#E5E9F2',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  footerRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10
+    backgroundColor: '#FFF'
   }
 });
