@@ -1,5 +1,6 @@
 import uuid
 from typing import List, Optional
+from django.db.models import Count, Exists, OuterRef, Subquery, IntegerField
 from ..dominio.PublicacionRepositoryPort import PublicacionRepositoryPort
 from ..dominio.Entidades import Publicacion, Like, Comentario
 from .models import PublicacionModel, LikeModel, ComentarioModel, LikeComentarioModel
@@ -20,15 +21,47 @@ class DjangoPublicacionRepository(PublicacionRepositoryPort):
         return publicacion
 
     def obtener_por_empresa(self, empresa_id: str, usuario_id: str = None, limit: int = 10, offset: int = 0) -> List[Publicacion]:
-        modelos = PublicacionModel.objects.filter(empresa_id=empresa_id).order_by('-fecha_creacion')[offset:offset+limit]
-        resultado = []
-        for m in modelos:
-            total_likes = LikeModel.objects.filter(publicacion_id=m.id).count()
-            total_comentarios = ComentarioModel.objects.filter(publicacion_id=m.id, padre_id__isnull=True).count()
-            dio_like = False
-            if usuario_id:
-                dio_like = LikeModel.objects.filter(publicacion_id=m.id, usuario_id=usuario_id).exists()
-            resultado.append(Publicacion(
+        # Obtener publicaciones en una sola query
+        qs = list(
+            PublicacionModel.objects
+            .filter(empresa_id=empresa_id)
+            .order_by('-fecha_creacion')[offset:offset + limit]
+        )
+
+        if not qs:
+            return []
+
+        ids = [m.id for m in qs]
+
+        # Una query para contar likes por publicacion
+        likes_qs = (
+            LikeModel.objects
+            .filter(publicacion_id__in=ids)
+            .values('publicacion_id')
+            .annotate(total=Count('id'))
+        )
+        likes_map = {row['publicacion_id']: row['total'] for row in likes_qs}
+
+        # Una query para contar comentarios raíz por publicacion
+        comentarios_qs = (
+            ComentarioModel.objects
+            .filter(publicacion_id__in=ids, padre_id__isnull=True)
+            .values('publicacion_id')
+            .annotate(total=Count('id'))
+        )
+        comentarios_map = {row['publicacion_id']: row['total'] for row in comentarios_qs}
+
+        # Una query para saber qué publicaciones le gustaron al usuario
+        liked_ids = set()
+        if usuario_id:
+            liked_ids = set(
+                LikeModel.objects
+                .filter(publicacion_id__in=ids, usuario_id=usuario_id)
+                .values_list('publicacion_id', flat=True)
+            )
+
+        return [
+            Publicacion(
                 id=m.id,
                 empresa_id=m.empresa_id,
                 titulo=m.titulo,
@@ -36,11 +69,13 @@ class DjangoPublicacionRepository(PublicacionRepositoryPort):
                 imagen_url=m.imagen_url,
                 imagenes=m.imagenes or ([m.imagen_url] if m.imagen_url else []),
                 fecha_creacion=m.fecha_creacion,
-                total_likes=total_likes,
-                total_comentarios=total_comentarios,
-                usuario_dio_like=dio_like,
-            ))
-        return resultado
+                total_likes=likes_map.get(m.id, 0),
+                total_comentarios=comentarios_map.get(m.id, 0),
+                usuario_dio_like=m.id in liked_ids,
+            )
+            for m in qs
+        ]
+
 
     def eliminar(self, id: str) -> bool:
         try:

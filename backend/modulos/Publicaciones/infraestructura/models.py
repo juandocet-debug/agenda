@@ -17,7 +17,7 @@ class PublicacionModel(models.Model):
 class LikeModel(models.Model):
     id = models.CharField(max_length=36, primary_key=True)
     publicacion_id = models.CharField(max_length=36, db_index=True)
-    usuario_id = models.CharField(max_length=36)
+    usuario_id = models.CharField(max_length=36, db_index=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -28,10 +28,10 @@ class LikeModel(models.Model):
 class ComentarioModel(models.Model):
     id = models.CharField(max_length=36, primary_key=True)
     publicacion_id = models.CharField(max_length=36, db_index=True)
-    usuario_id = models.CharField(max_length=36)
+    usuario_id = models.CharField(max_length=36, db_index=True)
     autor_nombre = models.CharField(max_length=150, blank=True, null=True)
     texto = models.TextField()
-    padre_id = models.CharField(max_length=36, blank=True, null=True)  # Para respuestas
+    padre_id = models.CharField(max_length=36, blank=True, null=True, db_index=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -186,44 +186,44 @@ export const MuroPublicacionesScreen = ({ isOwner = false, empresaId }: { isOwne
       if (!idEmpresa) return;
       setResolvedEmpresaId(idEmpresa);
 
-      // Cargar nombre y logo (solo en carga inicial)
-      if (isInitial) {
-        try {
-          const perfilRes = await fetch(`https://agenda-production-ae37.up.railway.app/api/empresas/${idEmpresa}/publico/`);
-          const perfilData = await perfilRes.json();
-          if (perfilData.ok && perfilData.datos) {
-            if (perfilData.datos.nombre_empresa) setEmpresaNombre(perfilData.datos.nombre_empresa);
-            if (perfilData.datos.logo_url) setEmpresaLogo(perfilData.datos.logo_url);
-          }
-        } catch {}
-      }
-
       const repo = new ApiPublicacionRepository();
       const offset = pageNum * LIMIT;
-      const lista = await new ListarPublicacionesUseCase(repo).ejecutar(idEmpresa, LIMIT, offset);
-      
-      if (lista.length < LIMIT) {
-        setHasMore(false);
-      }
 
       if (isInitial) {
+        // ✅ PARALELO: perfil + publicaciones al mismo tiempo
+        const [perfilRes, lista] = await Promise.all([
+          fetch(`https://agenda-production-ae37.up.railway.app/api/empresas/${idEmpresa}/publico/`)
+            .then(r => r.json())
+            .catch(() => null),
+          new ListarPublicacionesUseCase(repo).ejecutar(idEmpresa, LIMIT, 0),
+        ]);
+
+        if (perfilRes?.ok && perfilRes?.datos) {
+          if (perfilRes.datos.nombre_empresa) setEmpresaNombre(perfilRes.datos.nombre_empresa);
+          if (perfilRes.datos.logo_url) setEmpresaLogo(perfilRes.datos.logo_url);
+        }
+
+        if (lista.length < LIMIT) setHasMore(false);
         setPublicaciones(lista);
         setPage(1);
       } else {
+        const lista = await new ListarPublicacionesUseCase(repo).ejecutar(idEmpresa, LIMIT, offset);
+        if (lista.length < LIMIT) setHasMore(false);
         setPublicaciones(prev => {
           const newItems = lista.filter((item: any) => !prev.some(p => p.id === item.id));
           return [...prev, ...newItems];
         });
         setPage(prev => prev + 1);
       }
-    } catch (e: any) { 
-      console.error(e.message); 
-    } finally { 
-      setLoading(false); 
+    } catch (e: any) {
+      console.error(e.message);
+    } finally {
+      setLoading(false);
       setIsFetchingMore(false);
       setRefreshing(false);
     }
   };
+
 
   const handleRefresh = () => {
     setRefreshing(true);
