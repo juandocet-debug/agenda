@@ -4,23 +4,25 @@
  * Hook que cierra sesión automáticamente si el usuario no interactúa
  * con la app durante TIEMPO_INACTIVIDAD_MS milisegundos.
  *
- * Detecta: toques en pantalla, scroll, teclado.
- * Muestra: alerta de advertencia 1 minuto antes de cerrar sesión.
- * Al cerrar: borra el token y navega a Login.
+ * Detección:
+ *  - WEB:    escucha eventos del DOM (mousemove, click, keydown, scroll, touchstart)
+ *  - NATIVO: el AppNavigator pasa reiniciarTimer al PanResponder
+ *
+ * Flujo:
+ *  29 min → alerta de aviso
+ *  30 min → logout automático + borra token
  */
 
 import { useEffect, useRef, useCallback } from 'react';
-import { AppState, AppStateStatus, Alert } from 'react-native';
+import { AppState, AppStateStatus, Alert, Platform } from 'react-native';
 import { eliminarTokenLocal } from '../../core/infraestructura/auth/TokenStorageAdapter';
 
 // ── Configuración ─────────────────────────────────────────────────────────────
-const TIEMPO_INACTIVIDAD_MS  = 30 * 60 * 1000; // 30 minutos sin actividad → logout
-const AVISO_ANTICIPADO_MS    =  1 * 60 * 1000; // Aviso 1 minuto antes del logout
+const TIEMPO_INACTIVIDAD_MS = 30 * 60 * 1000; // 30 minutos
+const AVISO_ANTICIPADO_MS   =  1 * 60 * 1000; // Aviso 1 minuto antes
 
 interface Props {
-  /** Callback que navega a la pantalla de Login */
   onLogout: () => void;
-  /** Si false, el hook está desactivado (ej: usuario no logueado) */
   activo?: boolean;
 }
 
@@ -28,6 +30,10 @@ export const useInactividadLogout = ({ onLogout, activo = true }: Props) => {
   const timerLogout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const timerAviso  = useRef<ReturnType<typeof setTimeout> | null>(null);
   const avisando    = useRef(false);
+
+  // Usamos ref para que los event listeners de DOM siempre tengan
+  // acceso a la versión actualizada de reiniciarTimer sin re-registrarse
+  const reiniciarTimerRef = useRef<() => void>(() => {});
 
   const limpiarTimers = useCallback(() => {
     if (timerLogout.current) clearTimeout(timerLogout.current);
@@ -45,56 +51,73 @@ export const useInactividadLogout = ({ onLogout, activo = true }: Props) => {
 
   const reiniciarTimer = useCallback(() => {
     if (!activo) return;
-
-    // Si ya está mostrando el aviso y el usuario toca, cancelamos el logout
-    if (avisando.current) {
-      avisando.current = false;
-    }
-
+    avisando.current = false;
     limpiarTimers();
 
-    // Timer del aviso (TIEMPO - 1 minuto)
+    // Aviso 1 minuto antes
     timerAviso.current = setTimeout(() => {
       avisando.current = true;
       Alert.alert(
         '⏳ Sesión por vencer',
         'Tu sesión se cerrará en 1 minuto por inactividad. ¿Deseas continuar?',
         [
-          {
-            text: 'Cerrar sesión',
-            style: 'destructive',
-            onPress: cerrarSesion,
-          },
-          {
-            text: 'Continuar',
-            onPress: reiniciarTimer, // Reinicia el timer al tocar "Continuar"
-          },
+          { text: 'Cerrar sesión', style: 'destructive', onPress: cerrarSesion },
+          { text: 'Continuar', onPress: reiniciarTimer },
         ],
         { cancelable: false }
       );
     }, TIEMPO_INACTIVIDAD_MS - AVISO_ANTICIPADO_MS);
 
-    // Timer del logout automático
+    // Logout automático
     timerLogout.current = setTimeout(() => {
       cerrarSesion();
     }, TIEMPO_INACTIVIDAD_MS);
   }, [activo, limpiarTimers, cerrarSesion]);
 
-  // Reiniciar el timer cuando la app vuelve a primer plano
+  // Mantener el ref actualizado con la última versión de reiniciarTimer
   useEffect(() => {
-    if (!activo) return;
+    reiniciarTimerRef.current = reiniciarTimer;
+  }, [reiniciarTimer]);
+
+  // ── Web: escuchar eventos del DOM ─────────────────────────────────────────
+  useEffect(() => {
+    if (!activo || Platform.OS !== 'web') return;
+
+    const handler = () => reiniciarTimerRef.current();
+
+    // Eventos que indican actividad del usuario en navegador
+    const EVENTOS_WEB = [
+      'mousemove',
+      'mousedown',
+      'click',
+      'keydown',
+      'scroll',
+      'touchstart',
+      'wheel',
+    ];
+
+    EVENTOS_WEB.forEach(ev =>
+      document.addEventListener(ev, handler, { passive: true })
+    );
+
+    reiniciarTimerRef.current(); // Arrancar el timer al activarse
+
+    return () => {
+      EVENTOS_WEB.forEach(ev => document.removeEventListener(ev, handler));
+      limpiarTimers();
+    };
+  }, [activo, limpiarTimers]);
+
+  // ── Nativo: escuchar cambios de AppState ──────────────────────────────────
+  useEffect(() => {
+    if (!activo || Platform.OS === 'web') return;
 
     const handleAppState = (nextState: AppStateStatus) => {
-      if (nextState === 'active') {
-        reiniciarTimer();
-      } else if (nextState === 'background' || nextState === 'inactive') {
-        // Cuando va a background, dejamos el timer corriendo normalmente
-        // (el backend ya no recibe requests, pero el token puede expirar)
-      }
+      if (nextState === 'active') reiniciarTimer();
     };
 
     const subs = AppState.addEventListener('change', handleAppState);
-    reiniciarTimer(); // Iniciar al montar
+    reiniciarTimer(); // Arrancar el timer al activarse
 
     return () => {
       subs.remove();
@@ -102,6 +125,6 @@ export const useInactividadLogout = ({ onLogout, activo = true }: Props) => {
     };
   }, [activo, reiniciarTimer, limpiarTimers]);
 
-  // Expone reiniciarTimer para usarlo en el PanResponder del NavigationContainer
+  // Expone reiniciarTimer para que AppNavigator lo use con PanResponder (nativo)
   return { reiniciarTimer };
 };
