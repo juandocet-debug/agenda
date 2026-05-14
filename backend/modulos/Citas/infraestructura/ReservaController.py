@@ -208,6 +208,14 @@ class ReservarGuestController(APIView):
     throttle_classes = [ReservaGuestThrottle]  # Máx 10 reservas/min por IP — anti-spam
 
     def post(self, request):
+        try:
+            return self._procesar_reserva(request)
+        except Exception as e:
+            import traceback
+            print('[ReservarGuestController] ERROR 500:', traceback.format_exc())
+            return Response({'ok': False, 'error': f'Error interno: {str(e)}'}, status=500)
+
+    def _procesar_reserva(self, request):
         d = request.data
         empresa_id    = d.get('empresa_id')
         servicio_id   = d.get('servicio_id')
