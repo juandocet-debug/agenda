@@ -19,10 +19,26 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.core.mail import send_mail
 from django.conf import settings
+
+
+# ─── Throttles personalizados para endpoints públicos sensibles ───────────────
+
+class ReservaGuestThrottle(AnonRateThrottle):
+    """Máximo 10 reservas por minuto por IP — previene spam de reservas."""
+    scope = 'reserva_guest'
+
+class SlotsThrottle(AnonRateThrottle):
+    """Máximo 60 consultas de slots por minuto por IP."""
+    scope = 'slots'
+
+class UploadImagenThrottle(UserRateThrottle):
+    """Máximo 20 uploads por minuto por usuario autenticado."""
+    scope = 'upload_imagen'
 
 from .models import CitaModel, HorarioEmpresaModel
 from modulos.Empresas.infraestructura.models import EmpresaModel
@@ -88,7 +104,7 @@ def _enviar_email_cita(destinatario: str, asunto: str, cuerpo: str):
 # ─── Horarios ────────────────────────────────────────────────────────────────
 
 class HorarioEmpresaController(APIView):
-    """GET → obtiene horarios. POST → empresa configura (auth requerida)."""
+    """GET → obtiene horarios (público). POST → empresa configura SOLO SUS propios horarios (auth + ownership)."""
 
     def get(self, request, empresa_id):
         horarios = HorarioEmpresaModel.objects.filter(empresa_id=empresa_id, activo=True)
@@ -104,14 +120,22 @@ class HorarioEmpresaController(APIView):
 
     def post(self, request, empresa_id):
         """Recibe lista [{dia_semana, hora_inicio, hora_fin}] y los guarda."""
+        # 1. Verificar autenticación
         if not request.user.is_authenticated:
             return Response({'ok': False, 'error': 'Autenticación requerida.'}, status=401)
-        
+
+        # 2. Verificar que la empresa solo pueda editar SUS propios horarios
+        empresa_token_id = str(request.user.usuario_id)
+        if empresa_token_id != str(empresa_id):
+            return Response(
+                {'ok': False, 'error': 'No tienes permisos para modificar los horarios de esta empresa.'},
+                status=403
+            )
+
         horarios_data = request.data.get('horarios', [])
         if not horarios_data:
             return Response({'ok': False, 'error': 'Se requiere una lista de horarios.'}, status=400)
 
-        # Eliminar los del día si ya existen y reemplazar
         for h in horarios_data:
             dia = h.get('dia_semana')
             h_inicio = h.get('hora_inicio')
@@ -135,6 +159,7 @@ class HorarioEmpresaController(APIView):
 
 class SlotsDisponiblesController(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [SlotsThrottle]  # Máx 60 req/min por IP
 
     def get(self, request):
         empresa_id = request.query_params.get('empresa_id')
@@ -177,6 +202,7 @@ class SlotsDisponiblesController(APIView):
 
 class ReservarGuestController(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [ReservaGuestThrottle]  # Máx 10 reservas/min por IP — anti-spam
 
     def post(self, request):
         d = request.data
@@ -388,7 +414,7 @@ class IniciarPagoWompiController(APIView):
     def post(self, request):
         """
         Genera la URL de pago de Wompi para la cita indicada.
-        Este endpoint queda como fallback para citas existentes sin checkout_url.
+        Incluye firma de integridad SHA256 para prevenir manipulación del monto.
         """
         cita_id = request.data.get('cita_id')
         if not cita_id:
@@ -402,7 +428,18 @@ class IniciarPagoWompiController(APIView):
         except PagoModel.DoesNotExist:
             return Response({'ok': False, 'error': 'Registro de pago no encontrado.'}, status=404)
 
-        WOMPI_PUB_KEY = os.environ.get('WOMPI_PUBLIC_KEY', 'pub_test_CAMBIA_ESTO')
+        # Obtener llaves Wompi de la empresa (BYOG) o del entorno global
+        try:
+            empresa = EmpresaModel.objects.get(id=cita.empresa_id)
+            WOMPI_PUB_KEY = empresa.wompi_public_key or os.environ.get('WOMPI_PUBLIC_KEY', '')
+            WOMPI_INTEGRIDAD = empresa.wompi_integrity_key or os.environ.get('WOMPI_INTEGRITY_KEY', '')
+        except EmpresaModel.DoesNotExist:
+            WOMPI_PUB_KEY = os.environ.get('WOMPI_PUBLIC_KEY', '')
+            WOMPI_INTEGRIDAD = os.environ.get('WOMPI_INTEGRITY_KEY', '')
+
+        if not WOMPI_PUB_KEY:
+            return Response({'ok': False, 'error': 'Pasarela de pago no configurada.'}, status=503)
+
         referencia = f'cita-{cita_id[:8]}-{uuid.uuid4().hex[:6]}'
 
         # Guardar referencia en la cita para el webhook
@@ -411,13 +448,17 @@ class IniciarPagoWompiController(APIView):
 
         monto_centavos = int(float(pago.monto_total) * 100)
 
-        # URL de checkout Wompi
+        # Firma de integridad SHA256 — previene manipulación del monto por el cliente
+        cadena_integridad = f'{referencia}{monto_centavos}COP{WOMPI_INTEGRIDAD}'
+        firma_integridad = hashlib.sha256(cadena_integridad.encode()).hexdigest()
+
         checkout_url = (
             f'https://checkout.wompi.co/p/'
             f'?public-key={WOMPI_PUB_KEY}'
             f'&currency=COP'
             f'&amount-in-cents={monto_centavos}'
             f'&reference={referencia}'
+            f'&signature:integrity={firma_integridad}'
             f'&redirect-url=agendaapp://pago-exitoso/{cita_id}'
         )
 
@@ -438,8 +479,19 @@ class CitasEmpresaController(APIView):
 
     def get(self, request):
         empresa_id = str(request.user.usuario_id)
-        citas = CitaModel.objects.filter(empresa_id=empresa_id).order_by('-fecha', '-hora_inicio')
-        
+
+        # Paginación — evita cargar miles de citas de golpe
+        limit = min(int(request.query_params.get('limit', 50)), 100)  # Máx 100 por página
+        offset = int(request.query_params.get('offset', 0))
+        estado = request.query_params.get('estado')  # Filtro opcional por estado
+
+        qs = CitaModel.objects.filter(empresa_id=empresa_id).order_by('-fecha', '-hora_inicio')
+        if estado:
+            qs = qs.filter(estado=estado)
+
+        total = qs.count()
+        citas = qs[offset:offset + limit]
+
         try:
             servicios_map = {s.id: s.nombre for s in ServicioModel.objects.filter(empresa_id=empresa_id)}
             profesionales_map = {p.id: p.nombre for p in ProfesionalModel.objects.filter(empresa_id=empresa_id)}
@@ -463,4 +515,10 @@ class CitasEmpresaController(APIView):
             }
             for c in citas
         ]
-        return Response({'ok': True, 'datos': datos})
+        return Response({
+            'ok': True,
+            'total': total,
+            'limit': limit,
+            'offset': offset,
+            'datos': datos,
+        })
