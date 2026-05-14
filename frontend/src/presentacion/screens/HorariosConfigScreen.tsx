@@ -6,7 +6,7 @@
 
 import React, { useState, useCallback, useRef } from 'react';
 import {
-  View, Text, StyleSheet, SafeAreaView, TouchableOpacity,
+  View, Text, TextInput, StyleSheet, SafeAreaView, TouchableOpacity,
   ScrollView, Switch, ActivityIndicator, Alert, Platform
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
