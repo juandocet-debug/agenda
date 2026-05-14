@@ -221,17 +221,43 @@ export const HorariosConfigScreen = ({ navigation }: any) => {
 
               {h.activo && (
                 <View style={s.horasRow}>
-                  <TouchableOpacity style={[s.horaBtn, invalido && s.horaBtnError]} onPress={() => openPicker(dia.num, 'hora_inicio', h.hora_inicio)}>
-                    <Text style={s.horaLabel}>Apertura</Text>
-                    <Text style={[s.horaValue, invalido && s.horaValueError]}>{h.hora_inicio}</Text>
-                  </TouchableOpacity>
-
-                  <Feather name="arrow-right" size={20} color="#CBD5E1" style={{ marginTop: 15 }} />
-
-                  <TouchableOpacity style={[s.horaBtn, invalido && s.horaBtnError]} onPress={() => openPicker(dia.num, 'hora_fin', h.hora_fin)}>
-                    <Text style={s.horaLabel}>Cierre</Text>
-                    <Text style={[s.horaValue, invalido && s.horaValueError]}>{h.hora_fin}</Text>
-                  </TouchableOpacity>
+                  {Platform.OS === 'web' ? (
+                    <>
+                      <View style={[s.horaBtn, invalido && s.horaBtnError]}>
+                        <Text style={s.horaLabel}>Apertura</Text>
+                        <TextInput
+                          style={[s.horaInputWeb, invalido && s.horaValueError]}
+                          value={h.hora_inicio}
+                          onChangeText={v => actualizar(dia.num, 'hora_inicio', v)}
+                          placeholder="08:00"
+                          maxLength={5}
+                        />
+                      </View>
+                      <Feather name="arrow-right" size={20} color="#CBD5E1" style={{ marginTop: 15 }} />
+                      <View style={[s.horaBtn, invalido && s.horaBtnError]}>
+                        <Text style={s.horaLabel}>Cierre</Text>
+                        <TextInput
+                          style={[s.horaInputWeb, invalido && s.horaValueError]}
+                          value={h.hora_fin}
+                          onChangeText={v => actualizar(dia.num, 'hora_fin', v)}
+                          placeholder="18:00"
+                          maxLength={5}
+                        />
+                      </View>
+                    </>
+                  ) : (
+                    <>
+                      <TouchableOpacity style={[s.horaBtn, invalido && s.horaBtnError]} onPress={() => openPicker(dia.num, 'hora_inicio', h.hora_inicio)}>
+                        <Text style={s.horaLabel}>Apertura</Text>
+                        <Text style={[s.horaValue, invalido && s.horaValueError]}>{h.hora_inicio}</Text>
+                      </TouchableOpacity>
+                      <Feather name="arrow-right" size={20} color="#CBD5E1" style={{ marginTop: 15 }} />
+                      <TouchableOpacity style={[s.horaBtn, invalido && s.horaBtnError]} onPress={() => openPicker(dia.num, 'hora_fin', h.hora_fin)}>
+                        <Text style={s.horaLabel}>Cierre</Text>
+                        <Text style={[s.horaValue, invalido && s.horaValueError]}>{h.hora_fin}</Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
                 </View>
               )}
             </View>
@@ -290,6 +316,7 @@ const s = StyleSheet.create({
   horaLabel: { fontSize: 12, color: '#64748B', fontWeight: '500', marginBottom: 4, textTransform: 'uppercase' },
   horaValue: { fontSize: 22, fontWeight: '700', color: colors.primary },
   horaValueError: { color: '#EF4444' },
+  horaInputWeb: { fontSize: 22, fontWeight: '700', color: colors.primary, textAlign: 'center', width: '100%', outlineStyle: 'none' },
   btnGuardar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 18, marginTop: 10, shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 },
   btnGuardadoDone: { backgroundColor: '#10B981', shadowColor: '#10B981' },
   btnGuardarText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
