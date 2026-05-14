@@ -2,10 +2,11 @@ from django.urls import path
 from .PublicacionController import (
     CrearPublicacionController, ListarPublicacionesController, EliminarPublicacionController,
     LikeController, ComentariosController, EliminarComentarioController,
-    LikeComentarioController,
+    LikeComentarioController, UploadImagenPublicacionController,
 )
 
 urlpatterns = [
+    path('upload-imagen/', UploadImagenPublicacionController.as_view(), name='upload_imagen_publicacion'),
     path('crear/', CrearPublicacionController.as_view(), name='crear_publicacion'),
     path('empresa/<str:empresa_id>/', ListarPublicacionesController.as_view(), name='listar_publicaciones'),
     path('<str:publicacion_id>/eliminar/', EliminarPublicacionController.as_view(), name='eliminar_publicacion'),

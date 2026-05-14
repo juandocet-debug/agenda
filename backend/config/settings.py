@@ -175,8 +175,9 @@ EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'admin@ludensgroup.org')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'ooqlpekyxmdxtxum')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-# Limite para permitir payloads grandes de base64 (20MB)
-DATA_UPLOAD_MAX_MEMORY_SIZE = 20971520
+# Limite para uploads de imagen via multipart (10MB max por archivo)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB — suficiente para imágenes reales (antes era 20MB para base64)
+
 
 # ── Wompi (Sandbox) ──────────────────────────────────────────────────────────
 # Reemplaza estos valores con los de tu cuenta en https://sandbox.wompi.co

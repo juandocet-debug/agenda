@@ -13,6 +13,45 @@ from ..aplicacion.Interacciones import (
 )
 
 
+class UploadImagenPublicacionController(APIView):
+    """
+    Recibe un archivo de imagen (multipart/form-data, campo 'imagen'),
+    lo sube directamente a Cloudinary y devuelve la URL pública.
+    El frontend almacena solo esa URL — nunca base64 en la BD.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            archivo = request.FILES.get('imagen')
+            if not archivo:
+                return Response({"ok": False, "error": "No se recibió ninguna imagen."}, status=status.HTTP_400_BAD_REQUEST)
+
+            tipos_permitidos = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+            if archivo.content_type not in tipos_permitidos:
+                return Response({"ok": False, "error": "Tipo de archivo no permitido."}, status=status.HTTP_400_BAD_REQUEST)
+
+            if archivo.size > 8 * 1024 * 1024:
+                return Response({"ok": False, "error": "La imagen no puede superar 8MB."}, status=status.HTTP_400_BAD_REQUEST)
+
+            import cloudinary.uploader
+            resultado = cloudinary.uploader.upload(
+                archivo,
+                folder='agenda/publicaciones',
+                transformation=[
+                    {'width': 1080, 'crop': 'limit', 'quality': 'auto:good', 'fetch_format': 'auto'}
+                ],
+            )
+            url = resultado.get('secure_url')
+            if not url:
+                raise Exception("Cloudinary no devolvió una URL.")
+
+            return Response({"ok": True, "url": url}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"ok": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 class CrearPublicacionController(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -40,7 +79,6 @@ class ListarPublicacionesController(APIView):
             limit = int(request.query_params.get('limit', 10))
             offset = int(request.query_params.get('offset', 0))
 
-            # Obtenemos usuario_id del token si está autenticado (para saber si dio like)
             usuario_id = None
             if request.user and request.user.is_authenticated:
                 usuario_id = str(request.user.usuario_id)
@@ -87,7 +125,6 @@ class ComentariosController(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, publicacion_id):
-        """Listar comentarios de una publicación (puede ser público opcionalmente)."""
         try:
             repo = DjangoPublicacionRepository()
             comentarios = ListarComentariosUseCase(repo).ejecutar(publicacion_id)
@@ -96,16 +133,15 @@ class ComentariosController(APIView):
             return Response({"ok": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def post(self, request, publicacion_id):
-        """Agregar un comentario."""
         try:
             usuario_id = str(request.user.usuario_id)
             rol = getattr(request.user, 'rol', 'cliente')
-            
+
             from .models import PublicacionModel
             try:
                 pub = PublicacionModel.objects.get(id=publicacion_id)
                 if rol == 'empresa' and str(pub.empresa_id) != usuario_id:
-                    return Response({"ok": False, "error": "Como empresa solo puedes comentar en tus propias publicaciones (anti-spam/hate)."}, status=status.HTTP_403_FORBIDDEN)
+                    return Response({"ok": False, "error": "Como empresa solo puedes comentar en tus propias publicaciones."}, status=status.HTTP_403_FORBIDDEN)
             except PublicacionModel.DoesNotExist:
                 return Response({"ok": False, "error": "Publicación no encontrada."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -150,4 +186,3 @@ class LikeComentarioController(APIView):
             return Response({"ok": True, "datos": resultado})
         except Exception as e:
             return Response({"ok": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
