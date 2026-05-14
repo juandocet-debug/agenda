@@ -38,12 +38,58 @@ export const ReservarScreen = ({ route, navigation }: any) => {
   const [moneda, setMoneda] = useState('COP');
   const [profesionales, setProfesionales] = useState<Profesional[]>([]);
   const [slots, setSlots] = useState<string[]>([]);
+  // dias_semana (0=Lun..6=Dom) que la empresa tiene habilitados
+  const [diasHabilitados, setDiasHabilitados] = useState<number[]>([]);
+  const [cargandoCalendario, setCargandoCalendario] = useState(false);
 
   useEffect(() => {
-    console.log('[ReservarScreen] params:', route.params);
-    console.log('[ReservarScreen] idToUse:', idToUse);
-    if (idToUse) cargarServicios();
+    if (idToUse) {
+      cargarServicios();
+      cargarDiasHabilitados();
+    }
   }, [idToUse]);
+
+  const cargarDiasHabilitados = async () => {
+    try {
+      const res = await fetch(`https://agenda-production-ae37.up.railway.app/api/citas/horario/${idToUse}/`);
+      const data = await res.json();
+      if (data.ok) {
+        setDiasHabilitados(data.datos.filter((h: any) => h.activo).map((h: any) => h.dia_semana));
+      }
+    } catch (e) {
+      console.log('Error cargando dias habilitados:', e);
+    }
+  };
+
+  // Genera los próximos `cantidad` días hábiles desde hoy según diasHabilitados
+  const generarFechasDisponibles = (cantidad = 30): string[] => {
+    if (diasHabilitados.length === 0) return [];
+    const fechas: string[] = [];
+    const hoy = new Date();
+    for (let i = 0; i < 90 && fechas.length < cantidad; i++) {
+      const d = new Date(hoy);
+      d.setDate(hoy.getDate() + i + 1); // empezamos mañana
+      // getDay() retorna 0=Dom,1=Lun...6=Sáb → convertir a Python weekday (0=Lun..6=Dom)
+      const jsDay = d.getDay(); // 0=Dom
+      const pyDay = jsDay === 0 ? 6 : jsDay - 1; // 0=Dom→6, 1=Lun→0, etc.
+      if (diasHabilitados.includes(pyDay)) {
+        const iso = d.toISOString().split('T')[0];
+        fechas.push(iso);
+      }
+    }
+    return fechas;
+  };
+
+  // Formato legible para chips de fecha: "Lun 14 may"
+  const formatearFecha = (iso: string): { linea1: string; linea2: string } => {
+    const d = new Date(iso + 'T00:00:00');
+    const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    return {
+      linea1: dias[d.getDay()],
+      linea2: `${d.getDate()} ${meses[d.getMonth()]}`,
+    };
+  };
 
   const cargarServicios = async () => {
     try {
@@ -241,48 +287,84 @@ export const ReservarScreen = ({ route, navigation }: any) => {
     </View>
   );
 
-  const renderStep3 = () => (
-    <View style={s.stepContainer}>
-      <Text style={s.stepTitle}>Elige fecha y hora</Text>
-      
-      {/* Selector de fecha muy básico por ahora */}
-      <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
-        {['2026-05-13', '2026-05-14', '2026-05-15'].map(f => (
-          <TouchableOpacity 
-            key={f}
-            style={[s.dateChip, fechaSeleccionada === f && s.dateChipActive]}
-            onPress={() => { setFechaSeleccionada(f); cargarSlots(f); setHoraSeleccionada(''); }}
-          >
-            <Text style={[s.dateChipText, fechaSeleccionada === f && s.dateChipTextActive]}>{f}</Text>
-          </TouchableOpacity>
-        ))}
+  const renderStep3 = () => {
+    const fechasDisponibles = generarFechasDisponibles(30);
+
+    return (
+      <View style={s.stepContainer}>
+        <Text style={s.stepTitle}>Elige una fecha</Text>
+
+        {/* ── Sin horarios configurados ─── */}
+        {diasHabilitados.length === 0 && (
+          <View style={s.emptyBox}>
+            <Feather name="clock" size={40} color="#D1D5DB" style={{ marginBottom: 12 }} />
+            <Text style={s.emptyText}>Esta empresa aún no ha configurado sus horarios de atención.</Text>
+          </View>
+        )}
+
+        {/* ── Chips de fechas habilitadas ─── */}
+        {fechasDisponibles.length > 0 && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 6 }}>
+            <View style={s.fechasRow}>
+              {fechasDisponibles.map(f => {
+                const { linea1, linea2 } = formatearFecha(f);
+                const activa = fechaSeleccionada === f;
+                return (
+                  <TouchableOpacity
+                    key={f}
+                    style={[s.fechaChip, activa && s.fechaChipActive]}
+                    onPress={() => {
+                      setFechaSeleccionada(f);
+                      setHoraSeleccionada('');
+                      setSlots([]);
+                      cargarSlots(f);
+                    }}
+                  >
+                    <Text style={[s.fechaChipDia, activa && s.fechaChipTextActive]}>{linea1}</Text>
+                    <Text style={[s.fechaChipNum, activa && s.fechaChipTextActive]}>{linea2}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </ScrollView>
+        )}
+
+        {/* ── Slots de hora ─── */}
+        {fechaSeleccionada !== '' && (
+          <View style={{ marginTop: 20 }}>
+            <Text style={s.stepSubtitle}>Horas disponibles:</Text>
+            {loading ? <ActivityIndicator color={colors.primary} style={{ marginTop: 12 }} /> : (
+              <View style={s.slotsGrid}>
+                {slots.map(h => (
+                  <TouchableOpacity
+                    key={h}
+                    style={[s.slotChip, horaSeleccionada === h && s.slotChipActive]}
+                    onPress={() => setHoraSeleccionada(h)}
+                  >
+                    <Text style={[s.slotText, horaSeleccionada === h && s.slotTextActive]}>{h}</Text>
+                  </TouchableOpacity>
+                ))}
+                {slots.length === 0 && (
+                  <View style={s.emptyBox}>
+                    <Feather name="calendar" size={28} color="#D1D5DB" style={{ marginBottom: 8 }} />
+                    <Text style={s.emptyText}>No hay horas disponibles para este día.</Text>
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
+        )}
+
+        <TouchableOpacity
+          style={[s.btnNext, (!fechaSeleccionada || !horaSeleccionada) && s.btnDisabled]}
+          disabled={!fechaSeleccionada || !horaSeleccionada}
+          onPress={() => setStep(4)}
+        >
+          <Text style={s.btnNextText}>Siguiente</Text>
+        </TouchableOpacity>
       </View>
-
-      <Text style={s.stepSubtitle}>Horas disponibles:</Text>
-      {loading ? <ActivityIndicator color={colors.primary} /> : (
-        <View style={s.slotsGrid}>
-          {slots.map(h => (
-            <TouchableOpacity 
-              key={h}
-              style={[s.slotChip, horaSeleccionada === h && s.slotChipActive]}
-              onPress={() => setHoraSeleccionada(h)}
-            >
-              <Text style={[s.slotText, horaSeleccionada === h && s.slotTextActive]}>{h}</Text>
-            </TouchableOpacity>
-          ))}
-          {!slots.length && fechaSeleccionada && <Text>No hay horarios este día.</Text>}
-        </View>
-      )}
-
-      <TouchableOpacity 
-        style={[s.btnNext, (!fechaSeleccionada || !horaSeleccionada) && s.btnDisabled]} 
-        disabled={!fechaSeleccionada || !horaSeleccionada}
-        onPress={() => setStep(4)}
-      >
-        <Text style={s.btnNextText}>Siguiente</Text>
-      </TouchableOpacity>
-    </View>
-  );
+    );
+  };
 
   const renderStep4 = () => (
     <View style={s.stepContainer}>
@@ -471,4 +553,20 @@ const s = StyleSheet.create({
   btnNext: { backgroundColor: colors.primary, padding: 16, borderRadius: 30, alignItems: 'center', marginTop: 'auto' },
   btnDisabled: { opacity: 0.5 },
   btnNextText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
+
+  // Chips de fecha (calendario horizontal)
+  fechasRow: { flexDirection: 'row', gap: 10, paddingVertical: 6 },
+  fechaChip: {
+    width: 68, paddingVertical: 12, borderRadius: 14,
+    backgroundColor: '#F8FAFC', borderWidth: 1.5, borderColor: '#E2E8F0',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  fechaChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  fechaChipDia:    { fontSize: 12, fontWeight: '600', color: '#64748B', marginBottom: 2 },
+  fechaChipNum:    { fontSize: 13, fontWeight: '700', color: '#1E293B' },
+  fechaChipTextActive: { color: '#FFF' },
+
+  // Estado vacío
+  emptyBox: { alignItems: 'center', paddingVertical: 30, paddingHorizontal: 20 },
+  emptyText: { fontSize: 14, color: '#9CA3AF', textAlign: 'center', lineHeight: 20 },
 });
