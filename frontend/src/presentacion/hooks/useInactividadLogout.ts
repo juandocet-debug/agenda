@@ -18,7 +18,7 @@ import { AppState, AppStateStatus, Alert, Platform } from 'react-native';
 import { eliminarTokenLocal } from '../../core/infraestructura/auth/TokenStorageAdapter';
 
 // ── Configuración ─────────────────────────────────────────────────────────────
-const TIEMPO_INACTIVIDAD_MS = 30 * 60 * 1000; // 30 minutos
+const TIEMPO_INACTIVIDAD_MS = 5 * 60 * 1000; // 5 minutos
 const AVISO_ANTICIPADO_MS   =  1 * 60 * 1000; // Aviso 1 minuto antes
 
 interface Props {
