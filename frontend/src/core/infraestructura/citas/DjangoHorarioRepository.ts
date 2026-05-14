@@ -1,5 +1,6 @@
 import { HorarioDia, IHorarioRepository } from '../../domain/citas/IHorarioRepository';
-import { API_BASE_URL } from '../config';
+
+const API_BASE_URL = 'https://agenda-production-ae37.up.railway.app';
 
 export class DjangoHorarioRepository implements IHorarioRepository {
   async obtenerHorarios(empresaId: string): Promise<HorarioDia[]> {
