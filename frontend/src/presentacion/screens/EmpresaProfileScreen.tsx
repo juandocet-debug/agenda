@@ -112,7 +112,7 @@ export const EmpresaProfileScreen = ({ navigation }: any) => {
 
   return (
     <SafeAreaView style={s.safeArea}>
-      <ScrollView style={s.container} contentContainerStyle={{ paddingBottom: 150 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={s.container} contentContainerStyle={{ paddingBottom: 250 }} showsVerticalScrollIndicator={false}>
         
         {/* Top Header */}
         <View style={s.topHeader}>
@@ -120,8 +120,8 @@ export const EmpresaProfileScreen = ({ navigation }: any) => {
             <Feather name="x" size={24} color="#1A1C1E" />
           </TouchableOpacity>
           <View style={s.headerRight}>
-            <TouchableOpacity style={s.iconButton}>
-              <Feather name="help-circle" size={22} color="#1A1C1E" />
+            <TouchableOpacity style={s.iconButton} onPress={handleLogout}>
+              <Feather name="log-out" size={22} color="#FF4B4B" />
             </TouchableOpacity>
             <TouchableOpacity style={s.iconButton}>
               <View>
