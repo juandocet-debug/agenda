@@ -107,7 +107,8 @@ class HorarioEmpresaController(APIView):
     """GET → obtiene horarios (público). POST → empresa configura SOLO SUS propios horarios (auth + ownership)."""
 
     def get(self, request, empresa_id):
-        horarios = HorarioEmpresaModel.objects.filter(empresa_id=empresa_id, activo=True)
+        # Retorna todos los horarios (activos e inactivos) para que el frontend no pierda los valores configurados
+        horarios = HorarioEmpresaModel.objects.filter(empresa_id=empresa_id)
         data = [
             {
                 'dia_semana': h.dia_semana,
