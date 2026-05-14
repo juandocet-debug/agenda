@@ -105,6 +105,7 @@ def _enviar_email_cita(destinatario: str, asunto: str, cuerpo: str):
 
 class HorarioEmpresaController(APIView):
     """GET → obtiene horarios (público). POST → empresa configura SOLO SUS propios horarios (auth + ownership)."""
+    permission_classes = [AllowAny]
 
     def get(self, request, empresa_id):
         # Retorna todos los horarios (activos e inactivos) para que el frontend no pierda los valores configurados
@@ -114,6 +115,7 @@ class HorarioEmpresaController(APIView):
                 'dia_semana': h.dia_semana,
                 'hora_inicio': h.hora_inicio.strftime('%H:%M'),
                 'hora_fin': h.hora_fin.strftime('%H:%M'),
+                'activo': h.activo,
             }
             for h in horarios
         ]
