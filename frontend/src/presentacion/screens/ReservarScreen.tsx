@@ -18,6 +18,9 @@ export const ReservarScreen = ({ route, navigation }: any) => {
   // Estado del Wizard
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  // Cuando el cliente cierra el wizard, mostramos pantalla neutra
+  // en vez de navegar al dashboard de la empresa (que es privado)
+  const [cancelada, setCancelada] = useState(false);
 
   // Selecciones
   const [servicioSeleccionado, setServicioSeleccionado] = useState<Servicio | null>(null);
@@ -335,15 +338,38 @@ export const ReservarScreen = ({ route, navigation }: any) => {
     );
   };
 
+  // Pantalla neutra cuando el cliente cierra el wizard
+  if (cancelada) {
+    return (
+      <SafeAreaView style={s.container}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 }}>
+          <Feather name="x-circle" size={64} color="#CBD5E0" />
+          <Text style={{ fontSize: 22, fontWeight: '800', color: colors.text, marginTop: 20, textAlign: 'center' }}>
+            Reserva cancelada
+          </Text>
+          <Text style={{ fontSize: 15, color: colors.textSubtitle, marginTop: 10, textAlign: 'center', lineHeight: 22 }}>
+            Puedes cerrar esta ventana o volver a intentarlo cuando quieras.
+          </Text>
+          <TouchableOpacity
+            style={[s.btnNext, { marginTop: 40, width: '100%' }]}
+            onPress={() => { setCancelada(false); setStep(1); }}
+          >
+            <Text style={s.btnNextText}>Volver a intentar</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={s.container}>
-      {/* Header Wizard */}
+      {/* Header limpio — sin título ni puntos */}
       <View style={s.header}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={s.headerNavBtn}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           onPress={() => {
-            if (step === 1) navigation.goBack();
+            if (step === 1) setCancelada(true);
             else if (step === 4 && servicioSeleccionado?.tipo_servicio !== 'CITA') setStep(1);
             else setStep(prev => prev - 1);
           }}
@@ -351,23 +377,13 @@ export const ReservarScreen = ({ route, navigation }: any) => {
           <Feather name="arrow-left" size={22} color={colors.primary} />
         </TouchableOpacity>
 
-        <View style={{ alignItems: 'center' }}>
-          <Text style={s.headerTitle}>Reservar cita</Text>
-          <View style={{ flexDirection: 'row', gap: 5, marginTop: 5 }}>
-            {[1,2,3,4,5].map(n => (
-              <View key={n} style={[
-                s.stepDot,
-                n === step && s.stepDotActive,
-                n < step && s.stepDotDone,
-              ]} />
-            ))}
-          </View>
-        </View>
+        {/* Centro vacío — sin texto ni puntos */}
+        <View />
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={s.headerNavBtn}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          onPress={() => navigation.navigate('EmpresaTabs', { screen: 'Inicio' })}
+          onPress={() => setCancelada(true)}
         >
           <Feather name="x" size={22} color="#E53E3E" />
         </TouchableOpacity>
