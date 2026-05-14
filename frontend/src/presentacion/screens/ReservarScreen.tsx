@@ -141,11 +141,16 @@ export const ReservarScreen = ({ route, navigation }: any) => {
       return;
     }
     
+    // Timeout de 20s para no dejar el spinner colgado si Railway está durmiendo
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
+
     try {
       setLoading(true);
       const res = await fetch(`https://agenda-production-ae37.up.railway.app/api/citas/reservar-guest/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           empresa_id: idToUse,
           servicio_id: servicioSeleccionado?.id,
@@ -157,6 +162,7 @@ export const ReservarScreen = ({ route, navigation }: any) => {
           cliente_email: clienteEmail
         })
       });
+      clearTimeout(timeoutId);
       const data = await res.json();
       setLoading(false);
       
@@ -191,9 +197,17 @@ export const ReservarScreen = ({ route, navigation }: any) => {
       } else {
         Alert.alert('Error', data.error || 'No se pudo crear la cita.');
       }
-    } catch (e) {
+    } catch (e: any) {
+      clearTimeout(timeoutId);
       setLoading(false);
-      Alert.alert('Error', 'Hubo un problema de conexión.');
+      if (e?.name === 'AbortError') {
+        Alert.alert(
+          'Servidor tardando en responder',
+          'El servidor está iniciando. Espera 10 segundos y vuelve a intentarlo.'
+        );
+      } else {
+        Alert.alert('Error de conexión', 'No se pudo completar la reserva. Verifica tu internet e intenta de nuevo.');
+      }
     }
   };
 
