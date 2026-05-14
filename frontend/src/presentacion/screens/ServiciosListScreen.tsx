@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -6,25 +6,51 @@ import { obtenerTokenLocal } from '../../core/infraestructura/auth/TokenStorageA
 import { colors } from '../theme/colors';
 import { formatearMoneda } from '../../core/utils/currencyFormatter';
 
+// ── Caché en memoria — evita ir al servidor si ya cargamos los servicios ──────
+// Los servicios rara vez cambian, con 30 seg de cache es suficiente.
+let cacheServicios: any[] | null = null;
+let cacheMoneda: string = 'COP';
+let cacheTimestamp: number = 0;
+const CACHE_TTL_MS = 30_000; // 30 segundos
+
 export const ServiciosListScreen = () => {
   const navigation = useNavigation<any>();
-  const [servicios, setServicios] = useState<any[]>([]);
-  const [moneda, setMoneda] = useState('COP');
-  const [loading, setLoading] = useState(true);
+  const [servicios, setServicios] = useState<any[]>(cacheServicios ?? []);
+  const [moneda, setMoneda] = useState(cacheMoneda);
+  // Si hay caché válida, arrancamos con loading=false (pantalla instantánea)
+  const [loading, setLoading] = useState(cacheServicios === null);
+  const empresaIdRef = useRef<string | null>(null);
 
-  const cargarServicios = async () => {
+  const cargarServicios = useCallback(async (forzar = false) => {
     try {
-      setLoading(true);
-      const token = await obtenerTokenLocal();
-      if (!token) return;
-      
-      // Decodificar el token para sacar el usuario_id (empresa_id)
-      const p = JSON.parse(atob(token.access.split('.')[1]));
-      const empresaId = p.user_id;
+      // Servir desde caché si no han pasado 30 seg y no se fuerza recarga
+      if (!forzar && cacheServicios !== null && Date.now() - cacheTimestamp < CACHE_TTL_MS) {
+        setServicios(cacheServicios);
+        setMoneda(cacheMoneda);
+        return;
+      }
 
-      const res = await fetch(`https://agenda-production-ae37.up.railway.app/api/servicios/?empresa_id=${empresaId}`);
+      setLoading(true);
+
+      // Reutilizar empresaId si ya lo tenemos (evita decodificar el JWT otra vez)
+      if (!empresaIdRef.current) {
+        const token = await obtenerTokenLocal();
+        if (!token) return;
+        const p = JSON.parse(atob(token.access.split('.')[1]));
+        empresaIdRef.current = p.user_id;
+      }
+
+      const res = await fetch(
+        `https://agenda-production-ae37.up.railway.app/api/servicios/?empresa_id=${empresaIdRef.current}`
+      );
       const data = await res.json();
+
       if (data.ok) {
+        // Guardar en caché
+        cacheServicios = data.datos;
+        cacheMoneda = data.moneda ?? 'COP';
+        cacheTimestamp = Date.now();
+
         setServicios(data.datos);
         if (data.moneda) setMoneda(data.moneda);
       }
@@ -33,32 +59,35 @@ export const ServiciosListScreen = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
-      cargarServicios();
-    }, [])
+      // Al volver de crear/editar un servicio, invalidar el caché
+      // para que se reflejen los cambios nuevos
+      const debeForzar = navigation.getState()?.routes?.slice(-1)[0]?.params?.refrescar;
+      cargarServicios(!!debeForzar);
+    }, [cargarServicios])
   );
 
   const renderItem = ({ item }: { item: any }) => {
     let typeLabel = 'Cita';
     let typeColor = colors.primary;
     let iconName = 'calendar';
-    
+
     if (item.tipo_servicio === 'MENSUALIDAD') {
       typeLabel = 'Suscripción';
-      typeColor = '#10B981'; // Green
+      typeColor = '#10B981';
       iconName = 'refresh-cw';
     } else if (item.tipo_servicio === 'EXPERIENCIA') {
       typeLabel = 'Paquete';
-      typeColor = '#F59E0B'; // Orange
+      typeColor = '#F59E0B';
       iconName = 'star';
     }
 
     return (
-      <TouchableOpacity 
-        style={s.card} 
+      <TouchableOpacity
+        style={s.card}
         activeOpacity={0.8}
         onPress={() => navigation.navigate('CrearEditarServicio', { servicioId: item.id })}
       >
@@ -69,7 +98,7 @@ export const ServiciosListScreen = () => {
             <Feather name="image" size={24} color="#CCC" />
           </View>
         )}
-        
+
         <View style={s.cardInfo}>
           <View style={s.titleRow}>
             <Text style={s.cardTitle}>{item.nombre}</Text>
@@ -84,7 +113,7 @@ export const ServiciosListScreen = () => {
             </Text>
           </View>
         </View>
-        
+
         <Feather name="edit-2" size={20} color={colors.textSubtitle} />
       </TouchableOpacity>
     );
@@ -99,16 +128,21 @@ export const ServiciosListScreen = () => {
           </TouchableOpacity>
           <Text style={s.title}>Mis Servicios</Text>
         </View>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={s.headerAddBtn}
-          onPress={() => navigation.navigate('CrearEditarServicio')}
+          onPress={() => {
+            // Invalidar caché al crear nuevo servicio
+            cacheServicios = null;
+            navigation.navigate('CrearEditarServicio');
+          }}
         >
           <Feather name="plus" size={20} color="#FFF" />
           <Text style={s.headerAddText}>Nuevo</Text>
         </TouchableOpacity>
       </View>
 
-      {loading ? (
+      {/* Skeleton: muestra la lista anterior mientras recarga en background */}
+      {loading && servicios.length === 0 ? (
         <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 50 }} />
       ) : servicios.length === 0 ? (
         <View style={s.emptyState}>
@@ -122,19 +156,24 @@ export const ServiciosListScreen = () => {
           keyExtractor={item => item.id}
           renderItem={renderItem}
           contentContainerStyle={s.listContent}
+          // Indicador sutil de recarga en el pull-to-refresh
+          refreshing={loading}
+          onRefresh={() => {
+            cacheServicios = null; // Forzar recarga al hacer pull-to-refresh
+            cargarServicios(true);
+          }}
         />
       )}
-
     </View>
   );
 };
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FAFAFA' },
-  header: { 
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', 
-    paddingHorizontal: 20, paddingTop: 50, paddingBottom: 15, 
-    backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#EFEFEF' 
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 20, paddingTop: 50, paddingBottom: 15,
+    backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#EFEFEF'
   },
   backBtn: { marginRight: 15 },
   title: { fontSize: 20, fontWeight: 'bold', color: colors.text },
@@ -143,10 +182,10 @@ const s = StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, gap: 4
   },
   headerAddText: { color: '#FFF', fontSize: 13, fontWeight: '700' },
-  
+
   listContent: { padding: 15, paddingBottom: 100 },
   card: {
-    flexDirection: 'row', alignItems: 'center', 
+    flexDirection: 'row', alignItems: 'center',
     backgroundColor: '#FFF', padding: 12, borderRadius: 16, marginBottom: 15,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5, elevation: 2
   },
@@ -159,7 +198,7 @@ const s = StyleSheet.create({
   cardSubtitle: { fontSize: 14, color: colors.primary, fontWeight: '600' },
   badge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
   badgeText: { fontSize: 11, fontWeight: '700' },
-  
+
   emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
   emptyTitle: { fontSize: 20, fontWeight: 'bold', color: colors.text, marginTop: 15, marginBottom: 5 },
   emptySub: { fontSize: 15, color: colors.textSubtitle, textAlign: 'center', paddingHorizontal: 20 }
