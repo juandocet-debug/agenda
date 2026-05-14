@@ -275,16 +275,20 @@ class ReservarGuestController(APIView):
             wompi_referencia=wompi_ref,
         )
 
-        # Crear registro de pago pendiente
+        # Crear registro de pago pendiente (tolerante a fallos — si la tabla no existe no bloquea la cita)
         pago_id = str(uuid.uuid4())
-        PagoModel.objects.create(
-            id=pago_id,
-            empresa_id=empresa_id,
-            cita_id=cita_id,
-            monto_total=servicio.precio_valor,
-            monto_pagado=0,
-            estado='PENDIENTE',
-        )
+        try:
+            PagoModel.objects.create(
+                id=pago_id,
+                empresa_id=empresa_id,
+                cita_id=cita_id,
+                monto_total=servicio.precio_valor,
+                monto_pagado=0,
+                estado='PENDIENTE',
+            )
+        except Exception as pago_err:
+            print(f'[ReservarGuestController] AVISO: No se pudo crear PagoModel: {pago_err}')
+            # La cita ya fue creada. El error de pago no debe bloquear la reserva.
 
         # Email de confirmación al cliente (programada, pendiente de pago)
         if cliente_email:
