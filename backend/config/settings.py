@@ -116,7 +116,7 @@ if os.environ.get('CLOUDINARY_URL'):
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # ── CORS — solo orígenes permitidos ──────────────────────────────────────────
-CORS_ALLOW_ALL_ORIGINS = True  # Para cubrir errores 500 que no tendrían el header
+CORS_ALLOW_ALL_ORIGINS = False  # Solo los orígenes listados abajo tienen acceso
 CORS_ALLOWED_ORIGINS = [
     'https://agenda-pi-bice.vercel.app',
     'http://localhost:8081',
