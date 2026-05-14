@@ -400,21 +400,117 @@ export const ReservarScreen = ({ route, navigation }: any) => {
 
   const renderStep5 = () => {
     const isCita = servicioSeleccionado?.tipo_servicio === 'CITA';
-    
+
+    // Formatea la fecha a algo legible: "domingo, 25 de mayo"
+    const fechaLegible = fechaSeleccionada ? (() => {
+      const d = new Date(fechaSeleccionada + 'T00:00:00');
+      return d.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
+    })() : '';
+
     return (
       <View style={s.stepContainer}>
-        <Text style={s.stepTitle}>Resumen</Text>
-        
-        <View style={s.resumenCard}>
-          <Text style={s.resumenRow}>Servicio: {servicioSeleccionado?.nombre}</Text>
-          <Text style={s.resumenRow}>Precio: {formatearMoneda(servicioSeleccionado?.precio || 0, moneda)}</Text>
-          {isCita && <Text style={s.resumenRow}>Día: {fechaSeleccionada}</Text>}
-          {isCita && <Text style={s.resumenRow}>Hora: {horaSeleccionada}</Text>}
-          <Text style={s.resumenRow}>A nombre de: {clienteNombre}</Text>
+        {/* Ícono grande de confirmación */}
+        <View style={s.resumenIcono}>
+          <Feather name="check-circle" size={48} color={colors.primary} />
+        </View>
+        <Text style={s.resumenTitulo}>¡Casi listo!</Text>
+        <Text style={s.resumenSubtitulo}>Revisa los detalles antes de confirmar tu reserva</Text>
+
+        {/* Card de detalles */}
+        <View style={s.resumenCardPremium}>
+          {/* Servicio */}
+          <View style={s.resumenFila}>
+            <View style={s.resumenIconoBadge}>
+              <Feather name="scissors" size={16} color={colors.primary} />
+            </View>
+            <View style={s.resumenFilaTexto}>
+              <Text style={s.resumenFilaLabel}>Servicio</Text>
+              <Text style={s.resumenFilaValor}>{servicioSeleccionado?.nombre}</Text>
+            </View>
+          </View>
+          <View style={s.resumenDivider} />
+
+          {/* Precio */}
+          <View style={s.resumenFila}>
+            <View style={s.resumenIconoBadge}>
+              <Feather name="tag" size={16} color={colors.primary} />
+            </View>
+            <View style={s.resumenFilaTexto}>
+              <Text style={s.resumenFilaLabel}>Total a pagar</Text>
+              <Text style={[s.resumenFilaValor, { color: colors.primary, fontSize: 20 }]}>
+                {formatearMoneda(servicioSeleccionado?.precio || 0, moneda)}
+              </Text>
+            </View>
+          </View>
+
+          {isCita && (
+            <>
+              <View style={s.resumenDivider} />
+              {/* Fecha */}
+              <View style={s.resumenFila}>
+                <View style={s.resumenIconoBadge}>
+                  <Feather name="calendar" size={16} color={colors.primary} />
+                </View>
+                <View style={s.resumenFilaTexto}>
+                  <Text style={s.resumenFilaLabel}>Fecha</Text>
+                  <Text style={s.resumenFilaValor}>{fechaLegible}</Text>
+                </View>
+              </View>
+              <View style={s.resumenDivider} />
+              {/* Hora */}
+              <View style={s.resumenFila}>
+                <View style={s.resumenIconoBadge}>
+                  <Feather name="clock" size={16} color={colors.primary} />
+                </View>
+                <View style={s.resumenFilaTexto}>
+                  <Text style={s.resumenFilaLabel}>Hora</Text>
+                  <Text style={s.resumenFilaValor}>{horaSeleccionada}</Text>
+                </View>
+              </View>
+            </>
+          )}
+
+          <View style={s.resumenDivider} />
+          {/* Profesional */}
+          {profesionalSeleccionado && (
+            <>
+              <View style={s.resumenFila}>
+                <View style={s.resumenIconoBadge}>
+                  <Feather name="user" size={16} color={colors.primary} />
+                </View>
+                <View style={s.resumenFilaTexto}>
+                  <Text style={s.resumenFilaLabel}>Profesional</Text>
+                  <Text style={s.resumenFilaValor}>{profesionalSeleccionado.nombre}</Text>
+                </View>
+              </View>
+              <View style={s.resumenDivider} />
+            </>
+          )}
+
+          {/* Cliente */}
+          <View style={s.resumenFila}>
+            <View style={s.resumenIconoBadge}>
+              <Feather name="user-check" size={16} color={colors.primary} />
+            </View>
+            <View style={s.resumenFilaTexto}>
+              <Text style={s.resumenFilaLabel}>A nombre de</Text>
+              <Text style={s.resumenFilaValor}>{clienteNombre}</Text>
+              <Text style={s.resumenFilaDetalle}>{clienteTelefono}{clienteEmail ? ` · ${clienteEmail}` : ''}</Text>
+            </View>
+          </View>
         </View>
 
-        <TouchableOpacity style={s.btnNext} onPress={confirmarReserva}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.btnNextText}>Confirmar y Pagar</Text>}
+        <TouchableOpacity
+          style={[s.btnNext, s.btnConfirmar]}
+          onPress={confirmarReserva}
+          disabled={loading}
+        >
+          {loading
+            ? <ActivityIndicator color="#fff" />
+            : <>
+                <Feather name="check" size={20} color="#FFF" style={{ marginRight: 8 }} />
+                <Text style={s.btnNextText}>Confirmar y Pagar</Text>
+              </>}
         </TouchableOpacity>
       </View>
     );
@@ -569,4 +665,18 @@ const s = StyleSheet.create({
   // Estado vacío
   emptyBox: { alignItems: 'center', paddingVertical: 30, paddingHorizontal: 20 },
   emptyText: { fontSize: 14, color: '#9CA3AF', textAlign: 'center', lineHeight: 20 },
+
+  // Resumen premium (Step 5)
+  resumenIcono:       { alignItems: 'center', marginBottom: 10, marginTop: 10 },
+  resumenTitulo:      { fontSize: 26, fontWeight: '800', color: '#1E293B', textAlign: 'center' },
+  resumenSubtitulo:   { fontSize: 14, color: '#64748B', textAlign: 'center', marginBottom: 24, lineHeight: 20 },
+  resumenCardPremium: { backgroundColor: '#FFF', borderRadius: 18, borderWidth: 1.5, borderColor: '#F1F5F9', marginBottom: 24, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 3 },
+  resumenFila:        { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, paddingVertical: 14 },
+  resumenIconoBadge:  { width: 36, height: 36, borderRadius: 10, backgroundColor: colors.primary + '12', justifyContent: 'center', alignItems: 'center', marginRight: 14 },
+  resumenFilaTexto:   { flex: 1 },
+  resumenFilaLabel:   { fontSize: 11, fontWeight: '600', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
+  resumenFilaValor:   { fontSize: 16, fontWeight: '700', color: '#1E293B' },
+  resumenFilaDetalle: { fontSize: 13, color: '#64748B', marginTop: 2 },
+  resumenDivider:     { height: 1, backgroundColor: '#F1F5F9', marginHorizontal: 18 },
+  btnConfirmar:       { flexDirection: 'row', shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 5 },
 });
