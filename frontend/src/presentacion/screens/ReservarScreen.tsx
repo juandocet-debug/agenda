@@ -51,13 +51,25 @@ export const ReservarScreen = ({ route, navigation }: any) => {
 
   const cargarDiasHabilitados = async () => {
     try {
-      const res = await fetch(`https://agenda-production-ae37.up.railway.app/api/citas/horario/${idToUse}/`);
+      setCargandoCalendario(true);
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 15000);
+      const res = await fetch(
+        `https://agenda-production-ae37.up.railway.app/api/citas/horario/${idToUse}/`,
+        { signal: ctrl.signal }
+      );
+      clearTimeout(timer);
       const data = await res.json();
       if (data.ok) {
-        setDiasHabilitados(data.datos.filter((h: any) => h.activo).map((h: any) => h.dia_semana));
+        const dias = data.datos
+          .filter((h: any) => h.activo)
+          .map((h: any) => h.dia_semana);
+        setDiasHabilitados(dias);
       }
     } catch (e) {
       console.log('Error cargando dias habilitados:', e);
+    } finally {
+      setCargandoCalendario(false);
     }
   };
 
@@ -308,8 +320,16 @@ export const ReservarScreen = ({ route, navigation }: any) => {
       <View style={s.stepContainer}>
         <Text style={s.stepTitle}>Elige una fecha</Text>
 
-        {/* ── Sin horarios configurados ─── */}
-        {diasHabilitados.length === 0 && (
+        {/* ── Cargando días ─── */}
+        {cargandoCalendario && (
+          <View style={s.emptyBox}>
+            <ActivityIndicator color={colors.primary} size="large" />
+            <Text style={[s.emptyText, { marginTop: 12 }]}>Cargando disponibilidad…</Text>
+          </View>
+        )}
+
+        {/* ── Sin horarios configurados (solo mostrar cuando ya terminó de cargar) ─── */}
+        {!cargandoCalendario && diasHabilitados.length === 0 && (
           <View style={s.emptyBox}>
             <Feather name="clock" size={40} color="#D1D5DB" style={{ marginBottom: 12 }} />
             <Text style={s.emptyText}>Esta empresa aún no ha configurado sus horarios de atención.</Text>
