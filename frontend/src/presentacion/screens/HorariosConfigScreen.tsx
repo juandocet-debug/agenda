@@ -55,24 +55,26 @@ export const HorariosConfigScreen = ({ navigation }: any) => {
   const tokenRef     = useRef<string | null>(null);
 
   // ── Cargar horarios del backend ───────────────────────────────────────────
+  const [errorCarga, setErrorCarga] = useState<string | null>(null);
+
   const cargarHorarios = useCallback(async () => {
     try {
       setLoading(true);
+      setErrorCarga(null);
       const token = await obtenerTokenLocal();
-      if (!token) return;
+      if (!token) { setErrorCarga('Sesión expirada. Vuelve a iniciar sesión.'); return; }
       tokenRef.current = token.access;
 
       // Usar usuario_id del token guardado directamente (más confiable que decodificar JWT)
       const empId = token.usuario_id ||
         (() => {
           try {
-            // Fallback: decodificar JWT (base64url → base64)
             const b64 = token.access.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
             return JSON.parse(atob(b64)).user_id;
           } catch { return null; }
         })();
 
-      if (!empId) { console.error('No se pudo obtener empresa_id'); return; }
+      if (!empId) { setErrorCarga('No se pudo identificar tu empresa. Vuelve a iniciar sesión.'); return; }
       empresaIdRef.current = empId;
 
       const datosBackend = await obtenerCU.ejecutar(empresaIdRef.current!);
@@ -92,7 +94,11 @@ export const HorariosConfigScreen = ({ navigation }: any) => {
         });
       }
       setHorarios(base);
-    } catch (e) {
+    } catch (e: any) {
+      const msg = e?.name === 'AbortError'
+        ? 'El servidor tardó demasiado. Toca aquí para reintentar.'
+        : 'No se pudieron cargar los horarios. Toca aquí para reintentar.';
+      setErrorCarga(msg);
       console.log('Error cargando horarios:', e);
     } finally {
       setLoading(false);
@@ -136,7 +142,7 @@ export const HorariosConfigScreen = ({ navigation }: any) => {
     }
   };
 
-  if (loading) {
+  if (loading || errorCarga) {
     return (
       <SafeAreaView style={s.container}>
         <View style={s.header}>
@@ -146,7 +152,22 @@ export const HorariosConfigScreen = ({ navigation }: any) => {
           <Text style={s.headerTitle}>Horarios de atención</Text>
           <View style={{ width: 40 }} />
         </View>
-        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 80 }} />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 30 }}>
+          {loading
+            ? <ActivityIndicator size="large" color={colors.primary} />
+            : <>
+                <Feather name="wifi-off" size={48} color="#CBD5E1" />
+                <Text style={{ fontSize: 15, color: '#64748B', textAlign: 'center', marginTop: 16, lineHeight: 22 }}>
+                  {errorCarga}
+                </Text>
+                <TouchableOpacity
+                  style={{ marginTop: 24, backgroundColor: colors.primary, paddingHorizontal: 28, paddingVertical: 12, borderRadius: 24 }}
+                  onPress={cargarHorarios}
+                >
+                  <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 15 }}>Reintentar</Text>
+                </TouchableOpacity>
+              </>}
+        </View>
       </SafeAreaView>
     );
   }
