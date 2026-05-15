@@ -60,9 +60,20 @@ export const HorariosConfigScreen = ({ navigation }: any) => {
       setLoading(true);
       const token = await obtenerTokenLocal();
       if (!token) return;
-      tokenRef.current     = token.access;
-      const p              = JSON.parse(atob(token.access.split('.')[1]));
-      empresaIdRef.current = p.user_id;
+      tokenRef.current = token.access;
+
+      // Usar usuario_id del token guardado directamente (más confiable que decodificar JWT)
+      const empId = token.usuario_id ||
+        (() => {
+          try {
+            // Fallback: decodificar JWT (base64url → base64)
+            const b64 = token.access.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+            return JSON.parse(atob(b64)).user_id;
+          } catch { return null; }
+        })();
+
+      if (!empId) { console.error('No se pudo obtener empresa_id'); return; }
+      empresaIdRef.current = empId;
 
       const datosBackend = await obtenerCU.ejecutar(empresaIdRef.current!);
       const base = horarioDefault();
