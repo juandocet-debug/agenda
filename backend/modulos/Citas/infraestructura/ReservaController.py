@@ -237,13 +237,14 @@ class ReservarGuestController(APIView):
         except ValueError:
             return Response({'ok': False, 'error': 'Formato de fecha u hora inválido.'}, status=400)
 
-        # Calcular hora_fin según duración del servicio
+        # Calcular hora_fin según duración del servicio (default 60 min si duracion_minutos es NULL)
         try:
             servicio = ServicioModel.objects.get(id=servicio_id)
         except ServicioModel.DoesNotExist:
             return Response({'ok': False, 'error': 'Servicio no encontrado.'}, status=404)
 
-        h_fin = (datetime.combine(fecha_obj, h_inicio) + timedelta(minutes=servicio.duracion_minutos)).time()
+        duracion = servicio.duracion_minutos or 60  # NULL → 60 min por defecto
+        h_fin = (datetime.combine(fecha_obj, h_inicio) + timedelta(minutes=duracion)).time()
 
         # Verificar traslape — si hay conflicto, sugerir profesionales disponibles
         ocupados = _slots_ocupados(empresa_id, profesional_id, fecha_obj)
