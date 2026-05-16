@@ -6,7 +6,8 @@
 import React, { useState, useCallback, useRef } from 'react';
 import {
   View, Text, TextInput, StyleSheet, SafeAreaView, TouchableOpacity,
-  ScrollView, Switch, ActivityIndicator, Alert, Platform, LayoutAnimation, UIManager
+  ScrollView, Switch, ActivityIndicator, Alert, Platform, LayoutAnimation,
+  UIManager, Modal, FlatList
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -20,6 +21,108 @@ import { GuardarHorariosCasoUso } from '../../core/aplicacion/citas/GuardarHorar
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
+
+// Genera opciones cada 30 minutos de 00:00 a 23:30
+const HORAS_OPCIONES: string[] = [];
+for (let h = 0; h < 24; h++) {
+  for (let m = 0; m < 60; m += 30) {
+    HORAS_OPCIONES.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
+  }
+}
+
+// Componente desplegable de hora
+const TimeDropdown = ({
+  value, onChange, label, icon, iconColor
+}: {
+  value: string; onChange: (v: string) => void;
+  label: string; icon: string; iconColor: string;
+}) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <TouchableOpacity
+        style={sd.triggerBtn}
+        onPress={() => setOpen(true)}
+        activeOpacity={0.8}
+      >
+        <View style={sd.triggerTop}>
+          <Feather name={icon as any} size={13} color={iconColor} />
+          <Text style={sd.triggerLabel}>{label}</Text>
+        </View>
+        <View style={sd.triggerValueRow}>
+          <Text style={sd.triggerValue}>{value}</Text>
+          <Feather name="chevron-down" size={16} color={colors.primary} />
+        </View>
+      </TouchableOpacity>
+
+      <Modal visible={open} transparent animationType="fade">
+        <TouchableOpacity
+          style={sd.overlay}
+          activeOpacity={1}
+          onPress={() => setOpen(false)}
+        >
+          <View style={sd.sheet}>
+            <View style={sd.sheetHeader}>
+              <Feather name={icon as any} size={18} color={iconColor} />
+              <Text style={sd.sheetTitle}>{label}</Text>
+              <TouchableOpacity onPress={() => setOpen(false)}>
+                <Feather name="x" size={20} color="#64748B" />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={HORAS_OPCIONES}
+              keyExtractor={item => item}
+              showsVerticalScrollIndicator={false}
+              style={{ maxHeight: 340 }}
+              getItemLayout={(_, index) => ({ length: 52, offset: 52 * index, index })}
+              initialScrollIndex={Math.max(0, HORAS_OPCIONES.indexOf(value))}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[sd.option, item === value && sd.optionActive]}
+                  onPress={() => { onChange(item); setOpen(false); }}
+                >
+                  <Text style={[sd.optionTxt, item === value && sd.optionTxtActive]}>{item}</Text>
+                  {item === value && <Feather name="check" size={16} color={colors.primary} />}
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </>
+  );
+};
+
+const sd = StyleSheet.create({
+  triggerBtn: {
+    flex: 1, backgroundColor: '#F8FAFC', borderRadius: 16,
+    paddingHorizontal: 16, paddingVertical: 14,
+    borderWidth: 1, borderColor: '#E2E8F0',
+    alignItems: 'center',
+  },
+  triggerTop: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 8 },
+  triggerLabel: { fontSize: 11, fontWeight: '600', color: '#64748B', letterSpacing: 1 },
+  triggerValueRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  triggerValue: { fontSize: 24, fontWeight: '600', color: '#1E293B' },
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+  sheet: {
+    backgroundColor: '#FFF', borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    paddingBottom: 24, paddingTop: 8,
+  },
+  sheetHeader: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingHorizontal: 24, paddingVertical: 16,
+    borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
+  },
+  sheetTitle: { flex: 1, fontSize: 17, fontWeight: '600', color: '#1E293B' },
+  option: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 24, height: 52, borderBottomWidth: 1, borderBottomColor: '#F8FAFC',
+  },
+  optionActive: { backgroundColor: '#EEF2FF' },
+  optionTxt: { fontSize: 17, color: '#475569', fontWeight: '400' },
+  optionTxtActive: { color: colors.primary, fontWeight: '600' },
+});
 
 const DIAS = [
   { num: 0, nombre: 'Lunes',     short: 'Lun' },
@@ -239,39 +342,23 @@ export const HorariosConfigScreen = ({ navigation }: any) => {
               {/* Panel de Edición de Horas (Expandido) */}
               {abierto && h.activo && (
                 <View style={styles.timeEditor}>
-                  <View style={styles.timeBlock}>
-                    <View style={styles.timeHeader}>
-                      <Feather name="sun" size={14} color="#F59E0B" />
-                      <Text style={styles.timeLabel}>APERTURA</Text>
-                    </View>
-                    <TextInput
-                      style={[styles.timeInput, invalido && !horasValidas(h.hora_inicio, h.hora_fin) && styles.timeInputError]}
-                      value={h.hora_inicio}
-                      onChangeText={v => actualizar(dia.num, 'hora_inicio', v)}
-                      placeholder="08:00"
-                      maxLength={5}
-                      keyboardType="numbers-and-punctuation"
-                    />
-                  </View>
-
+                  <TimeDropdown
+                    value={h.hora_inicio}
+                    onChange={v => actualizar(dia.num, 'hora_inicio', v)}
+                    label="APERTURA"
+                    icon="sun"
+                    iconColor="#F59E0B"
+                  />
                   <View style={styles.timeDivider}>
                     <Feather name="arrow-right" size={20} color="#CBD5E1" />
                   </View>
-
-                  <View style={styles.timeBlock}>
-                    <View style={styles.timeHeader}>
-                      <Feather name="moon" size={14} color="#6366F1" />
-                      <Text style={styles.timeLabel}>CIERRE</Text>
-                    </View>
-                    <TextInput
-                      style={[styles.timeInput, invalido && !horasValidas(h.hora_inicio, h.hora_fin) && styles.timeInputError]}
-                      value={h.hora_fin}
-                      onChangeText={v => actualizar(dia.num, 'hora_fin', v)}
-                      placeholder="18:00"
-                      maxLength={5}
-                      keyboardType="numbers-and-punctuation"
-                    />
-                  </View>
+                  <TimeDropdown
+                    value={h.hora_fin}
+                    onChange={v => actualizar(dia.num, 'hora_fin', v)}
+                    label="CIERRE"
+                    icon="moon"
+                    iconColor="#6366F1"
+                  />
                 </View>
               )}
               {invalido && abierto && (
