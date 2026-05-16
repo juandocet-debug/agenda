@@ -52,6 +52,9 @@ from modulos.Pagos.infraestructura.models import PagoModel
 def _generar_slots(hora_inicio: time, hora_fin: time, duracion_min: int):
     """Genera lista de strings HH:MM de slots en un rango dado."""
     slots = []
+    if hora_inicio >= hora_fin:
+        raise ValueError("La hora de inicio es mayor o igual a la hora de fin.")
+        
     actual = datetime.combine(date.today(), hora_inicio)
     fin = datetime.combine(date.today(), hora_fin)
     while actual + timedelta(minutes=duracion_min) <= fin:
@@ -225,7 +228,16 @@ class SlotsDisponiblesController(APIView):
         except ServicioModel.DoesNotExist:
             return Response({'ok': False, 'error': 'Servicio no encontrado.'}, status=404)
 
-        todos_slots = _generar_slots(horario.hora_inicio, horario.hora_fin, duracion)
+        if not duracion or duracion <= 0:
+            return Response({'ok': False, 'error': 'Este servicio no tiene una duración válida configurada.'}, status=400)
+
+        try:
+            todos_slots = _generar_slots(horario.hora_inicio, horario.hora_fin, duracion)
+        except ValueError as e:
+            return Response({'ok': False, 'error': f'Horario mal configurado: {str(e)}'}, status=400)
+        except Exception as e:
+            return Response({'ok': False, 'error': f'Error generando slots: {str(e)}'}, status=500)
+            
         ocupados = _slots_ocupados(empresa_id, profesional_id, fecha_obj, sede_id)
 
         # Calcular cupos disponibles por slot
