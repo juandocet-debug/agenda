@@ -10,8 +10,7 @@ import { useCarrito } from '../../core/aplicacion/carrito/CarritoContext';
 import { calcularTotal, ItemCarrito } from '../../core/dominio/carrito/CarritoEntidad';
 import { formatearMoneda } from '../../core/utils/currencyFormatter';
 import { obtenerTokenLocal } from '../../core/infraestructura/auth/TokenStorageAdapter';
-
-const API = 'https://agenda-production-ae37.up.railway.app';
+import { API_BASE as API } from '../../core/config/api';
 
 const ItemCard = ({ item, onQuitar, onCambiarCantidad, onCambiarPlan }: {
   item: ItemCarrito;

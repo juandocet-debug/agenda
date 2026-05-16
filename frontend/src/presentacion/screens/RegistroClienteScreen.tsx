@@ -7,8 +7,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { colors, shadows } from '../theme/colors';
 import { guardarTokenLocal } from '../../core/infraestructura/auth/TokenStorageAdapter';
-
-const API = 'https://agenda-production-ae37.up.railway.app';
+import { API_BASE as API } from '../../core/config/api';
 
 export const RegistroClienteScreen = ({ navigation }: any) => {
   const [nombre, setNombre] = useState('');

@@ -13,10 +13,9 @@ import { ItemCarrito } from '../../core/dominio/carrito/CarritoEntidad';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
+import { API_BASE as API } from '../../core/config/api';
 
 WebBrowser.maybeCompleteAuthSession();
-
-const API = 'https://agenda-production-ae37.up.railway.app';
 
 LocaleConfig.locales['es'] = {
   monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],

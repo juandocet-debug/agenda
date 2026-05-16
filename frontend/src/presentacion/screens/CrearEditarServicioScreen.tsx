@@ -7,8 +7,7 @@ import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { colors } from '../theme/colors';
 import { obtenerTokenLocal } from '../../core/infraestructura/auth/TokenStorageAdapter';
-
-const API = 'https://agenda-production-ae37.up.railway.app';
+import { API_BASE as API } from '../../core/config/api';
 
 export const CrearEditarServicioScreen = ({ route, navigation }: any) => {
   const { servicioId } = route.params || {};

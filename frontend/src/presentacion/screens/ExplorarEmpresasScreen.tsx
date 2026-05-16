@@ -13,8 +13,7 @@ import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, shadows } from '../theme/colors';
-
-const API = 'https://agenda-production-ae37.up.railway.app';
+import { API_BASE as API } from '../../core/config/api';
 
 interface EmpresaPublica {
   id: string;
