@@ -22,6 +22,8 @@ DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = [
     'agenda-production-ae37.up.railway.app',
     'agenda-pi-bice.vercel.app',
+    'dist-nine-gold-65.vercel.app',
+    '.vercel.app',           # cubre cualquier preview deploy de Vercel
     '127.0.0.1',
     'localhost',
 ]
@@ -48,6 +50,7 @@ INSTALLED_APPS = [
     'modulos.Usuarios.infraestructura',
     'modulos.Profesionales.infraestructura',
     'modulos.Publicaciones.infraestructura',
+    'modulos.Sedes.infraestructura',
 ]
 
 MIDDLEWARE = [
@@ -83,14 +86,25 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # ── Base de datos ─────────────────────────────────────────────────────────────
 import dj_database_url
+import os
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
-}
+if os.environ.get('DEBUG') == 'True':
+    # Entorno Local: Usar SQLite
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        }
+    }
+else:
+    # Producción (Railway): Usar Neon PostgreSQL
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL'),
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    }
 
 # ── Validación de contraseñas ─────────────────────────────────────────────────
 AUTH_PASSWORD_VALIDATORS = [
@@ -117,12 +131,19 @@ if os.environ.get('CLOUDINARY_URL'):
 
 # ── CORS — solo orígenes permitidos ──────────────────────────────────────────
 CORS_ALLOW_ALL_ORIGINS = False  # Solo los orígenes listados abajo tienen acceso
-CORS_ALLOWED_ORIGINS = [
+_CORS_BASE = [
     'https://agenda-pi-bice.vercel.app',
+    'https://dist-nine-gold-65.vercel.app',
     'http://localhost:8081',
     'http://localhost:19006',
     'http://127.0.0.1:8081',
 ]
+# Lee la URL del frontend desde la variable de Railway y la añade si existe
+_FRONTEND_URL = os.environ.get('FRONTEND_URL', '').strip().rstrip('/')
+if _FRONTEND_URL and _FRONTEND_URL not in _CORS_BASE:
+    _CORS_BASE.append(_FRONTEND_URL)
+
+CORS_ALLOWED_ORIGINS = _CORS_BASE
 # Permite el token JWT en los headers CORS
 CORS_ALLOW_HEADERS = [
     'accept',
