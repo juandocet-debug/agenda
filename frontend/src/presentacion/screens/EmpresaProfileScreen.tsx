@@ -96,7 +96,7 @@ export const EmpresaProfileScreen = ({ navigation }: any) => {
     const baseUrl = Platform.OS === 'web'
       ? window.location.origin
       : 'http://localhost:19006';
-    const link = `${baseUrl}/reservar/${empresaId}`;
+    const link = `${baseUrl}/agendar/${empresaId}`;
     try {
       if (Platform.OS === 'web' && navigator.clipboard) {
         await navigator.clipboard.writeText(link);
@@ -234,29 +234,29 @@ const s = StyleSheet.create({
   avatar: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
   avatarImage: { width: 56, height: 56, borderRadius: 28, marginRight: 15 },
   profileText: { flex: 1 },
-  profileName: { fontSize: 18, fontWeight: '700', color: '#1A1C1E', marginBottom: 2 },
+  profileName: { fontSize: 18, fontWeight: '500', color: '#1A1C1E', marginBottom: 2 },
   profileSubtitle: { fontSize: 13, color: '#6B7280' },
 
   actionCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', marginHorizontal: 20, marginVertical: 15, padding: 16, borderRadius: 16 },
   actionIcon: { marginRight: 15 },
   actionTextWrapper: { flex: 1 },
-  actionTitle: { fontSize: 14, fontWeight: '700', color: '#1A1C1E', marginBottom: 2 },
+  actionTitle: { fontSize: 14, fontWeight: '500', color: '#1A1C1E', marginBottom: 2 },
   actionSubtitle: { fontSize: 13, color: '#6B7280' },
   badge: { backgroundColor: colors.primary, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 },
-  badgeText: { color: '#FFF', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' },
+  badgeText: { color: '#FFF', fontSize: 10, fontWeight: '500', textTransform: 'uppercase' },
 
   menuList: { borderTopWidth: 1, borderTopColor: '#F3F4F6', marginTop: 10 },
   menuItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 20, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
   menuItemLast: { borderBottomWidth: 0 },
   itemIcon: { marginRight: 15, width: 24, textAlign: 'center' },
   itemTextWrapper: { flex: 1 },
-  itemTitle: { fontSize: 16, fontWeight: '600', color: '#1A1C1E', marginBottom: 2 },
+  itemTitle: { fontSize: 16, fontWeight: '500', color: '#1A1C1E', marginBottom: 2 },
   itemSubtitle: { fontSize: 13, color: '#6B7280' },
 
   footer: { borderTopWidth: 1, borderTopColor: '#F3F4F6', marginTop: 10 },
   footerItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 20, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
   footerItemLast: { borderBottomWidth: 0 },
-  footerItemTitle: { flex: 1, fontSize: 16, fontWeight: '600', color: '#1A1C1E' },
+  footerItemTitle: { flex: 1, fontSize: 16, fontWeight: '500', color: '#1A1C1E' },
 
   linkCard: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
@@ -270,6 +270,6 @@ const s = StyleSheet.create({
     backgroundColor: '#DBEAFE',
     justifyContent: 'center', alignItems: 'center',
   },
-  linkTitle: { fontSize: 14, fontWeight: '700', color: colors.primary, marginBottom: 2 },
+  linkTitle: { fontSize: 14, fontWeight: '500', color: colors.primary, marginBottom: 2 },
   linkSubtitle: { fontSize: 12, color: '#3B82F6' },
 });

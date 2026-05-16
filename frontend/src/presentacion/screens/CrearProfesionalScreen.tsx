@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.body,
-    fontWeight: '600',
+    fontWeight: '500',
     color: colors.primary,
     marginBottom: 8,
   },

@@ -41,3 +41,4 @@ export class ApiPublicacionRepository implements PublicacionRepository {
     if (!response.ok || !data.ok) throw new Error(data.error || 'Error al eliminar');
   }
 }
+

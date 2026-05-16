@@ -34,7 +34,7 @@ const EmpresaCardItem = ({ empresa, isPrimary, navigation, toggleEmpresa, delete
             <Image source={{ uri: empresa.logo_url }} style={styles.newCardAvatar} />
           ) : (
             <View style={[styles.newCardAvatar, { backgroundColor: '#F0F4F8', justifyContent: 'center', alignItems: 'center' }]}>
-              <Text style={{ fontSize: 20, fontWeight: 'bold', color: colors.primary }}>
+              <Text style={{ fontSize: 20, fontWeight: '500', color: colors.primary }}>
                 {empresa.nombre.charAt(0).toUpperCase()}
               </Text>
             </View>
@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
   },
   newCardBadgeText: {
     fontSize: 9,
-    fontWeight: 'bold',
+    fontWeight: '500',
     color: '#333',
   },
   newCardInfo: {
@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
   },
   newCardTitle: {
     fontSize: 15,
-    fontWeight: '800',
+    fontWeight: '500',
     color: '#111',
   },
   newCardSubtitle: {
@@ -476,7 +476,7 @@ const styles = StyleSheet.create({
   },
   newCardActionBtnText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '500',
     color: '#111',
   },
 });

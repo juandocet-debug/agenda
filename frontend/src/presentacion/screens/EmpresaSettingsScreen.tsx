@@ -85,12 +85,12 @@ export const EmpresaSettingsScreen = () => {
         </Text>
         <Card style={[styles.card, { borderColor: primaryColor, borderWidth: 2 }]}>
           <View style={[styles.previewHeader, { backgroundColor: primaryColor }]}>
-            <Text style={{color: '#FFF', fontWeight: 'bold', fontSize: 16}}>Reserva de Cita</Text>
+            <Text style={{color: '#FFF', fontWeight: '500', fontSize: 16}}>Reserva de Cita</Text>
           </View>
           <View style={{padding: 20}}>
             <Text style={{color: '#333', fontSize: 14, marginBottom: 15}}>Elige tu servicio y horario.</Text>
             <TouchableOpacity style={[styles.previewButton, { backgroundColor: primaryColor }]}>
-              <Text style={{color: '#FFF', fontWeight: 'bold'}}>Agendar Ahora</Text>
+              <Text style={{color: '#FFF', fontWeight: '500'}}>Agendar Ahora</Text>
             </TouchableOpacity>
           </View>
         </Card>

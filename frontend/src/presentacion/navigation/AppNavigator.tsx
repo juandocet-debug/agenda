@@ -8,11 +8,18 @@ import { EmpresaNavigator } from './EmpresaNavigator';
 import { EmpresaDetailScreen } from '../screens/EmpresaDetailScreen';
 import { EditarEmpresaScreen } from '../screens/EditarEmpresaScreen';
 import { ReservarScreen } from '../screens/ReservarScreen';
+import { AgendarPublicoScreen } from '../screens/AgendarPublicoScreen';
+import { CarritoScreen } from '../screens/CarritoScreen';
+import { RegistroClienteScreen } from '../screens/RegistroClienteScreen';
 import { ConfirmacionReservaScreen } from '../screens/ConfirmacionReservaScreen';
+import { ClienteHomeScreen } from '../screens/ClienteHomeScreen';
+import { ExplorarEmpresasScreen } from '../screens/ExplorarEmpresasScreen';
+import { MuroPublicacionesScreen } from '../screens/MuroPublicacionesScreen';
 import { HorariosConfigScreen } from '../screens/HorariosConfigScreen';
 import { obtenerTokenLocal } from '../../core/infraestructura/auth/TokenStorageAdapter';
 import { colors } from '../theme/colors';
 import { useInactividadLogout } from '../hooks/useInactividadLogout';
+import { CarritoProvider } from '../../core/aplicacion/carrito/CarritoContext';
 
 const Stack = createNativeStackNavigator();
 
@@ -21,8 +28,10 @@ const linking = {
   prefixes: ['http://localhost:19006', 'https://agendapro.app', 'agendaapp://'],
   config: {
     screens: {
-      ReservarPublico: 'reservar/:empresaId',
+      AgendarPublico: 'agendar/:empresaId',   // Nuevo flujo público
+      ReservarPublico: 'reservar/:empresaId',  // Flujo anterior (compatibilidad)
       ConfirmacionReserva: 'pago-exitoso/:citaId',
+      Carrito: 'carrito',
       Login: 'login',
       EmpresaTabs: 'empresa',
     },
@@ -90,32 +99,37 @@ export const AppNavigator = () => {
   }
 
   return (
-    <View style={{ flex: 1 }} {...panResponder.panHandlers}>
-      <NavigationContainer
-        linking={linking}
-        ref={navigationRef}
-        onStateChange={handleNavStateChange}
-      >
-        <Stack.Navigator
-          initialRouteName={initialRoute}
-          screenOptions={{ headerShown: false, animation: 'fade' }}
+    <CarritoProvider>
+      <View style={{ flex: 1 }} {...panResponder.panHandlers}>
+        <NavigationContainer
+          linking={linking}
+          ref={navigationRef}
+          onStateChange={handleNavStateChange}
         >
-          {/* Ruta pública — clientes sin login, NO afectada por el timer */}
-          <Stack.Screen
-            name="ReservarPublico"
-            component={ReservarScreen}
-            options={{ animation: 'slide_from_bottom' }}
-          />
-          <Stack.Screen name="Login"       component={LoginScreen} />
-          <Stack.Screen name="MainTabs"    component={MainNavigator} />
-          <Stack.Screen name="EmpresaTabs" component={EmpresaNavigator} />
-          <Stack.Screen name="EmpresaDetail"       component={EmpresaDetailScreen}       options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="EditarEmpresa"       component={EditarEmpresaScreen}       options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="HorariosConfig"      component={HorariosConfigScreen}      options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="CrearCita"           component={ReservarScreen} />
-          <Stack.Screen name="ConfirmacionReserva" component={ConfirmacionReservaScreen} />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </View>
+          <Stack.Navigator
+            initialRouteName={initialRoute}
+            screenOptions={{ headerShown: false, animation: 'fade' }}
+          >
+            {/* Rutas públicas — sin login requerido */}
+            <Stack.Screen name="AgendarPublico" component={AgendarPublicoScreen} options={{ animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="Carrito" component={CarritoScreen} options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="RegistroCliente" component={RegistroClienteScreen} options={{ animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="ClienteHome" component={ClienteHomeScreen} options={{ animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="ExplorarEmpresas" component={ExplorarEmpresasScreen} options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="MuroPublicaciones" component={MuroPublicacionesScreen} options={{ animation: 'slide_from_right' }} />
+            {/* Se mapea la ruta antigua al nuevo componente para retrocompatibilidad de links ya compartidos */}
+            <Stack.Screen name="ReservarPublico" component={AgendarPublicoScreen} options={{ animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="MainTabs" component={MainNavigator} />
+            <Stack.Screen name="EmpresaTabs" component={EmpresaNavigator} />
+            <Stack.Screen name="EmpresaDetail" component={EmpresaDetailScreen} options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="EditarEmpresa" component={EditarEmpresaScreen} options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="HorariosConfig" component={HorariosConfigScreen} options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="CrearCita" component={ReservarScreen} />
+            <Stack.Screen name="ConfirmacionReserva" component={ConfirmacionReservaScreen} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </View>
+    </CarritoProvider>
   );
 };

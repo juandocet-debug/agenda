@@ -8,6 +8,9 @@ export interface TokenJWT {
   refresh: string;
   rol: string;
   usuario_id?: string;
+  nombre?: string;
+  email?: string;
+  telefono?: string;
 }
 
 export interface RegistroData {

@@ -61,3 +61,4 @@ export class DjangoAuthAdapter implements AuthRepository {
     return Promise.resolve();
   }
 }
+

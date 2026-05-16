@@ -184,7 +184,7 @@ const st = StyleSheet.create({
   },
 
   greeting: { fontSize: 12, color: 'rgba(255,255,255,0.75)', fontWeight: '500' },
-  companyName: { fontSize: 18, color: '#FFF', fontWeight: '800', marginTop: 1 },
+  companyName: { fontSize: 18, color: '#FFF', fontWeight: '500', marginTop: 1 },
 
   bellBtn: {
     width: 42, height: 42, borderRadius: 21,
@@ -219,22 +219,22 @@ const st = StyleSheet.create({
     borderWidth: 1, borderColor: '#DBEAFE',
   },
   heroTag: {
-    fontSize: 11, fontWeight: '700', color: colors.primary,
+    fontSize: 11, fontWeight: '500', color: colors.primary,
     backgroundColor: '#DBEAFE', paddingHorizontal: 10, paddingVertical: 3,
     borderRadius: 20, alignSelf: 'flex-start', marginBottom: 8,
     overflow: 'hidden',
   },
-  heroTitle: { fontSize: 20, fontWeight: '800', color: '#1E3A5F', lineHeight: 26, marginBottom: 14 },
+  heroTitle: { fontSize: 20, fontWeight: '500', color: '#1E3A5F', lineHeight: 26, marginBottom: 14 },
   heroBtn: {
     backgroundColor: colors.primary, paddingHorizontal: 20, paddingVertical: 9,
     borderRadius: 12, alignSelf: 'flex-start',
   },
-  heroBtnText: { color: '#FFF', fontWeight: '700', fontSize: 13 },
+  heroBtnText: { color: '#FFF', fontWeight: '500', fontSize: 13 },
   heroIcon: { width: 80, alignItems: 'center' },
 
   /* Quick actions */
   sectionTitle: {
-    fontSize: 16, fontWeight: '800', color: '#1E293B',
+    fontSize: 16, fontWeight: '500', color: '#1E293B',
     marginHorizontal: 20, marginBottom: 12,
   },
   qaRow: {
@@ -255,7 +255,7 @@ const st = StyleSheet.create({
     backgroundColor: '#F8FAFC',
     borderWidth: 1, borderColor: '#F1F5F9',
   },
-  qaLabel: { fontSize: 13, fontWeight: '700', color: colors.primary },
+  qaLabel: { fontSize: 13, fontWeight: '500', color: colors.primary },
 
   /* Stats */
   statsRow: {
@@ -274,7 +274,7 @@ const st = StyleSheet.create({
     backgroundColor: '#F8FAFC',
     borderWidth: 1, borderColor: '#F1F5F9',
   },
-  statValue: { fontSize: 22, fontWeight: '800', color: colors.primary },
+  statValue: { fontSize: 22, fontWeight: '500', color: colors.primary },
   statLabel: { fontSize: 11, color: '#64748B', fontWeight: '500', textAlign: 'center' },
 
   /* Logout */
@@ -284,5 +284,5 @@ const st = StyleSheet.create({
     borderRadius: 12, borderWidth: 1, borderColor: '#FCA5A5',
     backgroundColor: '#FFF5F5',
   },
-  logoutText: { color: '#E53E3E', fontWeight: '700', fontSize: 14 },
+  logoutText: { color: '#E53E3E', fontWeight: '500', fontSize: 14 },
 });

@@ -176,12 +176,12 @@ const s = StyleSheet.create({
     backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#EFEFEF'
   },
   backBtn: { marginRight: 15 },
-  title: { fontSize: 20, fontWeight: 'bold', color: colors.text },
+  title: { fontSize: 20, fontWeight: '500', color: colors.text },
   headerAddBtn: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: colors.primary,
     paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, gap: 4
   },
-  headerAddText: { color: '#FFF', fontSize: 13, fontWeight: '700' },
+  headerAddText: { color: '#FFF', fontSize: 13, fontWeight: '500' },
 
   listContent: { padding: 15, paddingBottom: 100 },
   card: {
@@ -194,12 +194,13 @@ const s = StyleSheet.create({
   cardInfo: { flex: 1, marginLeft: 15 },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
   subtitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: colors.text, flex: 1 },
-  cardSubtitle: { fontSize: 14, color: colors.primary, fontWeight: '600' },
+  cardTitle: { fontSize: 16, fontWeight: '500', color: colors.text, flex: 1 },
+  cardSubtitle: { fontSize: 14, color: colors.primary, fontWeight: '500' },
   badge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
-  badgeText: { fontSize: 11, fontWeight: '700' },
+  badgeText: { fontSize: 11, fontWeight: '500' },
 
   emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
-  emptyTitle: { fontSize: 20, fontWeight: 'bold', color: colors.text, marginTop: 15, marginBottom: 5 },
+  emptyTitle: { fontSize: 20, fontWeight: '500', color: colors.text, marginTop: 15, marginBottom: 5 },
   emptySub: { fontSize: 15, color: colors.textSubtitle, textAlign: 'center', paddingHorizontal: 20 }
 });
+

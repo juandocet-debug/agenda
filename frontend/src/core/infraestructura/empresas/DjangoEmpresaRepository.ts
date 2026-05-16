@@ -66,7 +66,7 @@ export class DjangoEmpresaRepository implements EmpresaRepository {
     }
   }
 
-  async actualizarDatos(id: string, datos: Partial<Pick<Empresa, 'nombre' | 'ciudad' | 'pais' | 'direccion' | 'telefono' | 'correo_contacto' | 'moneda'>>): Promise<boolean> {
+  async actualizarDatos(id: string, datos: Partial<Pick<Empresa, 'nombre' | 'ciudad' | 'pais' | 'direccion' | 'telefono' | 'correo_contacto' | 'moneda'>> & { mensaje_advertencia?: string | null }): Promise<boolean> {
     try {
       const response = await fetch(`${BASE_URL}/empresas/admin/${id}/datos/`, {
         method: 'PATCH',
@@ -125,3 +125,4 @@ export class DjangoEmpresaRepository implements EmpresaRepository {
     }
   }
 }
+

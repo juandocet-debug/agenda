@@ -25,6 +25,7 @@ export const EditarEmpresaScreen = ({ route, navigation }: any) => {
   const [telefono, setTelefono] = useState('');
   const [correoContacto, setCorreoContacto] = useState('');
   const [moneda, setMoneda] = useState('');
+  const [mensajeAdvertencia, setMensajeAdvertencia] = useState('');
   
   const [showMonedaModal, setShowMonedaModal] = useState(false);
   
@@ -60,6 +61,7 @@ export const EditarEmpresaScreen = ({ route, navigation }: any) => {
             setTelefono(data.telefono || '');
             setCorreoContacto(data.correo_contacto || '');
             setMoneda(data.moneda || 'COP');
+            setMensajeAdvertencia(data.mensaje_advertencia || '');
             setLogoUrl(data.logo_url || null);
 
             // Fetch cities if country is already set
@@ -146,6 +148,7 @@ export const EditarEmpresaScreen = ({ route, navigation }: any) => {
         telefono: telefono.trim() || null,
         correo_contacto: correoContacto.trim() || null,
         moneda: moneda.trim() || 'COP',
+        mensaje_advertencia: mensajeAdvertencia.trim() || null,
       });
 
       if (ok) {
@@ -258,6 +261,18 @@ export const EditarEmpresaScreen = ({ route, navigation }: any) => {
             />
           </View>
 
+          <Text style={styles.sectionLabel}>TÉRMINOS Y CONDICIONES (PÚBLICO)</Text>
+          <View style={styles.fieldCard}>
+            <InputRow
+              icon="file-text"
+              label="Mensaje de Advertencia / Tarifas (Ten en cuenta)"
+              value={mensajeAdvertencia}
+              onChangeText={setMensajeAdvertencia}
+              placeholder="Ej: Las tarifas pueden variar..."
+              multiline={true}
+            />
+          </View>
+
           <Text style={styles.hint}>
             💡 La moneda (COP, USD) define cómo se muestran tus precios a los clientes. El teléfono se usa para WhatsApp.
           </Text>
@@ -327,6 +342,8 @@ const InputRow = ({
         placeholderTextColor={colors.textSubtitle}
         keyboardType={keyboardType}
         autoCapitalize={autoCapitalize}
+        multiline={true}
+        numberOfLines={icon === 'file-text' ? 3 : 1}
       />
     </View>
   </View>
@@ -436,7 +453,7 @@ const styles = StyleSheet.create({
   logoHint: { marginTop: 10, fontSize: 12, color: colors.textSubtitle },
 
   sectionLabel: {
-    fontSize: 11, fontWeight: '700', color: colors.textSubtitle,
+    fontSize: 11, fontWeight: '500', color: colors.textSubtitle,
     letterSpacing: 1.2, marginBottom: 10, marginTop: 20, marginLeft: 4,
   },
   fieldCard: {
@@ -472,7 +489,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF', width: '85%', borderRadius: 16, padding: 20, ...shadows.medium,
     maxHeight: '90%'
   },
-  modalTitle: { fontSize: 16, fontWeight: '700', color: colors.primary, marginBottom: 15, textAlign: 'center' },
+  modalTitle: { fontSize: 16, fontWeight: '500', color: colors.primary, marginBottom: 15, textAlign: 'center' },
   searchInput: {
     backgroundColor: 'rgba(0,0,0,0.03)', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10,
     marginBottom: 10, fontSize: 14, color: colors.primary, borderWidth: 1, borderColor: 'rgba(0,0,0,0.05)'
@@ -483,5 +500,5 @@ const styles = StyleSheet.create({
   },
   modalOptionText: { fontSize: 15, color: colors.text },
   modalCancel: { marginTop: 15, alignItems: 'center', paddingVertical: 10 },
-  modalCancelText: { fontSize: 15, fontWeight: '600', color: '#EF4444' }
+  modalCancelText: { fontSize: 15, fontWeight: '500', color: '#EF4444' }
 });

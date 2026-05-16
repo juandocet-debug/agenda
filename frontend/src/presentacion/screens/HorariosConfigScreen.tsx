@@ -1,21 +1,25 @@
 /**
  * HorariosConfigScreen.tsx — Configuración de horarios de la empresa.
- * UX: Acordeón. Todos los días visibles. Click = expandir y editar horas.
+ * Rediseño Premium: Glassmorphism, animaciones y tipografías envolventes.
  */
 
 import React, { useState, useCallback, useRef } from 'react';
 import {
   View, Text, TextInput, StyleSheet, SafeAreaView, TouchableOpacity,
-  ScrollView, Switch, ActivityIndicator, Alert, Platform, Animated
+  ScrollView, Switch, ActivityIndicator, Alert, Platform, LayoutAnimation, UIManager
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { colors } from '../theme/colors';
+import { colors, shadows } from '../theme/colors';
 import { obtenerTokenLocal } from '../../core/infraestructura/auth/TokenStorageAdapter';
 import { HorarioDia } from '../../core/domain/citas/IHorarioRepository';
 import { DjangoHorarioRepository } from '../../core/infraestructura/citas/DjangoHorarioRepository';
 import { ObtenerHorariosCasoUso } from '../../core/aplicacion/citas/ObtenerHorariosCasoUso';
 import { GuardarHorariosCasoUso } from '../../core/aplicacion/citas/GuardarHorariosCasoUso';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 const DIAS = [
   { num: 0, nombre: 'Lunes',     short: 'Lun' },
@@ -49,12 +53,10 @@ export const HorariosConfigScreen = ({ navigation }: any) => {
   const [loading,   setLoading]   = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [guardado,  setGuardado]  = useState(false);
-  const [expandido, setExpandido] = useState<number | null>(null); // día expandido
+  const [expandido, setExpandido] = useState<number | null>(null);
 
   const empresaIdRef = useRef<string | null>(null);
   const tokenRef     = useRef<string | null>(null);
-
-  // ── Cargar horarios del backend ───────────────────────────────────────────
   const [errorCarga, setErrorCarga] = useState<string | null>(null);
 
   const cargarHorarios = useCallback(async () => {
@@ -62,11 +64,13 @@ export const HorariosConfigScreen = ({ navigation }: any) => {
       setLoading(true);
       setErrorCarga(null);
       const token = await obtenerTokenLocal();
-      if (!token) { setErrorCarga('Sesión expirada. Vuelve a iniciar sesión.'); return; }
+      if (!token || !token.access) { 
+        setErrorCarga('Sesión expirada. Vuelve a iniciar sesión.'); 
+        return; 
+      }
       tokenRef.current = token.access;
 
-      // Usar usuario_id del token guardado directamente (más confiable que decodificar JWT)
-      const empId = token.usuario_id ||
+      const empId = token.usuario_id || token.id ||
         (() => {
           try {
             const b64 = token.access.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
@@ -74,9 +78,9 @@ export const HorariosConfigScreen = ({ navigation }: any) => {
           } catch { return null; }
         })();
 
-      if (!empId) { setErrorCarga('No se pudo identificar tu empresa. Vuelve a iniciar sesión.'); return; }
-      empresaIdRef.current = empId;
+      if (!empId) { setErrorCarga(`No se pudo identificar tu empresa. Token: ${JSON.stringify(token)}`); return; }
 
+      empresaIdRef.current = empId;
       const datosBackend = await obtenerCU.ejecutar(empresaIdRef.current!);
       const base = horarioDefault();
 
@@ -113,15 +117,20 @@ export const HorariosConfigScreen = ({ navigation }: any) => {
   };
 
   const toggleDia = (diaNum: number) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     const h = horarios.find(x => x.dia_semana === diaNum)!;
     if (!h.activo) {
-      // Al activar, expandir automáticamente
       actualizar(diaNum, 'activo', true);
       setExpandido(diaNum);
     } else {
       actualizar(diaNum, 'activo', false);
       if (expandido === diaNum) setExpandido(null);
     }
+  };
+
+  const handleExpand = (diaNum: number) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpandido(expandido === diaNum ? null : diaNum);
   };
 
   const guardar = async () => {
@@ -134,7 +143,7 @@ export const HorariosConfigScreen = ({ navigation }: any) => {
       setGuardando(true);
       await guardarCU.ejecutar(empresaIdRef.current!, horarios, tokenRef.current!);
       setGuardado(true);
-      if (Platform.OS !== 'web') Alert.alert('✅ Guardado', 'Horarios actualizados.');
+      setTimeout(() => setGuardado(false), 3000); // Volver al estado normal después de 3s
     } catch (e: any) {
       Alert.alert('Error', e.message || 'No se pudo guardar.');
     } finally {
@@ -144,201 +153,221 @@ export const HorariosConfigScreen = ({ navigation }: any) => {
 
   if (loading || errorCarga) {
     return (
-      <SafeAreaView style={s.container}>
-        <View style={s.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-            <Feather name="arrow-left" size={24} color={colors.primary} />
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+            <Feather name="chevron-left" size={28} color="#1E293B" />
           </TouchableOpacity>
-          <Text style={s.headerTitle}>Horarios de atención</Text>
-          <View style={{ width: 40 }} />
         </View>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 30 }}>
-          {loading
-            ? <ActivityIndicator size="large" color={colors.primary} />
-            : <>
-                <Feather name="wifi-off" size={48} color="#CBD5E1" />
-                <Text style={{ fontSize: 15, color: '#64748B', textAlign: 'center', marginTop: 16, lineHeight: 22 }}>
-                  {errorCarga}
-                </Text>
-                <TouchableOpacity
-                  style={{ marginTop: 24, backgroundColor: colors.primary, paddingHorizontal: 28, paddingVertical: 12, borderRadius: 24 }}
-                  onPress={cargarHorarios}
-                >
-                  <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 15 }}>Reintentar</Text>
-                </TouchableOpacity>
-              </>}
+        <View style={styles.centerBox}>
+          {loading ? (
+            <ActivityIndicator size="large" color={colors.primary} />
+          ) : (
+            <>
+              <Feather name="wifi-off" size={48} color="#CBD5E1" />
+              <Text style={styles.errorTextMsg}>{errorCarga}</Text>
+              <TouchableOpacity style={styles.btnRetry} onPress={cargarHorarios}>
+                <Text style={styles.btnRetryText}>Reintentar</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={s.container}>
-      {/* Header */}
-      <View style={s.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-          <Feather name="arrow-left" size={24} color={colors.primary} />
+    <SafeAreaView style={styles.container}>
+      {/* Header Premium */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Feather name="chevron-left" size={28} color="#1E293B" />
         </TouchableOpacity>
-        <Text style={s.headerTitle}>Horarios de atención</Text>
-        <TouchableOpacity style={[s.saveBtn, guardado && s.saveBtnDone]} onPress={guardar} disabled={guardando}>
-          {guardando
-            ? <ActivityIndicator size="small" color="#FFF" />
-            : <Feather name={guardado ? 'check' : 'save'} size={18} color="#FFF" />}
-        </TouchableOpacity>
+        <View>
+          <Text style={styles.headerTitle}>Horarios de Atención</Text>
+          <Text style={styles.headerSubtitle}>Define cuándo estás disponible</Text>
+        </View>
+        <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView contentContainerStyle={s.scroll}>
-        {/* Info */}
-        <View style={s.infoBox}>
-          <Feather name="info" size={15} color="#0369A1" style={{ marginRight: 8, marginTop: 1 }} />
-          <Text style={s.infoText}>Activa los días que atiendes y ajusta las horas tocando cada fila.</Text>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        
+        <View style={styles.infoPill}>
+          <Feather name="clock" size={16} color={colors.primary} />
+          <Text style={styles.infoPillText}>Activa los días y personaliza tus jornadas.</Text>
         </View>
 
-        {/* ── Cards de Días ─────────────────────────────────────────────── */}
+        {/* Tarjetas de Días */}
         {DIAS.map(dia => {
-          const h         = horarios.find(x => x.dia_semana === dia.num)!;
-          const abierto   = expandido === dia.num;
-          const invalido  = h.activo && !horasValidas(h.hora_inicio, h.hora_fin);
+          const h = horarios.find(x => x.dia_semana === dia.num)!;
+          const abierto = expandido === dia.num;
+          const invalido = h.activo && !horasValidas(h.hora_inicio, h.hora_fin);
 
           return (
-            <View key={dia.num} style={[
-              s.diaCard,
-              !h.activo && s.diaCardOff,
-              invalido   && s.diaCardError,
-            ]}>
-              {/* Fila principal: nombre + switch + botón expandir */}
-              <TouchableOpacity
-                style={s.diaRow}
-                onPress={() => h.activo && setExpandido(abierto ? null : dia.num)}
-                activeOpacity={h.activo ? 0.6 : 1}
+            <View key={dia.num} style={[styles.dayCard, !h.activo && styles.dayCardInactive, invalido && styles.dayCardError]}>
+              
+              <TouchableOpacity 
+                style={styles.dayRow} 
+                onPress={() => h.activo && handleExpand(dia.num)}
+                activeOpacity={h.activo ? 0.7 : 1}
               >
-                {/* Indicador de color */}
-                <View style={[s.diaIndicador, h.activo ? s.diaIndicadorOn : s.diaIndicadorOff]} />
+                <View style={[styles.statusIndicator, h.activo ? styles.statusIndicatorActive : styles.statusIndicatorInactive]} />
+                
+                <View style={styles.dayInfo}>
+                  <Text style={[styles.dayName, !h.activo && styles.dayNameInactive]}>{dia.nombre}</Text>
+                  {h.activo && !abierto && (
+                    <Text style={styles.daySummary}>{h.hora_inicio} — {h.hora_fin}</Text>
+                  )}
+                  {!h.activo && <Text style={styles.daySummaryClosed}>Cerrado</Text>}
+                </View>
 
-                <Text style={[s.diaNombre, !h.activo && s.diaNombreOff]}>{dia.nombre}</Text>
-
-                {h.activo && (
-                  <Text style={s.horaResumen}>{h.hora_inicio} – {h.hora_fin}</Text>
-                )}
-
-                <View style={s.diaRowRight}>
-                  {!h.activo && <Text style={s.cerradoText}>Cerrado</Text>}
+                <View style={styles.dayControls}>
                   <Switch
                     value={h.activo}
                     onValueChange={() => toggleDia(dia.num)}
-                    trackColor={{ false: '#E5E7EB', true: colors.primary + '70' }}
-                    thumbColor={h.activo ? colors.primary : '#CBD5E1'}
+                    trackColor={{ false: '#E2E8F0', true: colors.primary + '80' }}
+                    thumbColor={h.activo ? colors.primary : '#F8FAFC'}
                   />
                   {h.activo && (
-                    <Feather
-                      name={abierto ? 'chevron-up' : 'chevron-down'}
-                      size={18}
-                      color="#94A3B8"
-                      style={{ marginLeft: 6 }}
-                    />
+                    <View style={[styles.chevronBox, abierto && styles.chevronBoxActive]}>
+                      <Feather name={abierto ? "chevron-up" : "chevron-down"} size={20} color={abierto ? "#FFF" : colors.primary} />
+                    </View>
                   )}
                 </View>
               </TouchableOpacity>
 
-              {/* Panel expandido con inputs de hora */}
+              {/* Panel de Edición de Horas (Expandido) */}
               {abierto && h.activo && (
-                <View style={s.horasPanel}>
-                  <View style={s.horaGroup}>
-                    <Text style={s.horaLabel}>APERTURA</Text>
+                <View style={styles.timeEditor}>
+                  <View style={styles.timeBlock}>
+                    <View style={styles.timeHeader}>
+                      <Feather name="sun" size={14} color="#F59E0B" />
+                      <Text style={styles.timeLabel}>APERTURA</Text>
+                    </View>
                     <TextInput
-                      style={[s.horaInput, invalido && !horasValidas(h.hora_inicio, h.hora_fin) && s.horaInputError]}
+                      style={[styles.timeInput, invalido && !horasValidas(h.hora_inicio, h.hora_fin) && styles.timeInputError]}
                       value={h.hora_inicio}
                       onChangeText={v => actualizar(dia.num, 'hora_inicio', v)}
                       placeholder="08:00"
                       maxLength={5}
-                      selectTextOnFocus
+                      keyboardType="numbers-and-punctuation"
                     />
                   </View>
-                  <View style={s.horaSeparador}>
-                    <Feather name="arrow-right" size={18} color="#CBD5E1" />
+
+                  <View style={styles.timeDivider}>
+                    <Feather name="arrow-right" size={20} color="#CBD5E1" />
                   </View>
-                  <View style={s.horaGroup}>
-                    <Text style={s.horaLabel}>CIERRE</Text>
+
+                  <View style={styles.timeBlock}>
+                    <View style={styles.timeHeader}>
+                      <Feather name="moon" size={14} color="#6366F1" />
+                      <Text style={styles.timeLabel}>CIERRE</Text>
+                    </View>
                     <TextInput
-                      style={[s.horaInput, invalido && !horasValidas(h.hora_inicio, h.hora_fin) && s.horaInputError]}
+                      style={[styles.timeInput, invalido && !horasValidas(h.hora_inicio, h.hora_fin) && styles.timeInputError]}
                       value={h.hora_fin}
                       onChangeText={v => actualizar(dia.num, 'hora_fin', v)}
                       placeholder="18:00"
                       maxLength={5}
-                      selectTextOnFocus
+                      keyboardType="numbers-and-punctuation"
                     />
                   </View>
                 </View>
               )}
               {invalido && abierto && (
-                <Text style={s.errorText}>⚠ Verifica el formato HH:MM y que apertura sea antes del cierre</Text>
+                <View style={styles.errorBanner}>
+                  <Feather name="alert-triangle" size={14} color="#EF4444" style={{ marginRight: 6 }} />
+                  <Text style={styles.errorBannerTxt}>La hora de apertura debe ser antes del cierre.</Text>
+                </View>
               )}
+
             </View>
           );
         })}
 
-        {/* Botón guardar */}
-        <TouchableOpacity
-          style={[s.btnGuardar, guardado && s.btnGuardadoDone]}
-          onPress={guardar}
+        <View style={{ height: 100 }} />
+      </ScrollView>
+
+      {/* Floating Save Button */}
+      <View style={styles.floatingFooter}>
+        <TouchableOpacity 
+          style={[styles.saveFab, guardado && styles.saveFabDone]} 
+          onPress={guardar} 
           disabled={guardando}
         >
-          {guardando
-            ? <ActivityIndicator color="#FFF" />
-            : <>
-                <Feather name={guardado ? 'check-circle' : 'save'} size={20} color="#FFF" style={{ marginRight: 8 }} />
-                <Text style={s.btnGuardarText}>{guardado ? 'Guardado correctamente' : 'Guardar horarios'}</Text>
-              </>}
+          {guardando ? (
+            <ActivityIndicator color="#FFF" />
+          ) : (
+            <>
+              <Feather name={guardado ? 'check' : 'save'} size={22} color="#FFF" style={{ marginRight: 8 }} />
+              <Text style={styles.saveFabTxt}>{guardado ? '¡Guardado!' : 'Guardar Cambios'}</Text>
+            </>
+          )}
         </TouchableOpacity>
-
-        <Text style={s.footerHint}>
-          💡 Los cambios afectan solo las nuevas reservas. Las citas existentes no se modifican.
-        </Text>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 };
 
-const s = StyleSheet.create({
-  container:    { flex: 1, backgroundColor: '#F8FAFC' },
-  header:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: Platform.OS === 'web' ? 20 : 50, paddingBottom: 16, backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
-  backBtn:      { width: 40, height: 40, justifyContent: 'center', alignItems: 'flex-start' },
-  headerTitle:  { fontSize: 18, fontWeight: '700', color: '#1E293B' },
-  saveBtn:      { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' },
-  saveBtnDone:  { backgroundColor: '#10B981' },
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#F4F6F9' },
+  
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'web' ? 24 : 40,
+    paddingBottom: 24,
+    backgroundColor: '#F4F6F9',
+  },
+  backBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center', ...shadows.soft },
+  headerTitle: { fontSize: 24, fontWeight: '500', color: '#1E293B', textAlign: 'center' },
+  headerSubtitle: { fontSize: 13, color: '#64748B', textAlign: 'center', marginTop: 4 },
 
-  scroll: { padding: 16, paddingBottom: 80 },
-  infoBox: { flexDirection: 'row', backgroundColor: '#E0F2FE', borderRadius: 12, padding: 12, marginBottom: 20, alignItems: 'flex-start' },
-  infoText: { flex: 1, fontSize: 13, color: '#0369A1', lineHeight: 19 },
+  centerBox: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 30 },
+  errorTextMsg: { fontSize: 15, color: '#64748B', textAlign: 'center', marginTop: 16, lineHeight: 22 },
+  btnRetry: { marginTop: 24, backgroundColor: colors.primary, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 30, ...shadows.medium },
+  btnRetryText: { color: '#FFF', fontWeight: '500', fontSize: 15 },
 
-  diaCard:      { backgroundColor: '#FFF', borderRadius: 14, marginBottom: 10, overflow: 'hidden', borderWidth: 1.5, borderColor: '#F1F5F9', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2 },
-  diaCardOff:   { backgroundColor: '#F8FAFC', borderColor: '#F1F5F9', shadowOpacity: 0, elevation: 0 },
-  diaCardError: { borderColor: '#FCA5A5' },
+  scroll: { paddingHorizontal: 20, paddingBottom: 40 },
+  
+  infoPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(76, 91, 238, 0.1)', alignSelf: 'center', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, marginBottom: 24 },
+  infoPillText: { fontSize: 13, fontWeight: '500', color: colors.primary, marginLeft: 8 },
 
-  diaRow:       { flexDirection: 'row', alignItems: 'center', padding: 16 },
-  diaIndicador: { width: 4, height: 36, borderRadius: 4, marginRight: 14 },
-  diaIndicadorOn:  { backgroundColor: colors.primary },
-  diaIndicadorOff: { backgroundColor: '#E5E7EB' },
+  dayCard: { backgroundColor: '#FFF', borderRadius: 20, marginBottom: 16, ...shadows.medium, borderWidth: 1, borderColor: '#F8FAFC', overflow: 'hidden' },
+  dayCardInactive: { opacity: 0.6, elevation: 1, shadowOpacity: 0.02 },
+  dayCardError: { borderColor: '#FCA5A5', borderWidth: 2 },
 
-  diaNombre:    { flex: 1, fontSize: 16, fontWeight: '600', color: '#1E293B' },
-  diaNombreOff: { color: '#9CA3AF' },
+  dayRow: { flexDirection: 'row', alignItems: 'center', padding: 20 },
+  statusIndicator: { width: 6, height: 32, borderRadius: 4, marginRight: 16 },
+  statusIndicatorActive: { backgroundColor: colors.primary },
+  statusIndicatorInactive: { backgroundColor: '#E2E8F0' },
 
-  horaResumen:  { fontSize: 13, fontWeight: '600', color: '#64748B', marginRight: 8 },
+  dayInfo: { flex: 1 },
+  dayName: { fontSize: 18, fontWeight: '500', color: '#1E293B' },
+  dayNameInactive: { color: '#94A3B8' },
+  daySummary: { fontSize: 13, fontWeight: '500', color: colors.primary, marginTop: 4 },
+  daySummaryClosed: { fontSize: 13, fontWeight: '500', color: '#94A3B8', marginTop: 4 },
 
-  diaRowRight:  { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  cerradoText:  { fontSize: 12, color: '#9CA3AF', marginRight: 6 },
+  dayControls: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  chevronBox: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(76, 91, 238, 0.1)', justifyContent: 'center', alignItems: 'center' },
+  chevronBoxActive: { backgroundColor: colors.primary },
 
-  horasPanel:   { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 34, paddingBottom: 18, paddingTop: 4, gap: 8 },
-  horaGroup:    { flex: 1 },
-  horaLabel:    { fontSize: 10, fontWeight: '700', color: '#94A3B8', marginBottom: 6, letterSpacing: 0.8 },
-  horaInput:    { backgroundColor: '#F8FAFC', borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 20, fontWeight: '700', color: colors.primary, textAlign: 'center' },
-  horaInputError: { borderColor: '#FCA5A5', backgroundColor: '#FFF5F5' },
-  horaSeparador: { paddingTop: 24 },
+  timeEditor: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, paddingBottom: 24, paddingTop: 4 },
+  timeBlock: { flex: 1, alignItems: 'center', backgroundColor: '#F8FAFC', paddingVertical: 16, borderRadius: 16 },
+  timeHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, gap: 6 },
+  timeLabel: { fontSize: 11, fontWeight: '500', color: '#64748B', letterSpacing: 1 },
+  timeInput: { fontSize: 26, fontWeight: '500', color: '#1E293B', textAlign: 'center' },
+  timeInputError: { color: '#EF4444' },
+  
+  timeDivider: { paddingHorizontal: 16 },
 
-  errorText: { fontSize: 12, color: '#EF4444', paddingHorizontal: 34, paddingBottom: 12, fontWeight: '500' },
+  errorBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FEF2F2', paddingHorizontal: 20, paddingVertical: 12 },
+  errorBannerTxt: { fontSize: 12, fontWeight: '500', color: '#EF4444' },
 
-  btnGuardar:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 18, marginTop: 10 },
-  btnGuardadoDone: { backgroundColor: '#10B981' },
-  btnGuardarText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
-  footerHint:     { textAlign: 'center', color: '#94A3B8', fontSize: 12, lineHeight: 18, marginTop: 16 },
+  floatingFooter: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20, paddingBottom: Platform.OS === 'ios' ? 34 : 20, backgroundColor: 'transparent' },
+  saveFab: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary, height: 60, borderRadius: 30, ...shadows.strong },
+  saveFabDone: { backgroundColor: '#10B981' },
+  saveFabTxt: { color: '#FFF', fontSize: 17, fontWeight: '500', letterSpacing: 0.5 },
 });

@@ -166,7 +166,7 @@ const s = StyleSheet.create({
   
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: 24 },
   backBtn: { padding: 8, marginRight: 8, marginLeft: -8 },
-  title: { fontSize: 24, fontWeight: '800', color: '#1E293B' },
+  title: { fontSize: 24, fontWeight: '500', color: '#1E293B' },
 
   infoBanner: {
     backgroundColor: '#EFF6FF',
@@ -182,14 +182,14 @@ const s = StyleSheet.create({
     width: 48, height: 48, borderRadius: 12, backgroundColor: '#DBEAFE',
     justifyContent: 'center', alignItems: 'center', marginRight: 16,
   },
-  infoTitle: { fontSize: 16, fontWeight: '700', color: '#1E40AF', marginBottom: 4 },
+  infoTitle: { fontSize: 16, fontWeight: '500', color: '#1E40AF', marginBottom: 4 },
   infoText: { fontSize: 13, color: '#3B82F6', lineHeight: 20 },
 
   form: { backgroundColor: '#FFF', padding: 24, borderRadius: 16, shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 10, elevation: 2 },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#0F172A', marginBottom: 20 },
+  sectionTitle: { fontSize: 18, fontWeight: '500', color: '#0F172A', marginBottom: 20 },
   
   inputGroup: { marginBottom: 20 },
-  label: { fontSize: 14, fontWeight: '600', color: '#475569', marginBottom: 8 },
+  label: { fontSize: 14, fontWeight: '500', color: '#475569', marginBottom: 8 },
   input: {
     borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 12,
     paddingHorizontal: 16, paddingVertical: 14, fontSize: 15,
@@ -207,5 +207,5 @@ const s = StyleSheet.create({
     borderRadius: 12, paddingVertical: 16,
     alignItems: 'center', justifyContent: 'center',
   },
-  saveBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' }
+  saveBtnText: { color: '#FFF', fontSize: 16, fontWeight: '500' }
 });

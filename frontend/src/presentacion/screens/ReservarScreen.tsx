@@ -5,7 +5,7 @@ import { colors } from '../theme/colors';
 import { formatearMoneda } from '../../core/utils/currencyFormatter';
 
 // Interfaces
-interface Servicio { id: string; nombre: string; precio: string; tipo_servicio?: string; duracion?: number; descripcion?: string; imagen_url?: string; }
+interface Servicio { id: string; nombre: string; precio: string; tipo_servicio?: string; duracion?: number; duracion_minutos?: number; descripcion?: string; imagen_url?: string; }
 interface Profesional { id: string; nombre: string; foto_url?: string; especialidad?: string; }
 interface Slot { hora: string; }
 
@@ -245,7 +245,7 @@ export const ReservarScreen = ({ route, navigation }: any) => {
             <View style={{ flex: 1, marginLeft: 15 }}>
               <Text style={s.cardTitle}>{item.nombre}</Text>
               <Text style={s.cardSubtitle}>
-                {item.tipo_servicio === 'CITA' ? `${item.duracion} min | ` : ''}{formatearMoneda(item.precio, moneda)}
+                {item.tipo_servicio === 'CITA' ? `${item.duracion_minutos || 60} min | ` : ''}{formatearMoneda(item.precio, moneda)}
               </Text>
             </View>
             {servicioSeleccionado?.id === item.id && <Feather name="check-circle" size={20} color={colors.primary} />}
@@ -556,7 +556,7 @@ export const ReservarScreen = ({ route, navigation }: any) => {
       <SafeAreaView style={s.container}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 }}>
           <Feather name="x-circle" size={64} color="#CBD5E0" />
-          <Text style={{ fontSize: 22, fontWeight: '800', color: colors.text, marginTop: 20, textAlign: 'center' }}>
+          <Text style={{ fontSize: 22, fontWeight: '500', color: colors.text, marginTop: 20, textAlign: 'center' }}>
             Reserva cancelada
           </Text>
           <Text style={{ fontSize: 15, color: colors.textSubtitle, marginTop: 10, textAlign: 'center', lineHeight: 22 }}>
@@ -617,6 +617,8 @@ export const ReservarScreen = ({ route, navigation }: any) => {
   );
 };
 
+
+
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   header: { 
@@ -629,7 +631,7 @@ const s = StyleSheet.create({
     borderBottomWidth: 0.5,
     borderBottomColor: '#E0E0E0',
   },
-  headerTitle: { fontSize: 14, fontWeight: '700', color: colors.text },
+  headerTitle: { fontSize: 14, fontWeight: '500', color: colors.text },
   headerNavBtn: {
     width: 40, height: 40, borderRadius: 20,
     backgroundColor: '#F1F5F9',
@@ -650,12 +652,12 @@ const s = StyleSheet.create({
   progressFill: { height: '100%', backgroundColor: colors.primary },
   
   stepContainer: { flex: 1 },
-  stepTitle: { fontSize: 24, fontWeight: 'bold', marginBottom: 10, color: colors.text },
+  stepTitle: { fontSize: 24, fontWeight: '500', marginBottom: 10, color: colors.text },
   stepSubtitle: { fontSize: 16, color: colors.textSubtitle, marginBottom: 20 },
   
   card: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, padding: 15, borderRadius: 12, marginBottom: 15, borderWidth: 2, borderColor: 'transparent' },
   cardSelected: { borderColor: colors.primary },
-  cardTitle: { fontSize: 16, fontWeight: '600', color: colors.text },
+  cardTitle: { fontSize: 16, fontWeight: '500', color: colors.text },
   cardSubtitle: { fontSize: 14, color: colors.textSubtitle, marginTop: 4 },
   
   servicioImage: { width: 50, height: 50, borderRadius: 12 },
@@ -667,13 +669,13 @@ const s = StyleSheet.create({
   dateChip: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20, backgroundColor: colors.surface, borderWidth: 1, borderColor: '#EEE' },
   dateChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   dateChipText: { color: colors.text },
-  dateChipTextActive: { color: '#FFF', fontWeight: 'bold' },
+  dateChipTextActive: { color: '#FFF', fontWeight: '500' },
   
   slotsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 30 },
   slotChip: { width: '30%', paddingVertical: 12, borderRadius: 8, backgroundColor: colors.surface, alignItems: 'center', borderWidth: 1, borderColor: '#EEE' },
   slotChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   slotText: { color: colors.text, fontWeight: '500' },
-  slotTextActive: { color: '#FFF', fontWeight: 'bold' },
+  slotTextActive: { color: '#FFF', fontWeight: '500' },
   
   input: { backgroundColor: colors.surface, padding: 15, borderRadius: 10, marginBottom: 15, fontSize: 16, borderColor: '#EEE', borderWidth: 1 },
   
@@ -682,7 +684,7 @@ const s = StyleSheet.create({
   
   btnNext: { backgroundColor: colors.primary, padding: 16, borderRadius: 30, alignItems: 'center', marginTop: 'auto' },
   btnDisabled: { opacity: 0.5 },
-  btnNextText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
+  btnNextText: { color: '#FFF', fontSize: 16, fontWeight: '500' },
 
   // Chips de fecha (calendario horizontal)
   fechasRow: { flexDirection: 'row', gap: 10, paddingVertical: 6 },
@@ -692,8 +694,8 @@ const s = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   fechaChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  fechaChipDia:    { fontSize: 12, fontWeight: '600', color: '#64748B', marginBottom: 2 },
-  fechaChipNum:    { fontSize: 13, fontWeight: '700', color: '#1E293B' },
+  fechaChipDia:    { fontSize: 12, fontWeight: '500', color: '#64748B', marginBottom: 2 },
+  fechaChipNum:    { fontSize: 13, fontWeight: '500', color: '#1E293B' },
   fechaChipTextActive: { color: '#FFF' },
 
   // Estado vacío
@@ -702,15 +704,16 @@ const s = StyleSheet.create({
 
   // Resumen premium (Step 5)
   resumenIcono:       { alignItems: 'center', marginBottom: 10, marginTop: 10 },
-  resumenTitulo:      { fontSize: 26, fontWeight: '800', color: '#1E293B', textAlign: 'center' },
+  resumenTitulo:      { fontSize: 26, fontWeight: '500', color: '#1E293B', textAlign: 'center' },
   resumenSubtitulo:   { fontSize: 14, color: '#64748B', textAlign: 'center', marginBottom: 24, lineHeight: 20 },
   resumenCardPremium: { backgroundColor: '#FFF', borderRadius: 18, borderWidth: 1.5, borderColor: '#F1F5F9', marginBottom: 24, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 3 },
   resumenFila:        { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, paddingVertical: 14 },
   resumenIconoBadge:  { width: 36, height: 36, borderRadius: 10, backgroundColor: colors.primary + '12', justifyContent: 'center', alignItems: 'center', marginRight: 14 },
   resumenFilaTexto:   { flex: 1 },
-  resumenFilaLabel:   { fontSize: 11, fontWeight: '600', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
-  resumenFilaValor:   { fontSize: 16, fontWeight: '700', color: '#1E293B' },
+  resumenFilaLabel:   { fontSize: 11, fontWeight: '500', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
+  resumenFilaValor:   { fontSize: 16, fontWeight: '500', color: '#1E293B' },
   resumenFilaDetalle: { fontSize: 13, color: '#64748B', marginTop: 2 },
   resumenDivider:     { height: 1, backgroundColor: '#F1F5F9', marginHorizontal: 18 },
   btnConfirmar:       { flexDirection: 'row', shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 5 },
 });
+

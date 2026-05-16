@@ -156,7 +156,7 @@ export const EmpresaDetailScreen = ({ route, navigation }: any) => {
             <View style={styles.topBadgesContainer}>
               <View style={[styles.planBadge, { backgroundColor: empresa.tipo_plan === 'Pro' ? '#FFD700' : colors.primary }]}>
                 <Feather name="award" size={12} color={empresa.tipo_plan === 'Pro' ? '#000' : '#FFF'} />
-                <Text style={[typography.caption, { color: empresa.tipo_plan === 'Pro' ? '#000' : '#FFF', marginLeft: 4, fontWeight: 'bold' }]}>
+                <Text style={[typography.caption, { color: empresa.tipo_plan === 'Pro' ? '#000' : '#FFF', marginLeft: 4, fontWeight: '500' }]}>
                   Plan {empresa.tipo_plan || 'Free'}
                 </Text>
               </View>
@@ -187,7 +187,7 @@ export const EmpresaDetailScreen = ({ route, navigation }: any) => {
             </View>
 
             <View style={styles.profileInfoText}>
-              <Text style={[typography.h1, { color: colors.primary, fontSize: 26, fontWeight: 'bold' }]}>
+              <Text style={[typography.h1, { color: colors.primary, fontSize: 26, fontWeight: '500' }]}>
                 {empresa.nombre}
               </Text>
               <Text style={[typography.body, { color: colors.textSubtitle, marginTop: 4, fontSize: 16 }]}>
@@ -293,7 +293,7 @@ export const EmpresaDetailScreen = ({ route, navigation }: any) => {
           <Card style={styles.infoCardLarge}>
             <Feather name="calendar" size={24} color={colors.primary} style={styles.infoIcon} />
             <Text style={[typography.caption, { color: colors.textSubtitle }]}>Suscripción Actual</Text>
-            <Text style={[typography.body, { color: colors.primary, fontWeight: 'bold', marginTop: 4 }]}>
+            <Text style={[typography.body, { color: colors.primary, fontWeight: '500', marginTop: 4 }]}>
               {empresa.fecha_suscripcion || 'N/A'}
             </Text>
           </Card>
@@ -301,7 +301,7 @@ export const EmpresaDetailScreen = ({ route, navigation }: any) => {
           <Card style={styles.infoCard}>
             <Feather name="users" size={24} color={colors.primary} style={styles.infoIcon} />
             <Text style={[typography.caption, { color: colors.textSubtitle }]}>Usuarios</Text>
-            <Text style={[typography.body, { color: colors.primary, fontWeight: 'bold', marginTop: 4 }]}>
+            <Text style={[typography.body, { color: colors.primary, fontWeight: '500', marginTop: 4 }]}>
               {empresa.usuarios}
             </Text>
           </Card>
@@ -309,7 +309,7 @@ export const EmpresaDetailScreen = ({ route, navigation }: any) => {
           <Card style={styles.infoCard}>
             <Feather name="briefcase" size={24} color={colors.primary} style={styles.infoIcon} />
             <Text style={[typography.caption, { color: colors.textSubtitle }]}>Profesionales</Text>
-            <Text style={[typography.body, { color: colors.primary, fontWeight: 'bold', marginTop: 4 }]}>
+            <Text style={[typography.body, { color: colors.primary, fontWeight: '500', marginTop: 4 }]}>
               {empresa.profesionales}
             </Text>
           </Card>
@@ -317,7 +317,7 @@ export const EmpresaDetailScreen = ({ route, navigation }: any) => {
           <Card style={styles.infoCard}>
             <Feather name="message-square" size={24} color={colors.primary} style={styles.infoIcon} />
             <Text style={[typography.caption, { color: colors.textSubtitle }]}>Publicaciones</Text>
-            <Text style={[typography.body, { color: colors.primary, fontWeight: 'bold', marginTop: 4 }]}>
+            <Text style={[typography.body, { color: colors.primary, fontWeight: '500', marginTop: 4 }]}>
               {empresa.publicaciones || 0}
             </Text>
           </Card>
@@ -325,7 +325,7 @@ export const EmpresaDetailScreen = ({ route, navigation }: any) => {
           <Card style={styles.infoCard}>
             <Feather name="heart" size={24} color="#FF4B4B" style={styles.infoIcon} />
             <Text style={[typography.caption, { color: colors.textSubtitle }]}>Likes (Total)</Text>
-            <Text style={[typography.body, { color: colors.primary, fontWeight: 'bold', marginTop: 4 }]}>
+            <Text style={[typography.body, { color: colors.primary, fontWeight: '500', marginTop: 4 }]}>
               {empresa.likes || 0}
             </Text>
           </Card>
@@ -336,7 +336,7 @@ export const EmpresaDetailScreen = ({ route, navigation }: any) => {
           <Text style={[typography.h3, styles.sectionTitle, { marginBottom: 0 }]}>Rendimiento y Actividad</Text>
           <View style={styles.growthBadge}>
             <Feather name="trending-up" size={14} color="#00C48C" />
-            <Text style={[typography.caption, { color: '#00C48C', fontWeight: 'bold', marginLeft: 4 }]}>+15%</Text>
+            <Text style={[typography.caption, { color: '#00C48C', fontWeight: '500', marginLeft: 4 }]}>+15%</Text>
           </View>
         </View>
         <Card style={styles.dashboardCard}>
@@ -354,7 +354,7 @@ export const EmpresaDetailScreen = ({ route, navigation }: any) => {
                   <View style={styles.barBackground}>
                     <View style={[styles.barFill, { height: `${heightPercent}%`, backgroundColor: isToday ? colors.primary : 'rgba(0,196,140,0.4)' }]} />
                   </View>
-                  <Text style={[styles.barLabel, isToday && { color: colors.primary, fontWeight: 'bold' }]}>{labels[index]}</Text>
+                  <Text style={[styles.barLabel, isToday && { color: colors.primary, fontWeight: '500' }]}>{labels[index]}</Text>
                 </View>
               );
             })}

@@ -238,7 +238,7 @@ export const ComentariosScreen = () => {
         {respondiendo && (
           <View style={styles.respondingBar}>
             <Text style={styles.respondingText}>
-              Respondiendo a <Text style={{ fontWeight: '800' }}>{respondiendo.autor_nombre}</Text>
+              Respondiendo a <Text style={{ fontWeight: '500' }}>{respondiendo.autor_nombre}</Text>
             </Text>
             <TouchableOpacity onPress={() => setRespondiendo(null)}>
               <Feather name="x" size={16} color="#8E8E8E" />
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     width: 40, height: 40, borderRadius: 20,
     justifyContent: 'center', alignItems: 'center',
   },
-  headerTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '800', color: '#262626' },
+  headerTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '500', color: '#262626' },
 
   /* Post preview */
   pubPreview: {
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   pubThumb: { width: 54, height: 54, borderRadius: 8 },
-  pubTitulo: { fontSize: 13, fontWeight: '700', color: '#262626' },
+  pubTitulo: { fontSize: 13, fontWeight: '500', color: '#262626' },
   pubDesc: { fontSize: 12, color: '#8E8E8E', marginTop: 2 },
   divider: { height: 0.5, backgroundColor: '#DBDBDB' },
 
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
     width: 36, height: 36, borderRadius: 18,
     backgroundColor: '#EEF2FF', justifyContent: 'center', alignItems: 'center',
   },
-  comAvatarLetter: { fontSize: 15, fontWeight: '800', color: colors.primary },
+  comAvatarLetter: { fontSize: 15, fontWeight: '500', color: colors.primary },
   comBubble: {
     flex: 1,
     backgroundColor: '#F0F2F5', borderRadius: 18,
@@ -316,12 +316,12 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'flex-start',
     paddingTop: 10, minWidth: 28,
   },
-  likeCount: { fontSize: 11, color: '#C7C7C7', fontWeight: '600', marginTop: 2 },
-  comAutor: { fontSize: 12, fontWeight: '800', color: '#262626' },
+  likeCount: { fontSize: 11, color: '#C7C7C7', fontWeight: '500', marginTop: 2 },
+  comAutor: { fontSize: 12, fontWeight: '500', color: '#262626' },
   comTexto: { fontSize: 14, color: '#262626', marginTop: 2, lineHeight: 19 },
   comMeta: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 5, paddingLeft: 8 },
   comFecha: { fontSize: 11, color: '#8E8E8E' },
-  responderBtn: { fontSize: 12, fontWeight: '700', color: '#8E8E8E' },
+  responderBtn: { fontSize: 12, fontWeight: '500', color: '#8E8E8E' },
 
   /* Respuestas */
   respuestasContainer: { marginTop: 8, paddingLeft: 4 },
@@ -330,11 +330,11 @@ const styles = StyleSheet.create({
     width: 28, height: 28, borderRadius: 14,
     backgroundColor: '#EEF2FF', justifyContent: 'center', alignItems: 'center',
   },
-  respuestaAvatarLetter: { fontSize: 12, fontWeight: '800', color: colors.primary },
+  respuestaAvatarLetter: { fontSize: 12, fontWeight: '500', color: colors.primary },
 
   /* Empty */
   emptyComments: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
-  emptyTitle: { fontSize: 18, fontWeight: '800', color: '#262626' },
+  emptyTitle: { fontSize: 18, fontWeight: '500', color: '#262626' },
   emptySub: { fontSize: 13, color: '#8E8E8E' },
 
   /* Input bar */
@@ -355,5 +355,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEF2FF', justifyContent: 'center', alignItems: 'center',
   },
   input: { flex: 1, fontSize: 14, color: '#262626', maxHeight: 80 },
-  sendBtn: { color: '#3897F0', fontWeight: '800', fontSize: 14 },
+  sendBtn: { color: '#3897F0', fontWeight: '500', fontSize: 14 },
 });
+

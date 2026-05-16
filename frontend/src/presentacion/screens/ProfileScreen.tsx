@@ -49,7 +49,7 @@ export const ProfileScreen = () => {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.foldersContainer} contentContainerStyle={{ paddingRight: 20 }}>
           <Card variant="accent" style={styles.folderCard}>
             <Feather name="folder" size={24} color={colors.primary} style={{ marginBottom: 12 }} />
-            <Text style={[typography.body, { color: colors.primary, fontWeight: '600', marginBottom: 4 }]}>Diseños Dribbble</Text>
+            <Text style={[typography.body, { color: colors.primary, fontWeight: '500', marginBottom: 4 }]}>Diseños Dribbble</Text>
             <Text style={[typography.caption, { color: colors.textSubtitle, fontSize: 10 }]}>Creado: 28 Feb 2022</Text>
             <View style={styles.folderAvatars}>
                <View style={[styles.miniAvatar, { left: 0, zIndex: 3 }]}><Feather name="user" size={10} color={colors.primary}/></View>
@@ -75,7 +75,7 @@ export const ProfileScreen = () => {
                <Feather name="shopping-bag" size={20} color={colors.primary} />
             </View>
             <View style={styles.teamItemTexts}>
-              <Text style={[typography.body, { color: colors.primary, fontWeight: '600' }]}>App E-Commerce</Text>
+              <Text style={[typography.body, { color: colors.primary, fontWeight: '500' }]}>App E-Commerce</Text>
               <Text style={[typography.caption, { color: colors.textSubtitle, marginTop: 4 }]}>Proyecto en Progreso</Text>
             </View>
             <View style={styles.teamAvatars}>
@@ -90,7 +90,7 @@ export const ProfileScreen = () => {
                <Feather name="coffee" size={20} color={colors.primary} />
             </View>
             <View style={styles.teamItemTexts}>
-              <Text style={[typography.body, { color: colors.primary, fontWeight: '600' }]}>Proyecto Comida</Text>
+              <Text style={[typography.body, { color: colors.primary, fontWeight: '500' }]}>Proyecto Comida</Text>
               <Text style={[typography.caption, { color: colors.textSubtitle, marginTop: 4 }]}>Completado</Text>
             </View>
             <View style={styles.teamAvatars}>
@@ -105,7 +105,7 @@ export const ProfileScreen = () => {
                <Feather name="book-open" size={20} color={colors.primary} />
             </View>
             <View style={styles.teamItemTexts}>
-              <Text style={[typography.body, { color: colors.primary, fontWeight: '600' }]}>Proyecto E-Book</Text>
+              <Text style={[typography.body, { color: colors.primary, fontWeight: '500' }]}>Proyecto E-Book</Text>
               <Text style={[typography.caption, { color: colors.textSubtitle, marginTop: 4 }]}>Proyecto en Progreso</Text>
             </View>
             <View style={styles.teamAvatars}>

@@ -57,8 +57,8 @@ const Caption = ({ autor, texto }: { autor: string; texto?: string }) => {
 const cap = StyleSheet.create({
   row: { paddingHorizontal: 12, marginBottom: 5 },
   text: { fontSize: 13.5, color: '#262626', lineHeight: 19 },
-  autor: { fontWeight: '800', color: '#262626' },
-  hashtag: { color: '#00376B', fontWeight: '600' },
+  autor: { fontWeight: '500', color: '#262626' },
+  hashtag: { color: '#00376B', fontWeight: '500' },
   mas: { color: '#8E8E8E', fontWeight: '500' },
 });
 
@@ -135,7 +135,7 @@ const car = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.55)',
     paddingHorizontal: 9, paddingVertical: 4, borderRadius: 12,
   },
-  counterText: { color: '#FFF', fontSize: 12, fontWeight: '700' },
+  counterText: { color: '#FFF', fontSize: 12, fontWeight: '500' },
   arrow: {
     position: 'absolute', top: '50%', marginTop: -18,
     width: 36, height: 36, borderRadius: 18,
@@ -145,8 +145,10 @@ const car = StyleSheet.create({
   },
 });
 
-export const MuroPublicacionesScreen = ({ isOwner = false, empresaId }: { isOwner?: boolean; empresaId?: string }) => {
+export const MuroPublicacionesScreen = ({ route, isOwner = false, empresaId }: any) => {
   const navigation = useNavigation<any>();
+  const idFromRoute = route?.params?.empresaId;
+  const targetEmpresaId = empresaId || idFromRoute;
   const [publicaciones, setPublicaciones] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -164,7 +166,7 @@ export const MuroPublicacionesScreen = ({ isOwner = false, empresaId }: { isOwne
   useFocusEffect(
     useCallback(() => {
       cargar(0, true);
-    }, [empresaId])
+    }, [targetEmpresaId])
   );
 
   const cargar = async (pageNum = 0, isInitial = false) => {
@@ -176,7 +178,7 @@ export const MuroPublicacionesScreen = ({ isOwner = false, empresaId }: { isOwne
         setIsFetchingMore(true);
       }
 
-      let idEmpresa = empresaId;
+      let idEmpresa = targetEmpresaId;
       const token = await obtenerTokenLocal();
       let userId = token?.usuario_id;
       if (!userId && token?.access) {
@@ -467,7 +469,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 12,
     backgroundColor: '#FFF', borderBottomWidth: 0.5, borderBottomColor: '#DBDBDB',
   },
-  topTitle: { fontSize: 17, fontWeight: '800', color: '#262626' },
+  topTitle: { fontSize: 17, fontWeight: '500', color: '#262626' },
 
   feedContainer: {
     paddingBottom: 100, // Para la barra inferior
@@ -489,7 +491,7 @@ const s = StyleSheet.create({
     flex: 1, borderRadius: 18,
     backgroundColor: '#EEF2FF', justifyContent: 'center', alignItems: 'center',
   },
-  autor: { fontSize: 13.5, fontWeight: '800', color: '#262626' },
+  autor: { fontSize: 13.5, fontWeight: '500', color: '#262626' },
   verified: {
     width: 15, height: 15, borderRadius: 8,
     backgroundColor: '#3797EF', justifyContent: 'center', alignItems: 'center',
@@ -503,13 +505,13 @@ const s = StyleSheet.create({
   },
   actionsLeft: { flexDirection: 'row', alignItems: 'center', gap: 18 },
   actionGroup: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  actionCount: { fontSize: 14, fontWeight: '700', color: '#262626' },
+  actionCount: { fontSize: 14, fontWeight: '500', color: '#262626' },
   reservarBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
     backgroundColor: colors.primary,
     paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20,
   },
-  reservarText: { color: '#FFF', fontSize: 13, fontWeight: '800' },
+  reservarText: { color: '#FFF', fontSize: 13, fontWeight: '500' },
 
   /* Caption */
   verComentarios: { fontSize: 13.5, color: '#8E8E8E', marginBottom: 2 },
@@ -537,11 +539,12 @@ const s = StyleSheet.create({
     flex: 1, alignItems: 'center', justifyContent: 'center',
     paddingHorizontal: 40, gap: 12,
   },
-  emptyTitle: { fontSize: 22, fontWeight: '800', color: '#262626' },
+  emptyTitle: { fontSize: 22, fontWeight: '500', color: '#262626' },
   emptySub: { fontSize: 14, color: '#8E8E8E', textAlign: 'center', lineHeight: 20 },
   emptyBtn: {
     backgroundColor: colors.primary, paddingHorizontal: 24,
     paddingVertical: 12, borderRadius: 8, marginTop: 8,
   },
-  emptyBtnText: { color: '#FFF', fontWeight: '800', fontSize: 14 },
+  emptyBtnText: { color: '#FFF', fontWeight: '500', fontSize: 14 },
 });
+

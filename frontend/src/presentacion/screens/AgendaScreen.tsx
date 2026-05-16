@@ -258,39 +258,41 @@ const s = StyleSheet.create({
   divider: { height: 8, backgroundColor: '#F8FAFC', borderTopWidth: 1, borderTopColor: '#F1F5F9', borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
   
   daySummaryHeader: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingTop: 20, paddingBottom: 10 },
-  daySummaryLabel: { fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12, color: '#64748B', letterSpacing: 1 },
-  daySummaryDate: { fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 32, color: '#1E293B', lineHeight: 36 },
-  daySummaryDayName: { fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13, color: '#94A3B8', textTransform: 'capitalize' },
-  daySummaryCount: { fontFamily: 'PlusJakartaSans_600SemiBold', marginLeft: 'auto', fontSize: 14, color: '#475569', backgroundColor: '#F1F5F9', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
+  daySummaryLabel: { fontWeight: '500', fontSize: 12, color: '#64748B', letterSpacing: 1 },
+  daySummaryDate: { fontWeight: '500', fontSize: 32, color: '#1E293B', lineHeight: 36 },
+  daySummaryDayName: { fontWeight: '500', fontSize: 13, color: '#94A3B8', textTransform: 'capitalize' },
+  daySummaryCount: { fontWeight: '500', marginLeft: 'auto', fontSize: 14, color: '#475569', backgroundColor: '#F1F5F9', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
   
   listContainer: { paddingHorizontal: 20, paddingBottom: 40 },
   eventCard: { backgroundColor: '#F1F5F9', borderRadius: 16, padding: 16, marginBottom: 12 },
   eventTimeRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
-  eventTime: { fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13, color: '#64748B' },
-  eventTitle: { fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 15, color: '#1E293B', marginBottom: 8, letterSpacing: 0.5 },
+  eventTime: { fontWeight: '500', fontSize: 13, color: '#64748B' },
+  eventTitle: { fontWeight: '500', fontSize: 15, color: '#1E293B', marginBottom: 8, letterSpacing: 0.5 },
   eventFooterRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  eventClientName: { fontFamily: 'PlusJakartaSans_500Medium', fontSize: 13, color: '#475569' },
+  eventClientName: { fontWeight: '500', fontSize: 13, color: '#475569' },
   statusDot: { width: 8, height: 8, borderRadius: 4 },
 
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 40 },
-  emptyText: { fontFamily: 'PlusJakartaSans_500Medium', marginTop: 12, fontSize: 14, color: '#94A3B8' },
+  emptyText: { fontWeight: '500', marginTop: 12, fontSize: 14, color: '#94A3B8' },
 
   // Modal
   modalOverlay: { flex: 1, justifyContent: 'flex-end' },
   modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(15, 23, 42, 0.4)' },
   modalContent: { backgroundColor: '#FFF', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, minHeight: '50%', shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 10 },
   modalHandle: { width: 40, height: 4, backgroundColor: '#E2E8F0', borderRadius: 2, alignSelf: 'center', marginBottom: 20 },
-  modalTitle: { fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 20, color: '#1E293B', marginBottom: 24 },
+  modalTitle: { fontWeight: '500', fontSize: 20, color: '#1E293B', marginBottom: 24 },
   
   detailRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 20 },
   detailTextCol: { marginLeft: 16, flex: 1 },
-  detailLabel: { fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
-  detailValue: { fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 16, color: '#1E293B' },
-  detailSub: { fontFamily: 'PlusJakartaSans_400Regular', fontSize: 14, color: '#64748B', marginTop: 2 },
+  detailLabel: { fontWeight: '500', fontSize: 12, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
+  detailValue: { fontWeight: '500', fontSize: 16, color: '#1E293B' },
+  detailSub: { fontSize: 14, color: '#64748B', marginTop: 2 },
   
   badgeInfo: { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, marginTop: 4 },
-  badgeInfoText: { fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12 },
+  badgeInfoText: { fontWeight: '500', fontSize: 12 },
 
   closeBtn: { marginTop: 'auto', backgroundColor: '#F1F5F9', paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
-  closeBtnText: { fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 15, color: '#1E293B' }
+  closeBtnText: { fontWeight: '500', fontSize: 15, color: '#1E293B' }
 });
+
+

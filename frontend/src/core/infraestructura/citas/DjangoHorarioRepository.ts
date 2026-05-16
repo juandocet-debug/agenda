@@ -1,6 +1,6 @@
 import { HorarioDia, IHorarioRepository } from '../../domain/citas/IHorarioRepository';
 
-const API_BASE_URL = 'https://agenda-production-ae37.up.railway.app';
+const API_BASE_URL = API_BASE;
 const TIMEOUT_MS   = 15000; // 15 s — para que nunca quede spinner colgado
 
 /** Fetch con timeout. Lanza AbortError si supera TIMEOUT_MS. */
@@ -32,3 +32,4 @@ export class DjangoHorarioRepository implements IHorarioRepository {
     if (!res.ok || !data.ok) throw new Error(data.error || 'Error guardando horarios');
   }
 }
+

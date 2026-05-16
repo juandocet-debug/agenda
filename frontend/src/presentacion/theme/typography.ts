@@ -1,15 +1,15 @@
 export const typography = {
   h1: {
     fontSize: 28,
-    fontWeight: '700' as const,
+    fontWeight: '500' as const,
   },
   h2: {
     fontSize: 22,
-    fontWeight: '600' as const,
+    fontWeight: '500' as const,
   },
   h3: {
     fontSize: 18,
-    fontWeight: '600' as const,
+    fontWeight: '500' as const,
   },
   body: {
     fontSize: 14,

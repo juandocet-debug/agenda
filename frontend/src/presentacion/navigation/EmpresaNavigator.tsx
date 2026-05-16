@@ -51,7 +51,7 @@ const EmpresaTabs = ({ navigation }: any) => {
           },
           tabBarLabelStyle: {
             fontSize: 11,
-            fontWeight: '600',
+            fontWeight: '500',
             marginTop: 5,
           },
           tabBarIcon: ({ color, size }) => {

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -14,6 +14,8 @@ import {
   Image,
   PanResponder
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Google from 'expo-auth-session/providers/google';
 import { Feather, FontAwesome5 } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
@@ -76,6 +78,58 @@ export const LoginScreen = ({ navigation }: any) => {
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
+  // Google Auth
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    webClientId: '776135233648-4cisjd6nonsphm2qklc95irnod7cqtf5.apps.googleusercontent.com', 
+  });
+
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { authentication } = response;
+      if (authentication?.accessToken || authentication?.idToken) {
+        const token = authentication.idToken || authentication.accessToken;
+        if (token) {
+          loginConGoogle(token);
+        }
+      }
+    }
+  }, [response]);
+
+  const loginConGoogle = async (token: string) => {
+    setIsLoading(true); setErrorMessage('');
+    try {
+      const res = await fetch(`https://agenda-production-ae37.up.railway.app/api/auth/google/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Error autenticando con Google.');
+      
+      await AsyncStorage.setItem('cliente_token', data.access);
+      await AsyncStorage.setItem('cliente_nombre', data.datos?.nombre || '');
+      await AsyncStorage.setItem('cliente_id', data.datos?.usuario_id || '');
+      await AsyncStorage.setItem('cliente_email', data.datos?.email || '');
+      
+      const rol = data.datos?.rol;
+      if (rol === 'superadmin') {
+        navigation.replace('MainTabs');
+      } else if (rol === 'cliente') {
+        if (navigation.canGoBack()) {
+          navigation.goBack();
+        } else {
+          navigation.replace('ClienteHome');
+        }
+      } else {
+        navigation.replace('EmpresaTabs');
+      }
+    } catch (e: any) {
+      setErrorMessage(e.message || 'Error al iniciar con Google.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Cambiar de vista con animación
   const switchView = (newState: 'welcome' | 'login' | 'register') => {
     setErrorMessage('');
@@ -105,6 +159,12 @@ export const LoginScreen = ({ navigation }: any) => {
       setIsLoading(false);
       if (rol === 'superadmin') {
         navigation.replace('MainTabs');
+      } else if (rol === 'cliente') {
+        if (navigation.canGoBack()) {
+          navigation.goBack();
+        } else {
+          navigation.replace('ClienteHome');
+        }
       } else {
         navigation.replace('EmpresaTabs');
       }
@@ -156,7 +216,7 @@ export const LoginScreen = ({ navigation }: any) => {
           <SafeAreaView style={styles.welcomeContent}>
             
             <View style={styles.welcomeTextContainer}>
-              <Text style={[typography.h1, { color: '#FFF', fontSize: 20, textAlign: 'center', fontWeight: '800' }]}>
+              <Text style={[typography.h1, { color: '#FFF', fontSize: 20, textAlign: 'center', fontWeight: '500' }]}>
                 Agenda tu servicio <Text style={{ color: colors.textTitle }}>en segundos.</Text>
               </Text>
             </View>
@@ -171,7 +231,7 @@ export const LoginScreen = ({ navigation }: any) => {
 
             <View style={styles.welcomeBottomBar}>
               <TouchableOpacity style={styles.pillButtonDark} onPress={() => switchView('login')}>
-                <Text style={[typography.h3, { color: '#FFF', fontSize: 16, fontWeight: '700', letterSpacing: 1 }]}>INGRESAR</Text>
+                <Text style={[typography.h3, { color: '#FFF', fontSize: 16, fontWeight: '500', letterSpacing: 1 }]}>INGRESAR</Text>
               </TouchableOpacity>
               
               <Text style={[typography.body, { color: 'rgba(255,255,255,0.8)', textAlign: 'center', marginVertical: 15, fontSize: 14 }]}>
@@ -179,7 +239,7 @@ export const LoginScreen = ({ navigation }: any) => {
               </Text>
 
               <TouchableOpacity style={styles.pillButtonDark} onPress={() => switchView('register')}>
-                <Text style={[typography.h3, { color: '#FFF', fontSize: 16, fontWeight: '700', letterSpacing: 1 }]}>REGISTRARSE</Text>
+                <Text style={[typography.h3, { color: '#FFF', fontSize: 16, fontWeight: '500', letterSpacing: 1 }]}>REGISTRARSE</Text>
               </TouchableOpacity>
             </View>
           </SafeAreaView>
@@ -191,7 +251,7 @@ export const LoginScreen = ({ navigation }: any) => {
             <SafeAreaView style={{ paddingTop: 10 }}>
               <TouchableOpacity style={styles.backButton} onPress={() => switchView('welcome')}>
                 <Feather name="chevron-left" size={20} color="#FFF" />
-                <Text style={[typography.body, { color: '#FFF', marginLeft: 2, fontSize: 14, fontWeight: '600' }]}>Atrás</Text>
+                <Text style={[typography.body, { color: '#FFF', marginLeft: 2, fontSize: 14, fontWeight: '500' }]}>Atrás</Text>
               </TouchableOpacity>
             </SafeAreaView>
 
@@ -206,7 +266,7 @@ export const LoginScreen = ({ navigation }: any) => {
                 </Text>
 
                 {errorMessage ? (
-                  <Text style={{ color: '#FF3B30', fontSize: 13, marginBottom: 10, fontWeight: '600', backgroundColor: '#FFEBEA', padding: 10, borderRadius: 8, overflow: 'hidden', textAlign: 'center' }}>
+                  <Text style={{ color: '#FF3B30', fontSize: 13, marginBottom: 10, fontWeight: '500', backgroundColor: '#FFEBEA', padding: 10, borderRadius: 8, overflow: 'hidden', textAlign: 'center' }}>
                     {errorMessage}
                   </Text>
                 ) : null}
@@ -302,7 +362,7 @@ export const LoginScreen = ({ navigation }: any) => {
                   </TouchableOpacity>
                   {viewState === 'login' && (
                     <TouchableOpacity>
-                      <Text style={[typography.caption, { color: colors.primary, fontWeight: '600', fontSize: 12 }]}>¿Olvidó su contraseña?</Text>
+                      <Text style={[typography.caption, { color: colors.primary, fontWeight: '500', fontSize: 12 }]}>¿Olvidó su contraseña?</Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -330,8 +390,12 @@ export const LoginScreen = ({ navigation }: any) => {
                 </View>
 
                 <View style={styles.socialRow}>
-                  <TouchableOpacity style={styles.socialButton}><FontAwesome5 name="google" size={20} color="#DB4437" /></TouchableOpacity>
-                  <TouchableOpacity style={styles.socialButton}><FontAwesome5 name="apple" size={22} color="#000" /></TouchableOpacity>
+                  <TouchableOpacity style={styles.socialButton} onPress={() => promptAsync()}>
+                    <FontAwesome5 name="google" size={20} color="#DB4437" />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.socialButton}>
+                    <FontAwesome5 name="apple" size={22} color="#000" />
+                  </TouchableOpacity>
                 </View>
 
               </View>
@@ -430,14 +494,14 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     fontSize: 28,
     marginBottom: 10,
-    fontWeight: '800'
+    fontWeight: '500'
   },
   inputContainer: { width: '100%' },
   inputLabel: {
     color: '#888',
     marginBottom: 6,
     marginLeft: 5,
-    fontWeight: '600',
+    fontWeight: '500',
     fontSize: 12,
   },
   inputWrapper: {

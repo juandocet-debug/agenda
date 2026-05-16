@@ -258,12 +258,12 @@ const styles = StyleSheet.create({
   },
   headerBtn: { padding: 4 },
   headerBtnText: { fontSize: 15, color: colors.textSubtitle, fontWeight: '500' },
-  headerTitle: { fontSize: 16, fontWeight: '800', color: '#1C1E21' },
+  headerTitle: { fontSize: 16, fontWeight: '500', color: '#1C1E21' },
   shareBtn: {
     backgroundColor: colors.primary, paddingHorizontal: 16,
     paddingVertical: 8, borderRadius: 20,
   },
-  shareBtnText: { color: '#FFF', fontWeight: '800', fontSize: 13 },
+  shareBtnText: { color: '#FFF', fontWeight: '500', fontSize: 13 },
   content: { padding: 16, paddingBottom: 40 },
   textArea: {
     flexDirection: 'row', gap: 12, marginBottom: 20,
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEF2FF', justifyContent: 'center', alignItems: 'center',
   },
   tituloInput: {
-    fontSize: 16, color: '#1C1E21', fontWeight: '600',
+    fontSize: 16, color: '#1C1E21', fontWeight: '500',
     minHeight: 40,
   },
   descInput: {
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#EFF6FF', borderRadius: 12,
     padding: 12, marginBottom: 16,
   },
-  uploadingText: { fontSize: 13, color: colors.primary, fontWeight: '600' },
+  uploadingText: { fontSize: 13, color: colors.primary, fontWeight: '500' },
   imageGrid: {
     flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 16,
   },
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.55)',
     paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8,
   },
-  portadaText: { color: '#FFF', fontSize: 9, fontWeight: '700' },
+  portadaText: { color: '#FFF', fontSize: 9, fontWeight: '500' },
   addMoreImg: {
     width: thumbSize, height: thumbSize, borderRadius: 8,
     backgroundColor: '#F0F2F5', justifyContent: 'center', alignItems: 'center',
@@ -333,6 +333,7 @@ const styles = StyleSheet.create({
     width: 64, height: 64, borderRadius: 32,
     backgroundColor: '#EEF2FF', justifyContent: 'center', alignItems: 'center',
   },
-  addImgText: { fontSize: 16, fontWeight: '700', color: '#1C1E21' },
+  addImgText: { fontSize: 16, fontWeight: '500', color: '#1C1E21' },
   addImgSub: { fontSize: 12, color: colors.textSubtitle },
 });
+

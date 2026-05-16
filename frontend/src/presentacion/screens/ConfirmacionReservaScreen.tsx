@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking, Platform, SafeAreaView, ScrollView, Dimensions } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
 export const ConfirmacionReservaScreen = ({ route, navigation }: any) => {
-  const { citaId, checkoutUrl, resumen } = route.params || {};
+  const { citaId, checkoutUrl, resumen, empresaId } = route.params || {};
   const [abriendo, setAbriendo] = useState(false);
 
   const abrirPago = async () => {
@@ -84,7 +85,7 @@ export const ConfirmacionReservaScreen = ({ route, navigation }: any) => {
         <View style={s.infoBox}>
           <Feather name="info" size={18} color="#2563EB" style={s.infoIcon} />
           <Text style={s.infoText}>
-            Tienes <Text style={{ fontWeight: '700' }}>30 minutos</Text> para realizar el pago antes de que el espacio sea liberado.
+            Tienes <Text style={{ fontWeight: '500' }}>30 minutos</Text> para realizar el pago antes de que el espacio sea liberado.
           </Text>
         </View>
 
@@ -104,9 +105,28 @@ export const ConfirmacionReservaScreen = ({ route, navigation }: any) => {
             </TouchableOpacity>
           )}
 
+          {/* Ir al dashboard del cliente */}
+          <TouchableOpacity
+            style={s.btnCliente}
+            onPress={() => navigation.navigate('ClienteHome')}
+            activeOpacity={0.8}
+          >
+            <Feather name="user" size={16} color={colors.primary} style={{ marginRight: 6 }} />
+            <Text style={s.btnClienteTxt}>Ver mis reservas</Text>
+          </TouchableOpacity>
+
+          {/* Volver al agendador público — NO al admin */}
           <TouchableOpacity
             style={s.btnSecondary}
-            onPress={() => navigation.navigate('EmpresaTabs', { screen: 'Inicio' })}
+            onPress={async () => {
+              // Si viene del link de empresa, vuelve ahí; si no, solo goBack
+              const id = empresaId || resumen?.empresa_id;
+              if (id) {
+                navigation.navigate('AgendarPublico', { empresaId: id });
+              } else {
+                navigation.goBack();
+              }
+            }}
             activeOpacity={0.6}
           >
             <Text style={s.btnSecondaryText}>Volver al inicio</Text>
@@ -158,7 +178,7 @@ const s = StyleSheet.create({
     marginBottom: 16,
     borderWidth: 1, borderColor: 'rgba(34, 197, 94, 0.5)',
   },
-  title: { fontSize: 28, fontWeight: '800', color: '#FFFFFF', marginBottom: 8, letterSpacing: 0.5 },
+  title: { fontSize: 28, fontWeight: '500', color: '#FFFFFF', marginBottom: 8, letterSpacing: 0.5 },
   subtitle: { fontSize: 14, color: '#94A3B8', textAlign: 'center', lineHeight: 22, paddingHorizontal: 20 },
 
   ticketContainer: {
@@ -170,15 +190,15 @@ const s = StyleSheet.create({
     marginBottom: 24,
   },
   ticketTop: { padding: 30, alignItems: 'center' },
-  ticketHeaderLabel: { fontSize: 11, fontWeight: '700', color: '#94A3B8', letterSpacing: 1.5, marginBottom: 8 },
-  codeText: { fontSize: 42, fontWeight: '900', color: '#0F172A', letterSpacing: 4, marginBottom: 16 },
+  ticketHeaderLabel: { fontSize: 11, fontWeight: '500', color: '#94A3B8', letterSpacing: 1.5, marginBottom: 8 },
+  codeText: { fontSize: 42, fontWeight: '500', color: '#0F172A', letterSpacing: 4, marginBottom: 16 },
   badgeContainer: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: '#FFFBEB', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
     borderWidth: 1, borderColor: '#FDE68A',
   },
   badgeDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#D97706', marginRight: 6 },
-  badgeText: { fontSize: 11, fontWeight: '700', color: '#D97706', letterSpacing: 0.5 },
+  badgeText: { fontSize: 11, fontWeight: '500', color: '#D97706', letterSpacing: 0.5 },
 
   ticketDivider: { height: 1, position: 'relative', justifyContent: 'center', marginVertical: 0 },
   dashedLine: {
@@ -198,8 +218,8 @@ const s = StyleSheet.create({
   detailsGrid: { gap: 16 },
   detailItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   detailLabel: { fontSize: 14, color: '#64748B', fontWeight: '500' },
-  detailValue: { fontSize: 14, color: '#1E293B', fontWeight: '700', textAlign: 'right', flex: 1, marginLeft: 10 },
-  detailHighlight: { fontSize: 16, color: '#2563EB', fontWeight: '900' },
+  detailValue: { fontSize: 14, color: '#1E293B', fontWeight: '500', textAlign: 'right', flex: 1, marginLeft: 10 },
+  detailHighlight: { fontSize: 16, color: '#2563EB', fontWeight: '500' },
   placeholderText: { textAlign: 'center', color: '#94A3B8', fontStyle: 'italic' },
 
   infoBox: {
@@ -219,11 +239,18 @@ const s = StyleSheet.create({
     shadowColor: '#0F172A', shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2, shadowRadius: 8, elevation: 4,
   },
-  btnPrimaryText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
+  btnPrimaryText: { color: '#FFFFFF', fontSize: 16, fontWeight: '500' },
   
   btnSecondary: {
     paddingVertical: 16, borderRadius: 16, alignItems: 'center',
     backgroundColor: 'transparent',
   },
-  btnSecondaryText: { color: '#64748B', fontSize: 15, fontWeight: '600' },
+  btnSecondaryText: { color: '#64748B', fontSize: 15, fontWeight: '500' },
+  btnCliente: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 15, borderRadius: 16,
+    borderWidth: 1.5, borderColor: colors.primary,
+    backgroundColor: '#EFF6FF',
+  },
+  btnClienteTxt: { color: colors.primary, fontSize: 15, fontWeight: '500' },
 });

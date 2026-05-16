@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   },
   addBtnText: {
     color: '#FFF',
-    fontWeight: '700',
+    fontWeight: '500',
     fontSize: 12,
   },
   listContent: {
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
   },
   emptyProfBtnText: {
     color: '#FFF',
-    fontWeight: '700',
+    fontWeight: '500',
     fontSize: 14,
   },
   profCard: {
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
   },
   profAvatarLetter: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '500',
     color: colors.primary,
   },
   profInfo: {
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
   },
   profName: {
     fontSize: 15,
-    fontWeight: '800',
+    fontWeight: '500',
     color: colors.primary,
   },
   profSpecialty: {
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
   },
   profBadgeText: {
     fontSize: 10,
-    fontWeight: '800',
+    fontWeight: '500',
   },
   editBtn: {
     width: 32,
