@@ -80,10 +80,14 @@ export const LoginScreen = ({ navigation }: any) => {
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
-  // Google Auth
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    webClientId: '776135233648-4cisjd6nonsphm2qklc95irnod7cqtf5.apps.googleusercontent.com', 
-  });
+  // Google Auth — solo disponible en Web (Android necesita androidClientId de Google Cloud Console)
+  const isWeb = Platform.OS === 'web';
+  const [request, response, promptAsync] = Google.useAuthRequest(
+    isWeb
+      ? { webClientId: '776135233648-4cisjd6nonsphm2qklc95irnod7cqtf5.apps.googleusercontent.com' }
+      : { webClientId: '776135233648-4cisjd6nonsphm2qklc95irnod7cqtf5.apps.googleusercontent.com',
+          androidClientId: '776135233648-4cisjd6nonsphm2qklc95irnod7cqtf5.apps.googleusercontent.com' } // placeholder — no funcional en android pero evita el crash
+  );
 
   useEffect(() => {
     if (response?.type === 'success') {
