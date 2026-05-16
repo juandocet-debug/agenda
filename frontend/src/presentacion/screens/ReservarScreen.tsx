@@ -556,10 +556,10 @@ export const ReservarScreen = ({ route, navigation }: any) => {
       <SafeAreaView style={s.container}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 }}>
           <Feather name="x-circle" size={64} color="#CBD5E0" />
-          <Text style={{ fontSize: 22, fontWeight: '500', color: colors.text, marginTop: 20, textAlign: 'center' }}>
+          <Text style={{ fontSize: 22, fontWeight: '500', color: colors.textTitle, marginTop: 20, textAlign: 'center' }}>
             Reserva cancelada
           </Text>
-          <Text style={{ fontSize: 15, color: colors.textSubtitle, marginTop: 10, textAlign: 'center', lineHeight: 22 }}>
+          <Text style={{ fontSize: 15, color: colors.textTitleSubtitle, marginTop: 10, textAlign: 'center', lineHeight: 22 }}>
             Puedes cerrar esta ventana o volver a intentarlo cuando quieras.
           </Text>
           <TouchableOpacity
@@ -631,7 +631,7 @@ const s = StyleSheet.create({
     borderBottomWidth: 0.5,
     borderBottomColor: '#E0E0E0',
   },
-  headerTitle: { fontSize: 14, fontWeight: '500', color: colors.text },
+  headerTitle: { fontSize: 14, fontWeight: '500', color: colors.textTitle },
   headerNavBtn: {
     width: 40, height: 40, borderRadius: 20,
     backgroundColor: '#F1F5F9',
@@ -652,12 +652,12 @@ const s = StyleSheet.create({
   progressFill: { height: '100%', backgroundColor: colors.primary },
   
   stepContainer: { flex: 1 },
-  stepTitle: { fontSize: 24, fontWeight: '500', marginBottom: 10, color: colors.text },
+  stepTitle: { fontSize: 24, fontWeight: '500', marginBottom: 10, color: colors.textTitle },
   stepSubtitle: { fontSize: 16, color: colors.textSubtitle, marginBottom: 20 },
   
   card: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, padding: 15, borderRadius: 12, marginBottom: 15, borderWidth: 2, borderColor: 'transparent' },
   cardSelected: { borderColor: colors.primary },
-  cardTitle: { fontSize: 16, fontWeight: '500', color: colors.text },
+  cardTitle: { fontSize: 16, fontWeight: '500', color: colors.textTitle },
   cardSubtitle: { fontSize: 14, color: colors.textSubtitle, marginTop: 4 },
   
   servicioImage: { width: 50, height: 50, borderRadius: 12 },
@@ -668,19 +668,19 @@ const s = StyleSheet.create({
   
   dateChip: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20, backgroundColor: colors.surface, borderWidth: 1, borderColor: '#EEE' },
   dateChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  dateChipText: { color: colors.text },
+  dateChipText: { color: colors.textTitle },
   dateChipTextActive: { color: '#FFF', fontWeight: '500' },
   
   slotsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 30 },
   slotChip: { width: '30%', paddingVertical: 12, borderRadius: 8, backgroundColor: colors.surface, alignItems: 'center', borderWidth: 1, borderColor: '#EEE' },
   slotChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  slotText: { color: colors.text, fontWeight: '500' },
+  slotText: { color: colors.textTitle, fontWeight: '500' },
   slotTextActive: { color: '#FFF', fontWeight: '500' },
   
   input: { backgroundColor: colors.surface, padding: 15, borderRadius: 10, marginBottom: 15, fontSize: 16, borderColor: '#EEE', borderWidth: 1 },
   
   resumenCard: { backgroundColor: colors.surface, padding: 20, borderRadius: 12, marginBottom: 30 },
-  resumenRow: { fontSize: 16, marginBottom: 10, color: colors.text },
+  resumenRow: { fontSize: 16, marginBottom: 10, color: colors.textTitle },
   
   btnNext: { backgroundColor: colors.primary, padding: 16, borderRadius: 30, alignItems: 'center', marginTop: 'auto' },
   btnDisabled: { opacity: 0.5 },

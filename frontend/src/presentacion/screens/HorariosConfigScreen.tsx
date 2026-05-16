@@ -173,7 +173,7 @@ export const HorariosConfigScreen = ({ navigation }: any) => {
       }
       tokenRef.current = token.access;
 
-      const empId = token.usuario_id || token.id ||
+      const empId = token.usuario_id ||
         (() => {
           try {
             const b64 = token.access.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');

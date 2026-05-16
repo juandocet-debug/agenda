@@ -382,14 +382,14 @@ export const EmpresaDetailScreen = ({ route, navigation }: any) => {
             onPress={toggleEmpresa}
             disabled={loading}
           >
-            <Text style={[typography.button, { color: empresa.activa ? colors.primary : colors.surface }]}>
+            <Text style={[typography.caption, { color: empresa.activa ? colors.primary : colors.surface }]}>
               {empresa.activa ? 'Suspender Empresa' : 'Aprobar Empresa'}
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.dangerButton} onPress={deleteEmpresa} disabled={loading}>
             <Feather name="trash-2" size={18} color="#FF4B4B" style={{ marginRight: 8 }} />
-            <Text style={[typography.button, { color: '#FF4B4B' }]}>Eliminar Permanentemente</Text>
+            <Text style={[typography.caption, { color: '#FF4B4B' }]}>Eliminar Permanentemente</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
