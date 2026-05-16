@@ -16,6 +16,7 @@ import * as Google from 'expo-auth-session/providers/google';
 
 WebBrowser.maybeCompleteAuthSession();
 
+const API = 'https://agenda-production-ae37.up.railway.app';
 
 LocaleConfig.locales['es'] = {
   monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
@@ -221,43 +222,42 @@ export const AgendarPublicoScreen = ({ route, navigation }: any) => {
     const hoy = new Date();
     for (let i = 0; i < 90; i++) {
       const d = new Date(hoy); d.setDate(hoy.getDate() + i);
-      const pyDay = d.getDay() === 0 ? 6 : d.getDay() - 1; // 0 is Lunes in python
-      // FIX: formatear con hora LOCAL para evitar desfase por zona horaria (bug UTC)
+      const pyDay = d.getDay() === 0 ? 6 : d.getDay() - 1;
       const yyyy = d.getFullYear();
       const mm = String(d.getMonth() + 1).padStart(2, '0');
       const dd = String(d.getDate()).padStart(2, '0');
       const dateString = `${yyyy}-${mm}-${dd}`;
 
       if (diasHabilitados.includes(pyDay)) {
-        // Día disponible: fondo verde claro suave, texto oscuro
-        marks[dateString] = { 
-          disabled: false, 
-          customStyles: { 
-            container: { backgroundColor: '#E8F5E9', borderRadius: 4, elevation: 0 }, 
-            text: { color: '#374151', fontWeight: '500' } 
-          } 
+        // ✅ Día disponible: verde brillante de marca
+        marks[dateString] = {
+          disabled: false,
+          customStyles: {
+            container: { backgroundColor: '#DCFCE7', borderRadius: 8, borderWidth: 1, borderColor: '#4ADE80' },
+            text: { color: '#15803D', fontWeight: '600' },
+          },
         };
       } else {
-        // Día no disponible: fondo rosa muy claro, texto gris
-        marks[dateString] = { 
-          disabled: true, 
-          disableTouchEvent: true, 
-          customStyles: { 
-            container: { backgroundColor: '#FFF0F2', borderRadius: 4 },
-            text: { color: '#D1D5DB' } 
-          } 
+        // ❌ Día no disponible: gris muy suave
+        marks[dateString] = {
+          disabled: true,
+          disableTouchEvent: true,
+          customStyles: {
+            container: { backgroundColor: '#F1F5F9', borderRadius: 8 },
+            text: { color: '#CBD5E1' },
+          },
         };
       }
     }
-    
+
     if (fechaSeleccionada) {
-      // Día seleccionado: fondo naranja claro, texto oscuro
-      marks[fechaSeleccionada] = { 
-        selected: true, 
-        customStyles: { 
-          container: { backgroundColor: '#FCD34D', borderRadius: 4, elevation: 1 }, 
-          text: { color: '#1F2937', fontWeight: '500' } 
-        } 
+      // 🔵 Día seleccionado: color primario de Flowy
+      marks[fechaSeleccionada] = {
+        selected: true,
+        customStyles: {
+          container: { backgroundColor: colors.primary, borderRadius: 8, elevation: 3 },
+          text: { color: '#FFF', fontWeight: '700' },
+        },
       };
     }
     return marks;
@@ -736,14 +736,24 @@ export const AgendarPublicoScreen = ({ route, navigation }: any) => {
               markingType={'custom'}
               markedDates={getMarkedDates()}
               onDayPress={(day: any) => {
+                // Solo permitir selección de días habilitados
+                const d = new Date(day.dateString + 'T00:00:00');
+                const pyDay = d.getDay() === 0 ? 6 : d.getDay() - 1;
+                if (!diasHabilitados.includes(pyDay)) return;
                 setFechaSeleccionada(day.dateString);
                 setMostrarDisponibilidad(false);
                 setMostrarCalendario(false);
               }}
               theme={{
-                todayTextColor: '#4F46E5',
-                arrowColor: '#4F46E5',
+                backgroundColor: '#FFFFFF',
+                calendarBackground: '#FFFFFF',
+                todayTextColor: colors.primary,
+                arrowColor: colors.primary,
                 textDayFontWeight: '500',
+                textMonthFontWeight: '700',
+                textMonthFontSize: 16,
+                monthTextColor: '#1E293B',
+                textSectionTitleColor: '#64748B',
               }}
             />
           </View>
