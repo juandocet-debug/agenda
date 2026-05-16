@@ -8,7 +8,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { colors } from '../theme/colors';
 import { obtenerTokenLocal } from '../../core/infraestructura/auth/TokenStorageAdapter';
 
-const API = Platform.OS === 'web' ? API_BASE : API_BASE;
+const API = 'https://agenda-production-ae37.up.railway.app';
 
 export const CrearEditarServicioScreen = ({ route, navigation }: any) => {
   const { servicioId } = route.params || {};
