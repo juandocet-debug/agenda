@@ -3,6 +3,30 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from .models import EmpresaModel, NoticiaModel
 
+class ListaEmpresasPublicasController(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        from modulos.Autenticacion.infraestructura.models import CredencialModel
+        ids_activos = set(
+            CredencialModel.objects.filter(activo=True).values_list('usuario_id', flat=True)
+        )
+        empresas_db = EmpresaModel.objects.filter(id__in=ids_activos).order_by('nombre')
+        resultado = [
+            {
+                'id':        str(e.id),
+                'nombre':    e.nombre,
+                'logo_url':  e.logo_url or '',
+                'foto_portada_url': e.foto_portada_url or '',
+                'ciudad':    e.ciudad or '',
+                'direccion': e.direccion or '',
+                'telefono':  e.telefono or '',
+            }
+            for e in empresas_db
+        ]
+        return Response({'ok': True, 'datos': resultado}, status=200)
+
+
 class EmpresaVisualConfigController(APIView):
     permission_classes = [AllowAny]
     """
@@ -54,7 +78,8 @@ class PerfilPublicoEmpresaController(APIView):
                 'datos': {
                     'empresa_id': empresa.id,
                     'nombre_empresa': empresa.nombre,
-                    'logo_url': empresa.logo_url
+                    'logo_url': empresa.logo_url,
+                    'mensaje_advertencia': empresa.mensaje_advertencia
                 }
             }, status=200)
         except EmpresaModel.DoesNotExist:
@@ -87,6 +112,7 @@ class DetalleEmpresaPrivadoController(APIView):
                     'wompi_public_key': getattr(empresa, 'wompi_public_key', ''),
                     'wompi_integrity_key': getattr(empresa, 'wompi_integrity_key', ''),
                     'wompi_events_secret': getattr(empresa, 'wompi_events_secret', ''),
+                    'mensaje_advertencia': getattr(empresa, 'mensaje_advertencia', ''),
                 }
             }, status=200)
         except EmpresaModel.DoesNotExist:

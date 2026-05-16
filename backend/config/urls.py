@@ -28,4 +28,5 @@ urlpatterns = [
     path('api/usuarios/', include('modulos.Usuarios.infraestructura.urls')),
     path('api/profesionales/', include('modulos.Profesionales.infraestructura.urls')),
     path('api/publicaciones/', include('modulos.Publicaciones.infraestructura.urls')),
+    path('api/sedes/', include('modulos.Sedes.infraestructura.urls')),
 ]

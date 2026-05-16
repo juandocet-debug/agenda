@@ -23,6 +23,10 @@ class ServicioController(APIView):
             duracion = data.get('duracion')
             descripcion = data.get('descripcion')
             imagen_url = data.get('imagen_url')
+            permite_sesion = data.get('permite_sesion', True)
+            precio_30_dias = data.get('precio_30_dias')
+            precio_90_dias = data.get('precio_90_dias')
+            precio_120_dias = data.get('precio_120_dias')
             
             if not all([empresa_id, nombre, precio is not None]):
                 return Response({'ok': False, 'error': 'Faltan datos requeridos (empresa_id, nombre, precio)'}, status=400)
@@ -40,7 +44,11 @@ class ServicioController(APIView):
                 tipo_servicio=tipo_servicio,
                 duracion_minutos=int(duracion) if duracion else None,
                 descripcion=descripcion,
-                imagen_url=imagen_url
+                imagen_url=imagen_url,
+                permite_sesion=bool(permite_sesion),
+                precio_30_dias=float(precio_30_dias) if precio_30_dias else None,
+                precio_90_dias=float(precio_90_dias) if precio_90_dias else None,
+                precio_120_dias=float(precio_120_dias) if precio_120_dias else None,
             )
             
             return Response({'ok': True, 'datos': {'servicio_id': servicio.id}}, status=201)
@@ -59,7 +67,6 @@ class ServicioController(APIView):
         repo = DjangoServicioRepository()
         servicios = repo.listar_por_empresa(empresa_id)
         
-        # Buscar la moneda de la empresa
         empresa_moneda = 'COP'
         try:
             empresa = EmpresaModel.objects.get(id=empresa_id)
@@ -73,8 +80,13 @@ class ServicioController(APIView):
             'descripcion': s.descripcion,
             'tipo_servicio': getattr(s, 'tipo_servicio', 'CITA'),
             'precio': str(s.precio.valor),
-            'duracion': s.duracion.valor if s.duracion else None,
-            'imagen_url': getattr(s, 'imagen_url', None)
+            'duracion_minutos': s.duracion.valor if s.duracion else None,
+            'imagen_url': getattr(s, 'imagen_url', None),
+            # Campos de paquetes
+            'permite_sesion': getattr(s, 'permite_sesion', True),
+            'precio_30_dias': str(s.precio_30_dias) if s.precio_30_dias else None,
+            'precio_90_dias': str(s.precio_90_dias) if s.precio_90_dias else None,
+            'precio_120_dias': str(s.precio_120_dias) if s.precio_120_dias else None,
         } for s in servicios]
         
         return Response({'ok': True, 'moneda': empresa_moneda, 'datos': datos}, status=200)
@@ -93,6 +105,10 @@ class ActualizarServicioController(APIView):
             descripcion = data.get('descripcion')
             imagen_url = data.get('imagen_url')
             activo = data.get('activo', True)
+            permite_sesion = data.get('permite_sesion', True)
+            precio_30_dias = data.get('precio_30_dias')
+            precio_90_dias = data.get('precio_90_dias')
+            precio_120_dias = data.get('precio_120_dias')
 
             repo = DjangoServicioRepository()
             caso_uso = ActualizarServicio(servicio_repository=repo)
@@ -106,7 +122,11 @@ class ActualizarServicioController(APIView):
                 duracion_minutos=int(duracion) if duracion else None,
                 descripcion=descripcion,
                 imagen_url=imagen_url,
-                activo=activo
+                activo=activo,
+                permite_sesion=bool(permite_sesion),
+                precio_30_dias=float(precio_30_dias) if precio_30_dias else None,
+                precio_90_dias=float(precio_90_dias) if precio_90_dias else None,
+                precio_120_dias=float(precio_120_dias) if precio_120_dias else None,
             )
             return Response({'ok': True, 'mensaje': 'Servicio actualizado correctamente'}, status=200)
         except Exception as e:
@@ -117,7 +137,6 @@ class ActualizarServicioController(APIView):
             empresa_id = str(request.user.usuario_id)
             repo = DjangoServicioRepository()
             caso_uso = EliminarServicio(servicio_repository=repo)
-            
             caso_uso.run(servicio_id=servicio_id, empresa_id=empresa_id)
             return Response({'ok': True, 'mensaje': 'Servicio desactivado correctamente'}, status=200)
         except Exception as e:

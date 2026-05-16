@@ -12,6 +12,8 @@ class CitaModel(models.Model):
     empresa_id = models.CharField(max_length=36)
     profesional_id = models.CharField(max_length=50, blank=True, null=True)
     servicio_id = models.CharField(max_length=50)
+    # Sede (sucursal) donde se agenda la cita. Null = sede única / sin sedes.
+    sede_id = models.CharField(max_length=36, blank=True, null=True, db_index=True)
 
     # Cliente puede ser registrado o invitado (guest)
     cliente_id = models.CharField(max_length=50, blank=True, null=True)
@@ -42,6 +44,8 @@ class HorarioEmpresaModel(models.Model):
 
     id = models.AutoField(primary_key=True)
     empresa_id = models.CharField(max_length=36)
+    # Sede específica. Null = horario base de la empresa (aplica cuando no hay sedes configuradas).
+    sede_id = models.CharField(max_length=36, blank=True, null=True)
     dia_semana = models.IntegerField(choices=DIAS)  # 0=Lunes ... 6=Domingo
     hora_inicio = models.TimeField()
     hora_fin = models.TimeField()
@@ -49,4 +53,5 @@ class HorarioEmpresaModel(models.Model):
 
     class Meta:
         db_table = 'citas_horarios_empresa'
-        unique_together = ('empresa_id', 'dia_semana')
+        # unique_together incluye sede_id para que cada sede tenga su propio horario por día
+        unique_together = ('empresa_id', 'dia_semana', 'sede_id')

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 import uuid
+from decimal import Decimal
 from .ValueObjects import Precio, DuracionMinutos
 
 @dataclass
@@ -14,6 +15,10 @@ class Servicio:
     duracion: Optional[DuracionMinutos]
     imagen_url: Optional[str]
     activo: bool
+    permite_sesion: bool = True
+    precio_30_dias: Optional[Decimal] = None
+    precio_90_dias: Optional[Decimal] = None
+    precio_120_dias: Optional[Decimal] = None
     
     @classmethod
     def crear(
@@ -24,7 +29,11 @@ class Servicio:
         tipo_servicio: str = 'CITA',
         duracion: Optional[DuracionMinutos] = None, 
         descripcion: Optional[str] = None,
-        imagen_url: Optional[str] = None
+        imagen_url: Optional[str] = None,
+        permite_sesion: bool = True,
+        precio_30_dias: Optional[Decimal] = None,
+        precio_90_dias: Optional[Decimal] = None,
+        precio_120_dias: Optional[Decimal] = None
     ) -> 'Servicio':
         if tipo_servicio == 'CITA' and duracion is None:
             raise ValueError("Las citas requieren una duración en minutos.")
@@ -38,7 +47,11 @@ class Servicio:
             tipo_servicio=tipo_servicio,
             duracion=duracion,
             imagen_url=imagen_url,
-            activo=True
+            activo=True,
+            permite_sesion=permite_sesion,
+            precio_30_dias=precio_30_dias,
+            precio_90_dias=precio_90_dias,
+            precio_120_dias=precio_120_dias
         )
 
     def desactivar(self):

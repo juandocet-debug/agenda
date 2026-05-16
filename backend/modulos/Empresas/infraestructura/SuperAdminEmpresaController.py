@@ -122,7 +122,7 @@ class ActualizarDatosEmpresaController(APIView):
 
     def patch(self, request, empresa_id):
         """Actualiza los datos de contacto/ubicación de una empresa."""
-        campos_permitidos = ['nombre', 'ciudad', 'pais', 'direccion', 'telefono', 'correo_contacto', 'moneda']
+        campos_permitidos = ['nombre', 'ciudad', 'pais', 'direccion', 'telefono', 'correo_contacto', 'moneda', 'mensaje_advertencia']
         
         try:
             empresa = EmpresaModel.objects.get(id=empresa_id)

@@ -7,6 +7,7 @@ from .ReservaController import (
     WompiWebhookController,
     IniciarPagoWompiController,
     CitasEmpresaController,
+    CitasClienteController,
 )
 
 urlpatterns = [
@@ -28,5 +29,8 @@ urlpatterns = [
 
     # Panel empresa: ver sus citas
     path('mis-citas/', CitasEmpresaController.as_view(), name='citas_empresa'),
+
+    # Panel cliente: ver sus propias citas
+    path('mis-citas-cliente/', CitasClienteController.as_view(), name='citas_cliente'),
 ]
 

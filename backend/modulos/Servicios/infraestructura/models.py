@@ -10,6 +10,14 @@ class ServicioModel(models.Model):
     duracion_minutos = models.IntegerField(null=True, blank=True)
     imagen_url = models.TextField(blank=True, null=True)
     activo = models.BooleanField(default=True)
+    # Cupos máximos por slot. 1 = cita individual. N = clase/actividad grupal.
+    capacidad_por_slot = models.IntegerField(default=1)
+    
+    # --- PAQUETES Y SUSCRIPCIONES ---
+    permite_sesion = models.BooleanField(default=True) # Pago por cita única
+    precio_30_dias = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    precio_90_dias = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    precio_120_dias = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 

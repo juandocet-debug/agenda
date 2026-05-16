@@ -18,7 +18,11 @@ class ActualizarServicio:
         duracion_minutos: Optional[int] = None, 
         descripcion: Optional[str] = None,
         imagen_url: Optional[str] = None,
-        activo: bool = True
+        activo: bool = True,
+        permite_sesion: bool = True,
+        precio_30_dias: Optional[float] = None,
+        precio_90_dias: Optional[float] = None,
+        precio_120_dias: Optional[float] = None
     ) -> Servicio:
         
         servicio = self.servicio_repository.obtener_por_id(servicio_id)
@@ -33,6 +37,10 @@ class ActualizarServicio:
         servicio.tipo_servicio = tipo_servicio
         servicio.duracion = duracion
         servicio.descripcion = descripcion
+        servicio.permite_sesion = permite_sesion
+        servicio.precio_30_dias = Decimal(str(precio_30_dias)) if precio_30_dias is not None else None
+        servicio.precio_90_dias = Decimal(str(precio_90_dias)) if precio_90_dias is not None else None
+        servicio.precio_120_dias = Decimal(str(precio_120_dias)) if precio_120_dias is not None else None
         if imagen_url is not None:
             servicio.imagen_url = imagen_url
             

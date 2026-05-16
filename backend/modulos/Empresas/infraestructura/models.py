@@ -14,6 +14,7 @@ class EmpresaModel(models.Model):
     telefono = models.CharField(max_length=20, blank=True, null=True)
     correo_contacto = models.EmailField(blank=True, null=True)
     moneda = models.CharField(max_length=3, default='COP')
+    mensaje_advertencia = models.TextField(blank=True, null=True)
     
     # Credenciales de Wompi (BYOG)
     wompi_public_key = models.CharField(max_length=100, blank=True, null=True)

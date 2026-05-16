@@ -17,7 +17,11 @@ class DjangoServicioRepository(ServicioRepositoryPort):
                 'precio_valor': servicio.precio.valor,
                 'duracion_minutos': servicio.duracion.valor if servicio.duracion else None,
                 'imagen_url': servicio.imagen_url,
-                'activo': servicio.activo
+                'activo': servicio.activo,
+                'permite_sesion': getattr(servicio, 'permite_sesion', True),
+                'precio_30_dias': getattr(servicio, 'precio_30_dias', None),
+                'precio_90_dias': getattr(servicio, 'precio_90_dias', None),
+                'precio_120_dias': getattr(servicio, 'precio_120_dias', None),
             }
         )
 
@@ -44,5 +48,9 @@ class DjangoServicioRepository(ServicioRepositoryPort):
             tipo_servicio=model.tipo_servicio,
             duracion=DuracionMinutos(valor=model.duracion_minutos) if model.duracion_minutos else None,
             imagen_url=model.imagen_url,
-            activo=model.activo
+            activo=model.activo,
+            permite_sesion=getattr(model, 'permite_sesion', True),
+            precio_30_dias=model.precio_30_dias,
+            precio_90_dias=model.precio_90_dias,
+            precio_120_dias=model.precio_120_dias,
         )
