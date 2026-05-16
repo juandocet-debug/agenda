@@ -185,8 +185,15 @@ class SlotsDisponiblesController(APIView):
     throttle_classes = [SlotsThrottle]  # Máx 60 req/min por IP
 
     def get(self, request):
+        try:
+            return self._get(request)
+        except Exception as e:
+            import traceback
+            return Response({'ok': False, 'error': f'CRASH GLOBAL: {str(e)}', 'trace': traceback.format_exc()}, status=500)
+
+    def _get(self, request):
         empresa_id = request.query_params.get('empresa_id')
-        fecha_str = request.query_params.get('fecha')          # 'YYYY-MM-DD'
+        fecha_str = request.query_params.get('fecha')  # 'YYYY-MM-DD'
         servicio_id = request.query_params.get('servicio_id')
         profesional_id = request.query_params.get('profesional_id') or None
         sede_id = request.query_params.get('sede_id') or None  # Nuevo: filtro por sede
