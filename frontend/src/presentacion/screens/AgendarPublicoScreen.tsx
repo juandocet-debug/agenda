@@ -444,10 +444,10 @@ export const AgendarPublicoScreen = ({ route, navigation }: any) => {
         if (token) {
           navigation.navigate('Carrito');
         } else {
-          navigation.navigate('RegistroCliente');
+          navigation.navigate('Login');
         }
       } catch {
-        navigation.navigate('RegistroCliente');
+        navigation.navigate('Login');
       }
     };
 
@@ -514,10 +514,10 @@ export const AgendarPublicoScreen = ({ route, navigation }: any) => {
             if (token) {
               navigation.navigate('Carrito');
             } else {
-              navigation.navigate('RegistroCliente');
+              navigation.navigate('Login');
             }
           } catch {
-            navigation.navigate('RegistroCliente');
+            navigation.navigate('Login');
           }
         }}>
           <Feather name="shopping-cart" size={24} color="#4B5563" />
