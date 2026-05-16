@@ -121,23 +121,14 @@ const CarritoContext = createContext<CarritoContextType | undefined>(undefined);
 export const CarritoProvider = ({ children }: { children: ReactNode }) => {
   const [estado, dispatch] = useReducer(carritoReducer, estadoInicial);
 
-  // Restaurar carrito desde AsyncStorage al montar
+  // El carrito ya no se persiste en AsyncStorage para garantizar que siempre esté vacío
+  // al iniciar una nueva sesión desde el link del empresario.
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then(raw => {
-      if (raw) {
-        try {
-          const guardado: EstadoCarrito = JSON.parse(raw);
-          if (guardado.items?.length) {
-            dispatch({ type: 'RESTAURAR', payload: guardado });
-          }
-        } catch { /* carrito corrupto — ignorar */ }
-      }
-    });
+    // Ya no se restaura
   }, []);
 
-  // Persistir cada cambio
   useEffect(() => {
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(estado));
+    // Ya no se persiste
   }, [estado]);
 
   const agregarItem = (item: ItemCarrito) =>

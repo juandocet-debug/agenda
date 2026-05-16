@@ -438,8 +438,21 @@ export const AgendarPublicoScreen = ({ route, navigation }: any) => {
     };
     agregarItem(item);
 
+    const irAlCarrito = async () => {
+      try {
+        const token = await AsyncStorage.getItem('cliente_token');
+        if (token) {
+          navigation.navigate('Carrito');
+        } else {
+          navigation.navigate('RegistroCliente');
+        }
+      } catch {
+        navigation.navigate('RegistroCliente');
+      }
+    };
+
     if (compraRapida) {
-      navigation.navigate('Carrito');
+      irAlCarrito();
     } else {
       setAgregadoHora(slotInfo.hora);
       Animated.sequence([
@@ -495,7 +508,18 @@ export const AgendarPublicoScreen = ({ route, navigation }: any) => {
           </View>
         </View>
 
-        <TouchableOpacity style={s.carritoBtn} onPress={() => navigation.navigate('Carrito')}>
+        <TouchableOpacity style={s.carritoBtn} onPress={async () => {
+          try {
+            const token = await AsyncStorage.getItem('cliente_token');
+            if (token) {
+              navigation.navigate('Carrito');
+            } else {
+              navigation.navigate('RegistroCliente');
+            }
+          } catch {
+            navigation.navigate('RegistroCliente');
+          }
+        }}>
           <Feather name="shopping-cart" size={24} color="#4B5563" />
           {totalItems > 0 && (
             <Animated.View style={[s.badge, { transform: [{ scale: badgeAnim }] }]}>

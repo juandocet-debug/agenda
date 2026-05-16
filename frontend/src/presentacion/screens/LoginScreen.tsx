@@ -25,6 +25,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LoginUseCase } from '../../core/aplicacion/auth/LoginUseCase';
 import { DjangoAuthAdapter } from '../../core/infraestructura/auth/DjangoAuthAdapter';
 import { guardarTokenLocal } from '../../core/infraestructura/auth/TokenStorageAdapter';
+import { useCarrito } from '../../core/aplicacion/carrito/CarritoContext';
 
 const authAdapter = new DjangoAuthAdapter();
 const loginUseCase = new LoginUseCase(authAdapter, guardarTokenLocal);
@@ -32,6 +33,7 @@ const loginUseCase = new LoginUseCase(authAdapter, guardarTokenLocal);
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export const LoginScreen = ({ navigation }: any) => {
+  const { totalItems } = useCarrito();
   // Estados: 'welcome' | 'login' | 'register'
   const [viewState, setViewState] = useState<'welcome' | 'login' | 'register'>('welcome');
   
@@ -115,7 +117,9 @@ export const LoginScreen = ({ navigation }: any) => {
       if (rol === 'superadmin') {
         navigation.replace('MainTabs');
       } else if (rol === 'cliente') {
-        if (navigation.canGoBack()) {
+        if (totalItems > 0) {
+          navigation.replace('Carrito');
+        } else if (navigation.canGoBack()) {
           navigation.goBack();
         } else {
           navigation.replace('ClienteHome');
@@ -160,7 +164,9 @@ export const LoginScreen = ({ navigation }: any) => {
       if (rol === 'superadmin') {
         navigation.replace('MainTabs');
       } else if (rol === 'cliente') {
-        if (navigation.canGoBack()) {
+        if (totalItems > 0) {
+          navigation.replace('Carrito');
+        } else if (navigation.canGoBack()) {
           navigation.goBack();
         } else {
           navigation.replace('ClienteHome');
