@@ -311,13 +311,6 @@ export const AgendarPublicoScreen = ({ route, navigation }: any) => {
   const agregarAlCarrito = (slotInfo: SlotInfo, compraRapida: boolean = false) => {
     if (!servicioSeleccionado) return;
 
-    // ── MURO DE AUTH: si no hay token de cliente, pedir registro/login ──────────
-    if (!clienteToken) {
-      setSlotPendiente({ slot: slotInfo, rapida: compraRapida });
-      setMostrarAuthCliente(true);
-      return;
-    }
-
     if (esEmpresaDiferente(idEmpresa)) {
       if (Platform.OS === 'web') {
         if (window.confirm('Tu carrito tiene ítems de otra empresa. ¿Deseas vaciarlo y agregar este?')) {

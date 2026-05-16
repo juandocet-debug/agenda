@@ -60,8 +60,8 @@ def _generar_slots(hora_inicio: time, hora_fin: time, duracion_min: int):
     return slots
 
 
-def _slots_ocupados(empresa_id: str, profesional_id, fecha_obj: date):
-    """Retorna set de strings 'HH:MM' ya reservados."""
+def _slots_ocupados(empresa_id: str, profesional_id, fecha_obj: date, sede_id=None):
+    """Retorna set de strings 'HH:MM' ya reservados (considera sede si se provee)."""
     q = CitaModel.objects.filter(
         empresa_id=empresa_id,
         fecha=fecha_obj,
@@ -69,7 +69,24 @@ def _slots_ocupados(empresa_id: str, profesional_id, fecha_obj: date):
     )
     if profesional_id:
         q = q.filter(profesional_id=profesional_id)
+    if sede_id:
+        q = q.filter(sede_id=sede_id)
     return {c.hora_inicio.strftime('%H:%M') for c in q}
+
+
+def _cupos_usados(empresa_id: str, fecha_obj: date, hora_str: str, sede_id=None) -> int:
+    """Retorna cuántos cupos ya están tomados para un slot específico."""
+    q = CitaModel.objects.filter(
+        empresa_id=empresa_id,
+        fecha=fecha_obj,
+        hora_inicio=hora_str,
+        estado__in=['PROGRAMADA', 'CONFIRMADA'],
+    )
+    if sede_id:
+        q = q.filter(sede_id=sede_id)
+    # Suma las cantidades (cantidad guardada como notas JSON o campo separado)
+    # Por compatibilidad, cada registro = 1 cupo
+    return q.count()
 
 
 def _profesionales_disponibles(empresa_id: str, fecha_obj: date, hora_inicio_str: str, excluir_id=None):
@@ -169,6 +186,7 @@ class SlotsDisponiblesController(APIView):
         fecha_str = request.query_params.get('fecha')          # 'YYYY-MM-DD'
         servicio_id = request.query_params.get('servicio_id')
         profesional_id = request.query_params.get('profesional_id') or None
+        sede_id = request.query_params.get('sede_id') or None  # Nuevo: filtro por sede
 
         if not all([empresa_id, fecha_str, servicio_id]):
             return Response({'ok': False, 'error': 'empresa_id, fecha y servicio_id son requeridos.'}, status=400)
@@ -181,9 +199,21 @@ class SlotsDisponiblesController(APIView):
         # Día de la semana: Python weekday() → 0=Lunes
         dia_semana = fecha_obj.weekday()
 
+        # Buscar horario: primero por sede, si no hay, buscar horario base (sede_id=None)
         horario = HorarioEmpresaModel.objects.filter(
-            empresa_id=empresa_id, dia_semana=dia_semana, activo=True
+            empresa_id=empresa_id, dia_semana=dia_semana, activo=True, sede_id=sede_id
         ).first()
+        if not horario and sede_id:
+            # Fallback 1: horario base de la empresa (sin sede especifica)
+            horario = HorarioEmpresaModel.objects.filter(
+                empresa_id=empresa_id, dia_semana=dia_semana, activo=True, sede_id__isnull=True
+            ).first()
+
+        if not horario:
+            # Fallback 2: si buscó con sede_id=None (o falló el fallback 1) y no lo encontró, buscar CUALQUIER horario activo
+            horario = HorarioEmpresaModel.objects.filter(
+                empresa_id=empresa_id, dia_semana=dia_semana, activo=True
+            ).first()
 
         if not horario:
             return Response({'ok': True, 'datos': [], 'mensaje': 'No hay horario configurado para este día.'})
@@ -191,12 +221,26 @@ class SlotsDisponiblesController(APIView):
         try:
             servicio = ServicioModel.objects.get(id=servicio_id)
             duracion = servicio.duracion_minutos
+            capacidad = servicio.capacidad_por_slot
         except ServicioModel.DoesNotExist:
             return Response({'ok': False, 'error': 'Servicio no encontrado.'}, status=404)
 
         todos_slots = _generar_slots(horario.hora_inicio, horario.hora_fin, duracion)
-        ocupados = _slots_ocupados(empresa_id, profesional_id, fecha_obj)
-        disponibles = [s for s in todos_slots if s not in ocupados]
+        ocupados = _slots_ocupados(empresa_id, profesional_id, fecha_obj, sede_id)
+
+        # Calcular cupos disponibles por slot
+        disponibles = []
+        for slot in todos_slots:
+            if slot in ocupados and capacidad == 1:
+                continue  # Slot lleno para cita individual
+            cupos_usados = _cupos_usados(empresa_id, fecha_obj, slot, sede_id)
+            cupos_libres = capacidad - cupos_usados
+            if cupos_libres > 0:
+                disponibles.append({
+                    'hora': slot,
+                    'cupos_disponibles': cupos_libres,
+                    'capacidad_total': capacidad,
+                })
 
         return Response({'ok': True, 'datos': disponibles})
 
@@ -227,6 +271,9 @@ class ReservarGuestController(APIView):
         cliente_email   = d.get('cliente_email', '').strip()
         notas = d.get('notas', '')
         cliente_id = d.get('cliente_id') or None   # Opcional si ya tiene cuenta
+        sede_id = d.get('sede_id') or None          # Nuevo: sede donde se agenda
+        cantidad = max(1, int(d.get('cantidad', 1)))  # Cupos a reservar
+        tipo_plan = d.get('tipo_plan', 'sesion') # 'sesion', '30_dias', '90_dias', '120_dias'
 
         if not all([empresa_id, servicio_id, fecha_str, hora_inicio_str, cliente_nombre, cliente_telefono]):
             return Response({'ok': False, 'error': 'Faltan campos requeridos.'}, status=400)
@@ -237,24 +284,27 @@ class ReservarGuestController(APIView):
         except ValueError:
             return Response({'ok': False, 'error': 'Formato de fecha u hora inválido.'}, status=400)
 
-        # Calcular hora_fin según duración del servicio (default 60 min si duracion_minutos es NULL)
+        # Calcular hora_fin según duración del servicio
         try:
             servicio = ServicioModel.objects.get(id=servicio_id)
         except ServicioModel.DoesNotExist:
             return Response({'ok': False, 'error': 'Servicio no encontrado.'}, status=404)
 
-        duracion = servicio.duracion_minutos or 60  # NULL → 60 min por defecto
+        duracion = servicio.duracion_minutos or 60
+        capacidad = servicio.capacidad_por_slot
         h_fin = (datetime.combine(fecha_obj, h_inicio) + timedelta(minutes=duracion)).time()
 
-        # Verificar traslape — si hay conflicto, sugerir profesionales disponibles
-        ocupados = _slots_ocupados(empresa_id, profesional_id, fecha_obj)
-        if hora_inicio_str in ocupados:
+        # Verificar cupos disponibles
+        cupos_usados = _cupos_usados(empresa_id, fecha_obj, hora_inicio_str, sede_id)
+        cupos_libres = capacidad - cupos_usados
+        if cupos_libres <= 0 or cantidad > cupos_libres:
             alternativos = _profesionales_disponibles(empresa_id, fecha_obj, hora_inicio_str, excluir_id=profesional_id)
             return Response({
                 'ok': False,
-                'error': 'Ese horario ya fue reservado para este profesional.',
+                'error': f'No hay suficientes cupos. Disponibles: {max(0, cupos_libres)}.',
+                'cupos_disponibles': max(0, cupos_libres),
                 'alternativos': alternativos,
-                'codigo': 'TRASLAPE',
+                'codigo': 'SIN_CUPOS',
             }, status=409)
 
         cita_id = str(uuid.uuid4())
@@ -264,6 +314,7 @@ class ReservarGuestController(APIView):
             empresa_id=empresa_id,
             servicio_id=servicio_id,
             profesional_id=profesional_id,
+            sede_id=sede_id,
             fecha=fecha_obj,
             hora_inicio=h_inicio,
             hora_fin=h_fin,
@@ -276,6 +327,17 @@ class ReservarGuestController(APIView):
             wompi_referencia=wompi_ref,
         )
 
+        # Calcular el precio total según el plan seleccionado
+        precio_unitario = servicio.precio_valor
+        if tipo_plan == '30_dias' and servicio.precio_30_dias is not None:
+            precio_unitario = servicio.precio_30_dias
+        elif tipo_plan == '90_dias' and servicio.precio_90_dias is not None:
+            precio_unitario = servicio.precio_90_dias
+        elif tipo_plan == '120_dias' and servicio.precio_120_dias is not None:
+            precio_unitario = servicio.precio_120_dias
+            
+        monto_total = precio_unitario * cantidad
+
         # Crear registro de pago pendiente (tolerante a fallos — si la tabla no existe no bloquea la cita)
         pago_id = str(uuid.uuid4())
         try:
@@ -283,7 +345,7 @@ class ReservarGuestController(APIView):
                 id=pago_id,
                 empresa_id=empresa_id,
                 cita_id=cita_id,
-                monto_total=servicio.precio_valor,
+                monto_total=monto_total,
                 monto_pagado=0,
                 estado='PENDIENTE',
             )
@@ -314,7 +376,7 @@ class ReservarGuestController(APIView):
             WOMPI_INTEGRIDAD = empresa.wompi_integrity_key
             
             if WOMPI_PUB_KEY:
-                monto_centavos = int(float(servicio.precio_valor) * 100)
+                monto_centavos = int(float(monto_total) * 100)
                 
                 # Firma de integridad: SHA256(referencia + monto + moneda + llave_integridad)
                 cadena_integridad = f'{wompi_ref}{monto_centavos}COP{WOMPI_INTEGRIDAD or ""}'
@@ -538,3 +600,47 @@ class CitasEmpresaController(APIView):
             'offset': offset,
             'datos': datos,
         })
+
+
+
+
+# --- Citas del Cliente (seguro: requiere JWT de cliente) ---
+
+class CitasClienteController(APIView):
+    permission_classes = [AllowAny]
+
+    def _validar_token_cliente(self, request):
+        auth_header = request.headers.get('Authorization', '')
+        if not auth_header.startswith('Bearer '):
+            return None, 'Token de autenticacion requerido'
+        raw_token = auth_header.split(' ', 1)[1]
+        try:
+            from rest_framework_simplejwt.tokens import AccessToken
+            token_obj = AccessToken(raw_token)
+            if token_obj.get('rol') not in ('cliente',):
+                return None, 'Acceso denegado: se requiere cuenta de cliente'
+            return token_obj.get('user_id') or token_obj.get('usuario_id'), None
+        except Exception:
+            return None, 'Token invalido o expirado'
+
+    def get(self, request):
+        token_user_id, error = self._validar_token_cliente(request)
+        if error:
+            return Response({'ok': False, 'error': error}, status=401)
+        cliente_id = request.GET.get('cliente_id', '').strip()
+        if not cliente_id:
+            return Response({'ok': False, 'error': 'cliente_id requerido'}, status=400)
+        if str(token_user_id) != str(cliente_id):
+            return Response({'ok': False, 'error': 'Acceso denegado'}, status=403)
+        citas = CitaModel.objects.filter(cliente_id=cliente_id).order_by('-fecha', '-hora_inicio')[:50]
+        servicios_map = {}
+        empresas_map = {}
+        try:
+            for serv in ServicioModel.objects.all():
+                servicios_map[str(serv.id)] = serv.nombre
+            for emp in EmpresaModel.objects.all():
+                empresas_map[str(emp.id)] = emp.nombre_empresa
+        except Exception:
+            pass
+        datos = [{'id': str(c.id), 'fecha': str(c.fecha), 'hora_inicio': c.hora_inicio.strftime('%H:%M'), 'hora_fin': c.hora_fin.strftime('%H:%M') if c.hora_fin else '', 'estado': c.estado, 'servicio_nombre': servicios_map.get(str(c.servicio_id), 'Servicio'), 'empresa_nombre': empresas_map.get(str(c.empresa_id), 'Empresa'), 'monto': (c.monto_centavos / 100) if c.monto_centavos else 0} for c in citas]
+        return Response({'ok': True, 'datos': datos, 'total': len(datos)})
