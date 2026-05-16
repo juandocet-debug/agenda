@@ -63,20 +63,22 @@ const fechaLegible = (iso: string) => {
 };
 
 const parseHoraToMinutes = (horaStr: string) => {
+  if (!horaStr) return 0;
   // "08:00:00" -> 480
   const [h, m] = horaStr.split(':').map(Number);
-  return h * 60 + m;
+  return (h || 0) * 60 + (m || 0);
 };
 
 const isAM = (horaStr: string) => parseHoraToMinutes(horaStr) < 720; // 12:00 PM is 720
 
 const formatHoraAmPm = (horaStr: string) => {
+  if (!horaStr) return '';
   const [hStr, mStr] = horaStr.split(':');
   let h = parseInt(hStr, 10);
   const ampm = h >= 12 ? 'PM' : 'AM';
   h = h % 12;
   h = h ? h : 12; // 0 becomes 12
-  return `${h}:${mStr} ${ampm}`;
+  return `${h}:${mStr || '00'} ${ampm}`;
 };
 
 export const AgendarPublicoScreen = ({ route, navigation }: any) => {
@@ -275,15 +277,19 @@ export const AgendarPublicoScreen = ({ route, navigation }: any) => {
       const r = await fetch(`${API}/api/citas/slots/?empresa_id=${idEmpresa}&fecha=${fechaSeleccionada}&servicio_id=${servicioSeleccionado.id}${sedeParam}`);
       const d = await r.json();
       if (d.ok) {
-        setSlots(d.datos);
+        const nuevosSlots = Array.isArray(d.datos) ? d.datos : [];
+        setSlots(nuevosSlots);
         // Si hay slots PM y no AM, cambiar tab automáticamente
-        if (d.datos.length > 0) {
-          const tieneAM = d.datos.some((s: any) => isAM(s.hora));
+        if (nuevosSlots.length > 0) {
+          const tieneAM = nuevosSlots.some((s: any) => s.hora && isAM(s.hora));
           if (!tieneAM) setTabFiltro('PM');
           else setTabFiltro('AM');
         }
+      } else {
+        setSlots([]);
+        Alert.alert('Aviso', d.error || d.mensaje || 'No hay horarios disponibles para esta fecha.');
       }
-    } catch { Alert.alert('Error', 'No se pudo consultar disponibilidad.'); }
+    } catch { Alert.alert('Error', 'No se pudo consultar disponibilidad.'); setSlots([]); }
     finally { setCargandoSlots(false); }
   };
 
@@ -531,7 +537,7 @@ export const AgendarPublicoScreen = ({ route, navigation }: any) => {
         {/* HERO IMAGE */}
         <View style={s.heroContainer}>
           {servicioSeleccionado?.imagen_url ? (
-            <Image source={{ uri: servicioSeleccionado.imagen_url }} style={s.heroImage} resizeMode="cover" />
+            <Image source={{ uri: servicioSeleccionado.imagen_url }} style={s.heroImage} resizeMode="contain" />
           ) : (
             <View style={[s.heroImage, { backgroundColor: '#E5E7EB', justifyContent: 'center', alignItems: 'center' }]}>
               <Feather name="image" size={40} color="#9CA3AF" />
@@ -940,9 +946,9 @@ const s = StyleSheet.create({
   dropItem: { padding: 14, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
   dropItemTxt: { fontSize: 15, color: '#333' },
 
-  heroContainer: { width: '100%', alignItems: 'center', marginBottom: 20 },
-  heroImage: { width: '100%', height: 260 },
-  dotsContainer: { flexDirection: 'row', marginTop: 12, gap: 8 },
+  heroContainer: { width: '100%', alignItems: 'center', marginBottom: 20, backgroundColor: '#4F46E5' },
+  heroImage: { width: '100%', height: 220 },
+  dotsContainer: { flexDirection: 'row', marginTop: 12, gap: 8, position: 'absolute', bottom: 10 },
   dotActive: { width: 24, height: 8, backgroundColor: '#4F46E5', borderRadius: 4 },
   dotInactive: { width: 8, height: 8, backgroundColor: '#818CF8', borderRadius: 4, opacity: 0.6 },
 
