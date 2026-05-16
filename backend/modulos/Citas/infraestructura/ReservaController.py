@@ -337,7 +337,7 @@ class ReservarGuestController(APIView):
             fecha=fecha_obj,
             hora_inicio=h_inicio,
             hora_fin=h_fin,
-            estado='PROGRAMADA',
+            estado='CONFIRMADA', # Para la demo de mañana, confirmación directa
             cliente_id=cliente_id,
             cliente_nombre=cliente_nombre,
             cliente_telefono=cliente_telefono,
@@ -365,53 +365,23 @@ class ReservarGuestController(APIView):
                 empresa_id=empresa_id,
                 cita_id=cita_id,
                 monto_total=monto_total,
-                monto_pagado=0,
-                estado='PENDIENTE',
+                monto_pagado=monto_total, # Pagado por defecto para la demo
+                estado='PAGADO', # Pagado por defecto para la demo
             )
         except Exception as pago_err:
             print(f'[ReservarGuestController] AVISO: No se pudo crear PagoModel: {pago_err}')
             # La cita ya fue creada. El error de pago no debe bloquear la reserva.
 
-        # Email de confirmación al cliente (programada, pendiente de pago)
-        if cliente_email:
-            _enviar_email_cita(
-                destinatario=cliente_email,
-                asunto='Tu cita ha sido programada',
-                cuerpo=(
-                    f'Hola {cliente_nombre},\n\n'
-                    f'Tu cita para {servicio.nombre} el {fecha_str} a las {hora_inicio_str} '
-                    f'ha sido programada.\n\n'
-                    f'Estado: PROGRAMADA (pendiente de pago)\n'
-                    f'Una vez confirmado el pago, recibirás otro email de confirmación.\n\n'
-                    f'¡Gracias!'
-                )
-            )
+        # Email desactivado temporalmente para evitar que se quede pensando 1000 horas por timeout SMTP
+        # if cliente_email:
+        #     _enviar_email_cita(...)
 
-        # Generar URL de pago Wompi (BYOG)
+        # Wompi desactivado para la demo
         checkout_url = None
-        try:
-            empresa = EmpresaModel.objects.get(id=empresa_id)
-            WOMPI_PUB_KEY = empresa.wompi_public_key
-            WOMPI_INTEGRIDAD = empresa.wompi_integrity_key
-            
-            if WOMPI_PUB_KEY:
-                monto_centavos = int(float(monto_total) * 100)
-                
-                # Firma de integridad: SHA256(referencia + monto + moneda + llave_integridad)
-                cadena_integridad = f'{wompi_ref}{monto_centavos}COP{WOMPI_INTEGRIDAD or ""}'
-                firma_integridad = hashlib.sha256(cadena_integridad.encode()).hexdigest()
-
-                checkout_url = (
-                    f'https://checkout.wompi.co/p/'
-                    f'?public-key={WOMPI_PUB_KEY}'
-                    f'&currency=COP'
-                    f'&amount-in-cents={monto_centavos}'
-                    f'&reference={wompi_ref}'
-                    f'&signature:integrity={firma_integridad}'
-                    f'&redirect-url=agendaapp://pago-exitoso/{cita_id}'
-                )
-        except EmpresaModel.DoesNotExist:
-            pass
+        # try:
+        #    ...
+        # except EmpresaModel.DoesNotExist:
+        #     pass
 
         return Response({
             'ok': True,
@@ -423,7 +393,7 @@ class ReservarGuestController(APIView):
                 'fecha': fecha_str,
                 'hora_inicio': hora_inicio_str,
                 'hora_fin': h_fin.strftime('%H:%M'),
-                'estado': 'PROGRAMADA',
+                'estado': 'CONFIRMADA',
                 'checkout_url': checkout_url,
                 'wompi_referencia': wompi_ref,
             }

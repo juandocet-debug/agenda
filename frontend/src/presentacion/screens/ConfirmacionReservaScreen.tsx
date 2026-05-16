@@ -45,7 +45,7 @@ export const ConfirmacionReservaScreen = ({ route, navigation }: any) => {
           </View>
           <Text style={s.title}>Cita Separada</Text>
           <Text style={s.subtitle}>
-            Tu espacio ha sido reservado. Completa el pago para asegurar tu asistencia.
+            Tu espacio ha sido reservado y confirmado exitosamente. ¡Te esperamos!
           </Text>
         </View>
 
@@ -54,9 +54,9 @@ export const ConfirmacionReservaScreen = ({ route, navigation }: any) => {
           <View style={s.ticketTop}>
             <Text style={s.ticketHeaderLabel}>CÓDIGO DE RESERVA</Text>
             <Text style={s.codeText}>{codigoCita}</Text>
-            <View style={s.badgeContainer}>
-              <View style={s.badgeDot} />
-              <Text style={s.badgeText}>PENDIENTE DE PAGO</Text>
+            <View style={[s.badgeContainer, { backgroundColor: '#E0F2FE' }]}>
+              <View style={[s.badgeDot, { backgroundColor: '#0284C7' }]} />
+              <Text style={[s.badgeText, { color: '#0284C7' }]}>CONFIRMADA</Text>
             </View>
           </View>
 
@@ -83,28 +83,14 @@ export const ConfirmacionReservaScreen = ({ route, navigation }: any) => {
 
         {/* Info Box */}
         <View style={s.infoBox}>
-          <Feather name="info" size={18} color="#2563EB" style={s.infoIcon} />
+          <Feather name="check-circle" size={18} color="#059669" style={s.infoIcon} />
           <Text style={s.infoText}>
-            Tienes <Text style={{ fontWeight: '500' }}>30 minutos</Text> para realizar el pago antes de que el espacio sea liberado.
+            Tu cita ya está agendada en el sistema. Puedes verla en tu <Text style={{ fontWeight: '500' }}>Dashboard</Text>.
           </Text>
         </View>
 
         {/* Acciones */}
         <View style={s.actionContainer}>
-          {checkoutUrl && (
-            <TouchableOpacity 
-              style={s.btnPrimary} 
-              onPress={abrirPago} 
-              disabled={abriendo} 
-              activeOpacity={0.8}
-            >
-              <Text style={s.btnPrimaryText}>
-                {abriendo ? 'Redirigiendo...' : 'Pagar de forma segura'}
-              </Text>
-              {!abriendo && <Feather name="arrow-right" size={20} color="#FFF" />}
-            </TouchableOpacity>
-          )}
-
           {/* Ir al dashboard del cliente */}
           <TouchableOpacity
             style={s.btnCliente}
