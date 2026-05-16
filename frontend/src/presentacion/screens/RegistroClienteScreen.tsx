@@ -66,7 +66,7 @@ export const RegistroClienteScreen = ({ navigation }: any) => {
         access: d.access,
         refresh: d.refresh,
         rol: 'cliente',
-        usuario_id: d.datos.usuario_id,
+        usuario_id: String(d.datos.usuario_id),
         nombre: d.datos.nombre,
         email: d.datos.email,
         telefono: d.datos.telefono,

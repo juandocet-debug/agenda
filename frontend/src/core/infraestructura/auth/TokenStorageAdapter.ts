@@ -8,7 +8,7 @@ export const guardarTokenLocal = async (token: TokenJWT): Promise<void> => {
     await AsyncStorage.setItem(TOKEN_KEY, JSON.stringify(token));
     if (token.rol === 'cliente') {
       await AsyncStorage.setItem('cliente_token', token.access);
-      if (token.usuario_id) await AsyncStorage.setItem('cliente_id', token.usuario_id);
+      if (token.usuario_id) await AsyncStorage.setItem('cliente_id', String(token.usuario_id));
       if (token.nombre) await AsyncStorage.setItem('cliente_nombre', token.nombre);
     }
   } catch (e) {

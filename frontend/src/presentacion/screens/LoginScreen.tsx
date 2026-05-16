@@ -110,7 +110,7 @@ export const LoginScreen = ({ navigation }: any) => {
       
       await AsyncStorage.setItem('cliente_token', data.access);
       await AsyncStorage.setItem('cliente_nombre', data.datos?.nombre || '');
-      await AsyncStorage.setItem('cliente_id', data.datos?.usuario_id || '');
+      await AsyncStorage.setItem('cliente_id', data.datos?.usuario_id ? String(data.datos.usuario_id) : '');
       await AsyncStorage.setItem('cliente_email', data.datos?.email || '');
       
       const rol = data.datos?.rol;
