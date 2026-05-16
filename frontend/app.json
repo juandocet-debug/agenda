@@ -17,9 +17,10 @@
     },
     "android": {
       "package": "com.juandocet.agendapro",
+      "permissions": ["INTERNET", "ACCESS_NETWORK_STATE"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#5B5BD6"
       }
     },
     "web": {

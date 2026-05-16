@@ -7,19 +7,32 @@ const BASE_URL = 'https://agenda-production-ae37.up.railway.app/api';
 export class DjangoAuthAdapter implements AuthRepository {
   
   async login(credenciales: Credenciales): Promise<TokenJWT> {
-    const response = await fetch(`${BASE_URL}/auth/login/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: credenciales.email,
-        password: credenciales.password,
-      }),
-    });
+    let response: Response;
+    let responseData: any;
 
-    // Siempre leer el body antes de evaluar el status
-    const responseData = await response.json();
+    try {
+      response = await fetch(`${BASE_URL}/auth/login/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          email: credenciales.email,
+          password: credenciales.password,
+        }),
+      });
+    } catch (networkError: any) {
+      // Error de red (sin internet, SSL, timeout, etc.)
+      console.error('=== ERROR DE RED ===', networkError);
+      throw new Error(`Error de conexión: ${networkError?.message || 'Sin internet o el servidor no responde'}`);
+    }
+
+    try {
+      responseData = await response.json();
+    } catch (parseError) {
+      throw new Error(`El servidor respondió con status ${response.status} pero sin JSON válido`);
+    }
     
     console.log('=== LOGIN RESPONSE ===', response.status, JSON.stringify(responseData));
 
