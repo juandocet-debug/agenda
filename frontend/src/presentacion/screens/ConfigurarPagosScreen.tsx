@@ -25,10 +25,10 @@ export const ConfigurarPagosScreen = ({ navigation }: any) => {
   const cargarDatos = async () => {
     try {
       const token = await obtenerTokenLocal();
-      if (!token || !token.empresa_id) return;
-      setEmpresaId(token.empresa_id);
+      if (!token || !token.usuario_id) return;
+      setEmpresaId(token.usuario_id);
 
-      const data = await empresaRepository.obtenerEmpresaPrivada(token.empresa_id);
+      const data = await empresaRepository.obtenerEmpresaPrivada(token.usuario_id);
       
       if (data) {
         setLlaves({
