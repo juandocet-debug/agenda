@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, SafeAreaView, Modal, Pressable, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, SafeAreaView, Modal, Pressable, Platform, ScrollView } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { colors } from '../theme/colors';
@@ -34,6 +34,7 @@ interface Cita {
   estado: CitaEstado;
   servicio_nombre: string;
   profesional_nombre: string;
+  cliente_email?: string;
   cliente_nombre: string;
   cliente_telefono: string;
 }
@@ -89,43 +90,41 @@ export const AgendaScreen = () => {
     setSlots([]);
   };
 
+  // ── Alert compatible con web ─────────────────────────────────────────────
+  const mostrarAlerta = (titulo: string, msg: string) => {
+    if (Platform.OS === 'web') { window.alert(`${titulo}\n${msg}`); }
+  };
+  const confirmarAccion = (msg: string): boolean => {
+    if (Platform.OS === 'web') return window.confirm(msg);
+    return true;
+  };
+
   // ── Cancelar ──────────────────────────────────────────────────────────────
-  const cancelarCita = () => {
+  const cancelarCita = async () => {
     if (!citaSeleccionada) return;
-    Alert.alert(
-      'Cancelar cita',
-      `¿Estás seguro de que deseas cancelar la cita de ${citaSeleccionada.cliente_nombre}?`,
-      [
-        { text: 'No, volver', style: 'cancel' },
-        {
-          text: 'Sí, cancelar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setGuardando(true);
-              const token = await obtenerTokenLocal();
-              if (!token) return;
-              const res = await fetch(`${API}/citas/${citaSeleccionada.id}/cancelar/`, {
-                method: 'PATCH',
-                headers: { 'Authorization': `Bearer ${token.access}`, 'Content-Type': 'application/json' }
-              });
-              const data = await res.json();
-              if (data.ok) {
-                Alert.alert('✅ Listo', 'Cita cancelada correctamente.');
-                cerrarModal();
-                cargarCitas();
-              } else {
-                Alert.alert('Error', data.error || 'No se pudo cancelar la cita.');
-              }
-            } catch {
-              Alert.alert('Error', 'Problema de conexión.');
-            } finally {
-              setGuardando(false);
-            }
-          }
-        }
-      ]
-    );
+    const ok = confirmarAccion(`¿Cancelar la cita de ${citaSeleccionada.cliente_nombre}?`);
+    if (!ok) return;
+    try {
+      setGuardando(true);
+      const token = await obtenerTokenLocal();
+      if (!token) return;
+      const res = await fetch(`${API}/citas/${citaSeleccionada.id}/cancelar/`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token.access}`, 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (data.ok) {
+        mostrarAlerta('✅ Listo', 'Cita cancelada correctamente.');
+        cerrarModal();
+        cargarCitas();
+      } else {
+        mostrarAlerta('Error', data.error || 'No se pudo cancelar la cita.');
+      }
+    } catch {
+      mostrarAlerta('Error', 'Problema de conexión.');
+    } finally {
+      setGuardando(false);
+    }
   };
 
   // ── Reprogramar paso 1: elegir fecha ─────────────────────────────────────
@@ -168,14 +167,14 @@ export const AgendaScreen = () => {
       });
       const data = await res.json();
       if (data.ok) {
-        Alert.alert('✅ Listo', `Cita reprogramada para el ${dayjs(nuevaFecha).format('DD/MM/YYYY')} a las ${hora}.`);
+        mostrarAlerta('✅ Listo', `Cita reprogramada para el ${dayjs(nuevaFecha).format('DD/MM/YYYY')} a las ${hora}.`);
         cerrarModal();
         cargarCitas();
       } else {
-        Alert.alert('Error', data.error || 'No se pudo reprogramar.');
+        mostrarAlerta('Error', data.error || 'No se pudo reprogramar.');
       }
     } catch {
-      Alert.alert('Error', 'Problema de conexión.');
+      mostrarAlerta('Error', 'Problema de conexión.');
     } finally {
       setGuardando(false);
     }
@@ -264,6 +263,14 @@ export const AgendaScreen = () => {
                   <View style={s.detailTextCol}>
                     <Text style={s.detailLabel}>Servicio</Text>
                     <Text style={s.detailValue}>{citaSeleccionada.servicio_nombre}</Text>
+                  </View>
+                </View>
+
+                <View style={s.detailRow}>
+                  <Feather name="briefcase" size={18} color="#64748B" />
+                  <View style={s.detailTextCol}>
+                    <Text style={s.detailLabel}>Profesional</Text>
+                    <Text style={s.detailValue}>{citaSeleccionada.profesional_nombre || 'Ninguno'}</Text>
                   </View>
                 </View>
 
