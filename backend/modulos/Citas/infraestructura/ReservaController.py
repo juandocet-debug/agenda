@@ -68,7 +68,7 @@ def _slots_ocupados(empresa_id: str, profesional_id, fecha_obj: date, sede_id=No
     q = CitaModel.objects.filter(
         empresa_id=empresa_id,
         fecha=fecha_obj,
-        estado__in=['PROGRAMADA', 'CONFIRMADA'],
+        estado__in=['CONFIRMADA'],  # Solo citas con pago confirmado bloquean el slot
     )
     if profesional_id:
         q = q.filter(profesional_id=profesional_id)
@@ -83,7 +83,7 @@ def _cupos_usados(empresa_id: str, fecha_obj: date, hora_str: str, sede_id=None)
         empresa_id=empresa_id,
         fecha=fecha_obj,
         hora_inicio=hora_str,
-        estado__in=['PROGRAMADA', 'CONFIRMADA'],
+        estado__in=['CONFIRMADA'],  # Solo citas con pago confirmado bloquean el slot
     )
     if sede_id:
         q = q.filter(sede_id=sede_id)
