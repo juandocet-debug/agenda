@@ -7,7 +7,7 @@ from .models import CredencialModel
 class DjangoAutenticacionRepository(AutenticacionRepositoryPort):
     def obtener_por_email(self, email: str) -> Optional[Credencial]:
         try:
-            m = CredencialModel.objects.get(email=email)
+            m = CredencialModel.objects.get(email__iexact=email)
             return Credencial(
                 usuario_id=m.usuario_id,
                 username=m.username,
@@ -21,7 +21,7 @@ class DjangoAutenticacionRepository(AutenticacionRepositoryPort):
 
     def obtener_por_username(self, username: str) -> Optional[Credencial]:
         try:
-            m = CredencialModel.objects.get(username=username)
+            m = CredencialModel.objects.get(username__iexact=username)
             return Credencial(
                 usuario_id=m.usuario_id,
                 username=m.username,
