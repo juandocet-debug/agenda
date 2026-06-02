@@ -198,7 +198,8 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 # NUNCA hardcodear contraseñas. Si no está en env, el email falla silenciosamente.
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER or 'noreply@agenda.app'
+# DEFAULT_FROM_EMAIL puede definirse independientemente (útil con Resend donde el user SMTP es "resend")
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL') or EMAIL_HOST_USER or 'noreply@agenda.app'
 # Timeout de 8s para la conexión SMTP — evita que gunicorn mate al worker por timeout
 EMAIL_TIMEOUT = 8
 
