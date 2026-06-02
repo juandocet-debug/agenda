@@ -414,9 +414,10 @@ export const AgendarPublicoScreen = ({ route, navigation }: any) => {
 
   const _agregar = (slotInfo: SlotInfo, compraRapida: boolean) => {
     if (!servicioSeleccionado) return;
+    const actualEmpresaId = empresa?.empresa_id || idEmpresa;
     const item: ItemCarrito = {
       id: `${servicioSeleccionado.id}-${fechaSeleccionada}-${slotInfo.hora}-${Date.now()}`,
-      empresaId: idEmpresa,
+      empresaId: actualEmpresaId,
       sedeId: sedeSeleccionada?.id,
       sedeNombre: sedeSeleccionada?.nombre,
       servicioId: servicioSeleccionado.id,

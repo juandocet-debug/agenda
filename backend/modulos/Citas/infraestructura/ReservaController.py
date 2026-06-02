@@ -327,24 +327,14 @@ class ReservarGuestController(APIView):
             }, status=409)
 
         cita_id = str(uuid.uuid4())
-        wompi_ref = f'cita-{cita_id[:8]}-{uuid.uuid4().hex[:6]}'
-        CitaModel.objects.create(
-            id=cita_id,
-            empresa_id=empresa_id,
-            servicio_id=servicio_id,
-            profesional_id=profesional_id,
-            sede_id=sede_id,
-            fecha=fecha_obj,
-            hora_inicio=h_inicio,
-            hora_fin=h_fin,
-            estado='CONFIRMADA', # Para la demo de mañana, confirmación directa
-            cliente_id=cliente_id,
-            cliente_nombre=cliente_nombre,
-            cliente_telefono=cliente_telefono,
-            cliente_email=cliente_email,
-            notas=notas,
-            wompi_referencia=wompi_ref,
-        )
+        # Obtener llaves Wompi de la empresa (BYOG) o del entorno global
+        try:
+            empresa = EmpresaModel.objects.get(id=empresa_id)
+            WOMPI_PUB_KEY = empresa.wompi_public_key or os.environ.get('WOMPI_PUBLIC_KEY', '')
+            WOMPI_INTEGRIDAD = empresa.wompi_integrity_key or os.environ.get('WOMPI_INTEGRITY_KEY', '')
+        except EmpresaModel.DoesNotExist:
+            WOMPI_PUB_KEY = os.environ.get('WOMPI_PUBLIC_KEY', '')
+            WOMPI_INTEGRIDAD = os.environ.get('WOMPI_INTEGRITY_KEY', '')
 
         # Calcular el precio total según el plan seleccionado
         precio_unitario = servicio.precio_valor
@@ -357,6 +347,48 @@ class ReservarGuestController(APIView):
             
         monto_total = precio_unitario * cantidad
 
+        checkout_url = None
+        estado_cita = 'CONFIRMADA'
+        estado_pago = 'PAGADO'
+        monto_pagado = monto_total
+
+        wompi_ref = f'cita-{cita_id[:8]}-{uuid.uuid4().hex[:6]}'
+
+        if WOMPI_PUB_KEY:
+            estado_cita = 'PROGRAMADA'
+            estado_pago = 'PENDIENTE'
+            monto_pagado = 0
+            monto_centavos = int(float(monto_total) * 100)
+            cadena_integridad = f'{wompi_ref}{monto_centavos}COP{WOMPI_INTEGRIDAD}'
+            firma_integridad = hashlib.sha256(cadena_integridad.encode()).hexdigest()
+            checkout_url = (
+                f'https://checkout.wompi.co/p/'
+                f'?public-key={WOMPI_PUB_KEY}'
+                f'&currency=COP'
+                f'&amount-in-cents={monto_centavos}'
+                f'&reference={wompi_ref}'
+                f'&signature:integrity={firma_integridad}'
+                f'&redirect-url=https://agenda-pi-bice.vercel.app/confirmacion-reserva'
+            )
+
+        CitaModel.objects.create(
+            id=cita_id,
+            empresa_id=empresa_id,
+            servicio_id=servicio_id,
+            profesional_id=profesional_id,
+            sede_id=sede_id,
+            fecha=fecha_obj,
+            hora_inicio=h_inicio,
+            hora_fin=h_fin,
+            estado=estado_cita,
+            cliente_id=cliente_id,
+            cliente_nombre=cliente_nombre,
+            cliente_telefono=cliente_telefono,
+            cliente_email=cliente_email,
+            notas=notas,
+            wompi_referencia=wompi_ref,
+        )
+
         # Crear registro de pago pendiente (tolerante a fallos — si la tabla no existe no bloquea la cita)
         pago_id = str(uuid.uuid4())
         try:
@@ -365,35 +397,27 @@ class ReservarGuestController(APIView):
                 empresa_id=empresa_id,
                 cita_id=cita_id,
                 monto_total=monto_total,
-                monto_pagado=monto_total, # Pagado por defecto para la demo
-                estado='PAGADO', # Pagado por defecto para la demo
+                monto_pagado=monto_pagado,
+                estado=estado_pago,
             )
         except Exception as pago_err:
             print(f'[ReservarGuestController] AVISO: No se pudo crear PagoModel: {pago_err}')
-            # La cita ya fue creada. El error de pago no debe bloquear la reserva.
 
         # Email desactivado temporalmente para evitar que se quede pensando 1000 horas por timeout SMTP
         # if cliente_email:
         #     _enviar_email_cita(...)
-
-        # Wompi desactivado para la demo
-        checkout_url = None
-        # try:
-        #    ...
-        # except EmpresaModel.DoesNotExist:
-        #     pass
 
         return Response({
             'ok': True,
             'datos': {
                 'cita_id': cita_id,
                 'pago_id': pago_id,
-                'monto_total': str(servicio.precio_valor),
+                'monto_total': str(monto_total),
                 'servicio_nombre': servicio.nombre,
                 'fecha': fecha_str,
                 'hora_inicio': hora_inicio_str,
                 'hora_fin': h_fin.strftime('%H:%M'),
-                'estado': 'CONFIRMADA',
+                'estado': estado_cita,
                 'checkout_url': checkout_url,
                 'wompi_referencia': wompi_ref,
             }

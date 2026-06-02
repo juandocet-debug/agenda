@@ -91,6 +91,20 @@ export const ConfirmacionReservaScreen = ({ route, navigation }: any) => {
 
         {/* Acciones */}
         <View style={s.actionContainer}>
+          {checkoutUrl ? (
+            <TouchableOpacity
+              style={s.btnPrimary}
+              onPress={abrirPago}
+              disabled={abriendo}
+              activeOpacity={0.8}
+            >
+              <Feather name="credit-card" size={18} color="#FFF" style={{ marginRight: 6 }} />
+              <Text style={s.btnPrimaryText}>
+                {abriendo ? 'Abriendo pasarela...' : 'Proceder al Pago'}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
+
           {/* Ir al dashboard del cliente */}
           <TouchableOpacity
             style={s.btnCliente}

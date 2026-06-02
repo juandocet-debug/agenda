@@ -13,7 +13,8 @@ import {
   Dimensions,
   Image,
   PanResponder,
-  ScrollView
+  ScrollView,
+  ImageBackground
 } from 'react-native';
 
 // En web, useNativeDriver no soporta translateY — usar JS driver
@@ -83,7 +84,8 @@ export const LoginScreen = ({ navigation }: any) => {
 
   // Animaciones
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
-  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const welcomeOpacity = useRef(new Animated.Value(1)).current;
+  const loginOpacity = useRef(new Animated.Value(0)).current;
 
   // Google Auth — solo disponible en Web (Android necesita androidClientId de Google Cloud Console)
   const isWeb = Platform.OS === 'web';
@@ -143,32 +145,46 @@ export const LoginScreen = ({ navigation }: any) => {
     }
   };
 
-  // Cambiar de vista con animación
+  // Cambiar de vista con animación de transición cruzada y deslizamiento
   const switchView = (newState: 'welcome' | 'login' | 'register') => {
     setErrorMessage('');
     if (newState === 'welcome') {
+      // Devolver a pantalla de bienvenida
       Animated.parallel([
         Animated.timing(slideAnim, { toValue: SCREEN_HEIGHT, duration: 400, useNativeDriver: USE_NATIVE_DRIVER }),
-        Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: USE_NATIVE_DRIVER })
+        Animated.timing(welcomeOpacity, { toValue: 1, duration: 400, useNativeDriver: USE_NATIVE_DRIVER }),
+        Animated.timing(loginOpacity, { toValue: 0, duration: 400, useNativeDriver: USE_NATIVE_DRIVER })
       ]).start(() => setViewState(newState));
     } else {
-      setViewState(newState);
-      Animated.parallel([
-        Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: USE_NATIVE_DRIVER }),
-        Animated.timing(fadeAnim, { toValue: 0, duration: 300, useNativeDriver: USE_NATIVE_DRIVER })
-      ]).start();
+      if (viewState === 'welcome') {
+        // Desde bienvenida hacia Login o Registro
+        slideAnim.setValue(SCREEN_HEIGHT);
+        setViewState(newState);
+        const delay = Platform.OS === 'web' ? 50 : 0;
+        setTimeout(() => {
+          Animated.parallel([
+            Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: USE_NATIVE_DRIVER }),
+            Animated.timing(welcomeOpacity, { toValue: 0, duration: 400, useNativeDriver: USE_NATIVE_DRIVER }),
+            Animated.timing(loginOpacity, { toValue: 1, duration: 400, useNativeDriver: USE_NATIVE_DRIVER })
+          ]).start();
+        }, delay);
+      } else {
+        // Transición simple de Login a Registro y viceversa sin mover opacidades generales
+        setViewState(newState);
+      }
     }
   };
 
   const handleLogin = async () => {
     setErrorMessage('');
-    if (!email || !password) {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail || !password) {
       setErrorMessage('Completa todos los campos.');
       return;
     }
     setIsLoading(true);
     try {
-      const rol = await loginUseCase.ejecutar({ email, password });
+      const rol = await loginUseCase.ejecutar({ email: normalizedEmail, password });
       setIsLoading(false);
       if (rol === 'superadmin') {
         navigation.replace('MainTabs');
@@ -191,7 +207,9 @@ export const LoginScreen = ({ navigation }: any) => {
 
   const handleRegister = async () => {
     setErrorMessage('');
-    if (!nombreEmpresa || !username || !correoEmpresa || !password) {
+    const normalizedCorreo = correoEmpresa.trim().toLowerCase();
+    const normalizedUsername = username.trim().toLowerCase();
+    if (!nombreEmpresa || !normalizedUsername || !normalizedCorreo || !password) {
       setErrorMessage('Completa todos los campos para registrar tu empresa.');
       return;
     }
@@ -199,8 +217,8 @@ export const LoginScreen = ({ navigation }: any) => {
     try {
       await authAdapter.register({
         nombre_empresa: nombreEmpresa,
-        username: username,
-        email: correoEmpresa,
+        username: normalizedUsername,
+        email: normalizedCorreo,
         password: password
       });
       setIsLoading(false);
@@ -221,243 +239,214 @@ export const LoginScreen = ({ navigation }: any) => {
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       
-      {/* PANTALLA 1: WELCOME (Con Fondo Degradado) */}
-      {viewState === 'welcome' && (
-        <LinearGradient 
-          colors={['#4C5BEE', '#2532B3']} 
+      {/* CAPA DE LOGIN / REGISTRO (FONDO PAGE3) */}
+      <Animated.View style={[StyleSheet.absoluteFill, { opacity: loginOpacity }]} pointerEvents={viewState !== 'welcome' ? 'auto' : 'none'}>
+        <ImageBackground 
+          source={require('../../../assets/images/page3.png')} 
           style={styles.backgroundGradient}
+          resizeMode="cover"
         >
-          <Animated.View 
-            style={[styles.welcomeLayer, { opacity: fadeAnim }]} 
-            {...panResponder.panHandlers}
-          >
-            <SafeAreaView style={styles.welcomeContent}>
-              
-              <View style={styles.welcomeTextContainer}>
-                <Text style={styles.appTitle}>Flowy</Text>
-                <Text style={styles.welcomeSubtitle}>
-                  Agenda tu servicio <Text style={{ fontWeight: '700', color: '#FFF' }}>en segundos.</Text>
-                </Text>
-              </View>
-
-              <View style={styles.illustrationContainer}>
-                 <Image 
-                   source={require('../../../assets/images/logo2.png')} 
-                   style={styles.illustration} 
-                   resizeMode="contain" 
-                 />
-              </View>
-
-              <View style={styles.welcomeBottomBar}>
-                <TouchableOpacity style={styles.pillButtonDark} onPress={() => switchView('login')}>
-                  <Text style={styles.pillButtonText}>INGRESAR</Text>
-                </TouchableOpacity>
-                
-                <Text style={styles.orText}>
-                  ¿No tienes una cuenta?
-                </Text>
-
-                <TouchableOpacity style={styles.pillButtonDark} onPress={() => switchView('register')}>
-                  <Text style={styles.pillButtonText}>REGISTRARSE</Text>
-                </TouchableOpacity>
-              </View>
-            </SafeAreaView>
-          </Animated.View>
-        </LinearGradient>
-      )}
-
-      {/* PANTALLAS 2 Y 3: LOGIN / REGISTRO */}
-      {(viewState === 'login' || viewState === 'register') && (
-        <LinearGradient 
-          colors={['#4C5BEE', '#2532B3']} 
-          style={styles.backgroundGradient}
-        >
-          <SafeAreaView style={styles.cardHeaderArea}>
-            <View style={styles.headerTopRow}>
-              <TouchableOpacity style={styles.backBtnRound} onPress={() => switchView('welcome')}>
-                <Feather name="arrow-left" size={22} color="#FFF" />
+          <SafeAreaView style={{ flex: 1 }}>
+            {/* Back button on top left */}
+            <View style={styles.headerTopRowFloating}>
+              <TouchableOpacity 
+                style={styles.backBtnRoundFloating} 
+                onPress={() => switchView('welcome')}
+                activeOpacity={0.7}
+              >
+                <Feather name="arrow-left" size={24} color="#FFF" />
               </TouchableOpacity>
-              <Text style={styles.headerStateText}>
-                {viewState === 'login' ? 'Iniciar Sesión' : 'Nueva Cuenta'}
-              </Text>
             </View>
-            
-            {/* Logo/Icono central de cabecera tipo la pantalla de la derecha */}
-            <View style={styles.smallHeaderIllustrationContainer}>
-               <Image 
-                 source={require('../../../assets/images/logo2.png')} 
-                 style={styles.smallHeaderIllustration} 
-                 resizeMode="contain" 
-               />
-            </View>
-          </SafeAreaView>
 
-          <Animated.View 
-            style={[styles.bottomSheet, { transform: [{ translateY: slideAnim }] }]}
-            {...panResponderDown.panHandlers}
-          >
-            <ScrollView 
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.scrollForm}
+            {/* Spacer to push card to the bottom */}
+            <View style={{ flex: 1 }} />
+
+            <Animated.View 
+              style={[styles.floatingCard, { transform: [{ translateY: slideAnim }] }]}
+              {...panResponderDown.panHandlers}
             >
-              <Text style={styles.formGreeting}>
-                {viewState === 'login' ? '¡Hola de nuevo!' : 'Crea tu Cuenta'}
-              </Text>
-              <Text style={styles.formSubGreeting}>
-                {viewState === 'login' ? 'Ingresa tus credenciales para continuar' : 'Registra tu negocio en nuestra plataforma'}
-              </Text>
+              <ScrollView 
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollFormFloating}
+              >
+                {errorMessage ? (
+                  <Text style={styles.errorBox}>
+                    {errorMessage}
+                  </Text>
+                ) : null}
 
-              {errorMessage ? (
-                <Text style={styles.errorBox}>
-                  {errorMessage}
-                </Text>
-              ) : null}
-
-              {/* Formulario Registro */}
-              {viewState === 'register' && (
-                <>
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>Nombre de la Empresa</Text>
-                    <View style={styles.inputWrapper}>
-                      <Feather name="briefcase" size={18} color="#828C9A" style={styles.inputIcon} />
+                {/* Formulario Registro */}
+                {viewState === 'register' && (
+                  <>
+                    <View style={styles.floatingInputContainer}>
+                      <Feather name="briefcase" size={20} color="#4C5BEE" style={styles.floatingInputIcon} />
                       <TextInput
-                        style={styles.input}
-                        placeholder="Ej. Barbería VIP"
-                        placeholderTextColor={colors.textSubtitle}
+                        style={styles.floatingInput}
+                        placeholder="Nombre de la Empresa"
+                        placeholderTextColor="#94A3B8"
                         value={nombreEmpresa}
                         onChangeText={setNombreEmpresa}
                       />
                     </View>
-                  </View>
 
-                  <View style={[styles.inputContainer, { marginTop: 16 }]}>
-                    <Text style={styles.inputLabel}>Correo Electrónico</Text>
-                    <View style={styles.inputWrapper}>
-                      <Feather name="mail" size={18} color="#828C9A" style={styles.inputIcon} />
+                    <View style={[styles.floatingInputContainer, { marginTop: 12 }]}>
+                      <Feather name="mail" size={20} color="#4C5BEE" style={styles.floatingInputIcon} />
                       <TextInput
-                        style={styles.input}
-                        placeholder="hola@flowy.com"
-                        placeholderTextColor={colors.textSubtitle}
+                        style={styles.floatingInput}
+                        placeholder="Correo electrónico"
+                        placeholderTextColor="#94A3B8"
                         keyboardType="email-address"
                         autoCapitalize="none"
                         value={correoEmpresa}
                         onChangeText={setCorreoEmpresa}
                       />
                     </View>
-                  </View>
 
-                  <View style={[styles.inputContainer, { marginTop: 16 }]}>
-                    <Text style={styles.inputLabel}>Nombre de Usuario</Text>
-                    <View style={styles.inputWrapper}>
-                      <Feather name="user" size={18} color="#828C9A" style={styles.inputIcon} />
+                    <View style={[styles.floatingInputContainer, { marginTop: 12 }]}>
+                      <Feather name="user" size={20} color="#4C5BEE" style={styles.floatingInputIcon} />
                       <TextInput
-                        style={styles.input}
-                        placeholder="usuario_flowy"
-                        placeholderTextColor={colors.textSubtitle}
+                        style={styles.floatingInput}
+                        placeholder="Nombre de usuario"
+                        placeholderTextColor="#94A3B8"
                         autoCapitalize="none"
                         value={username}
                         onChangeText={setUsername}
                       />
                     </View>
-                  </View>
-                </>
-              )}
+                  </>
+                )}
 
-              {/* Formulario Login */}
-              {viewState === 'login' && (
-                <View style={[styles.inputContainer, { marginTop: 8 }]}>
-                  <Text style={styles.inputLabel}>Usuario o Correo</Text>
-                  <View style={styles.inputWrapper}>
-                    <Feather name="mail" size={18} color="#828C9A" style={styles.inputIcon} />
+                {/* Formulario Login */}
+                {viewState === 'login' && (
+                  <View style={styles.floatingInputContainer}>
+                    <Feather name="mail" size={20} color="#4C5BEE" style={styles.floatingInputIcon} />
                     <TextInput
-                      style={styles.input}
-                      placeholder="admin@flowy.com"
-                      placeholderTextColor={colors.textSubtitle}
+                      style={styles.floatingInput}
+                      placeholder="Correo electrónico"
+                      placeholderTextColor="#94A3B8"
                       autoCapitalize="none"
                       value={email}
                       onChangeText={setEmail}
                     />
                   </View>
-                </View>
-              )}
+                )}
 
-              {/* Password Input */}
-              <View style={[styles.inputContainer, { marginTop: 16 }]}>
-                <Text style={styles.inputLabel}>Contraseña</Text>
-                <View style={styles.inputWrapper}>
-                  <Feather name="lock" size={18} color="#828C9A" style={styles.inputIcon} />
+                {/* Password Input */}
+                <View style={[styles.floatingInputContainer, { marginTop: 12 }]}>
+                  <Feather name="lock" size={20} color="#4C5BEE" style={styles.floatingInputIcon} />
                   <TextInput
-                    style={styles.input}
-                    placeholder="••••••••••••"
-                    placeholderTextColor={colors.textSubtitle}
+                    style={styles.floatingInput}
+                    placeholder="Contraseña"
+                    placeholderTextColor="#94A3B8"
                     secureTextEntry={!showPassword}
                     value={password}
                     onChangeText={setPassword}
                   />
                   <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                    <Feather name={showPassword ? "eye" : "eye-off"} size={18} color="#828C9A" />
+                    <Feather name={showPassword ? "eye" : "eye-off"} size={20} color="#94A3B8" />
                   </TouchableOpacity>
                 </View>
-              </View>
 
-              {/* Options Row */}
-              <View style={styles.optionsRow}>
-                <TouchableOpacity style={styles.rememberMe} onPress={() => {}}>
-                  <View style={[styles.checkbox, { backgroundColor: colors.primary }]}>
-                    <Feather name="check" size={12} color="#FFF" />
-                  </View>
-                  <Text style={styles.optionsText}>
-                    {viewState === 'login' ? 'Recordarme' : 'Acepto los términos'}
-                  </Text>
-                </TouchableOpacity>
-                {viewState === 'login' && (
-                  <TouchableOpacity>
-                    <Text style={styles.forgotBtn}>¿Olvidó su contraseña?</Text>
+                {/* Options Row */}
+                <View style={styles.optionsRowFloating}>
+                  <TouchableOpacity style={styles.rememberMeFloating} onPress={() => {}}>
+                    <View style={[styles.checkboxFloating, { backgroundColor: '#2B5BEE' }]}>
+                      <Feather name="check" size={10} color="#FFF" />
+                    </View>
+                    <Text style={styles.optionsTextFloating}>
+                      {viewState === 'login' ? 'Recordarme' : 'Acepto los términos'}
+                    </Text>
                   </TouchableOpacity>
-                )}
-              </View>
+                  {viewState === 'login' && (
+                    <TouchableOpacity>
+                      <Text style={styles.forgotBtnFloating}>¿Olvidaste tu contraseña?</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
 
-              {/* Main Action Button */}
-              <TouchableOpacity 
-                style={styles.primaryButton} 
-                onPress={viewState === 'login' ? handleLogin : handleRegister}
-                disabled={isLoading}
-              >
-                {isLoading ? <ActivityIndicator color="#FFF" /> : (
-                  <Text style={styles.primaryButtonText}>
-                    {viewState === 'login' ? 'Ingresar' : 'Registrarse'}
+                {/* Main Action Button */}
+                <TouchableOpacity 
+                  style={styles.primaryButtonFloating} 
+                  onPress={viewState === 'login' ? handleLogin : handleRegister}
+                  disabled={isLoading}
+                >
+                  {isLoading ? <ActivityIndicator color="#FFF" /> : (
+                    <View style={styles.primaryButtonInnerFloating}>
+                      <Text style={styles.primaryButtonTextFloating}>
+                        {viewState === 'login' ? 'Iniciar sesión' : 'Registrar empresa'}
+                      </Text>
+                      <Feather name="arrow-right" size={20} color="#FFF" style={styles.primaryButtonArrowFloating} />
+                    </View>
+                  )}
+                </TouchableOpacity>
+
+                {/* Social Login */}
+                <View style={styles.separatorContainerFloating}>
+                  <View style={styles.separatorLineFloating} />
+                  <Text style={styles.separatorTextFloating}>o continúa con</Text>
+                  <View style={styles.separatorLineFloating} />
+                </View>
+
+                <View style={styles.socialRowFloating}>
+                  <TouchableOpacity style={styles.socialCircleButton} onPress={() => promptAsync()}>
+                    <FontAwesome5 name="google" size={20} color="#DB4437" />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.socialCircleButton}>
+                    <FontAwesome5 name="twitter" size={20} color="#1DA1F2" />
+                  </TouchableOpacity>
+                </View>
+
+                <TouchableOpacity 
+                  style={styles.toggleStateBtnFloating}
+                  onPress={() => switchView(viewState === 'login' ? 'register' : 'login')}
+                >
+                  <Text style={styles.toggleStateTextFloating}>
+                    {viewState === 'login' ? (
+                      <>
+                        <Text style={{ color: '#64748B' }}>¿Tienes un negocio? </Text>
+                        <Text style={{ color: '#2B5BEE', fontWeight: '600' }}>Registra tu empresa</Text>
+                      </>
+                    ) : (
+                      <>
+                        <Text style={{ color: '#64748B' }}>¿Ya tienes una cuenta? </Text>
+                        <Text style={{ color: '#2B5BEE', fontWeight: '600' }}>Inicia sesión</Text>
+                      </>
+                    )}
                   </Text>
-                )}
-              </TouchableOpacity>
-
-              {/* Social Login */}
-              <View style={styles.separatorContainer}>
-                <View style={styles.separatorLine} />
-                <Text style={styles.separatorText}>O continúa con</Text>
-                <View style={styles.separatorLine} />
-              </View>
-
-              <View style={styles.socialRow}>
-                <TouchableOpacity style={styles.socialButton} onPress={() => promptAsync()}>
-                  <FontAwesome5 name="google" size={18} color="#DB4437" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.socialButton}>
-                  <FontAwesome5 name="apple" size={20} color="#000" />
-                </TouchableOpacity>
-              </View>
+              </ScrollView>
+            </Animated.View>
+          </SafeAreaView>
+        </ImageBackground>
+      </Animated.View>
 
-              <TouchableOpacity 
-                style={styles.toggleStateBtn}
-                onPress={() => switchView(viewState === 'login' ? 'register' : 'login')}
-              >
-                <Text style={styles.toggleStateText}>
-                  {viewState === 'login' ? '¿No tienes cuenta? Registrate aquí' : '¿Ya tienes una cuenta? Ingresa aquí'}
-                </Text>
-              </TouchableOpacity>
-            </ScrollView>
-          </Animated.View>
-        </LinearGradient>
-      )}
+      {/* CAPA DE BIENVENIDA (FONDO PAGE1) */}
+      <Animated.View style={[StyleSheet.absoluteFill, { opacity: welcomeOpacity }]} pointerEvents={viewState === 'welcome' ? 'auto' : 'none'}>
+        <ImageBackground 
+          source={require('../../../assets/images/page1.png')} 
+          style={styles.backgroundGradient}
+          resizeMode="contain"
+        >
+          <View style={styles.welcomeLayer}>
+            <SafeAreaView style={styles.welcomeContent}>
+              {/* Espaciador flexible para empujar el contenido hacia abajo */}
+              <View style={{ flex: 1 }} />
+              
+              <View style={styles.welcomeBottomBar}>
+                <TouchableOpacity style={styles.pillButtonWhite} onPress={() => switchView('login')}>
+                  <Text style={styles.pillButtonTextBlue}>Comenzar</Text>
+                </TouchableOpacity>
+                
+                <View style={styles.indicatorRow}>
+                  <View style={[styles.indicatorDot, styles.indicatorActive]} />
+                  <View style={styles.indicatorDot} />
+                  <View style={styles.indicatorDot} />
+                </View>
+              </View>
+            </SafeAreaView>
+          </View>
+        </ImageBackground>
+      </Animated.View>
     </KeyboardAvoidingView>
   );
 };
@@ -507,96 +496,72 @@ const styles = StyleSheet.create({
   welcomeBottomBar: {
     width: '100%',
     alignItems: 'center',
+    paddingBottom: Platform.OS === 'web' ? 20 : 10,
   },
-  pillButtonDark: {
+  pillButtonWhite: {
     width: '100%',
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#000000',
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 6,
-  },
-  pillButtonText: {
-    color: '#FFF',
-    fontSize: 15,
-    fontWeight: '600',
-    letterSpacing: 1.2,
-  },
-  orText: {
-    color: 'rgba(255,255,255,0.7)',
-    textAlign: 'center',
-    marginVertical: 14,
-    fontSize: 14,
-  },
-
-  // Header for Login/Register State
-  cardHeaderArea: {
-    height: Platform.OS === 'web' ? 220 : '35%',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingTop: Platform.OS === 'web' ? 10 : 30,
-  },
-  headerTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-  },
-  backBtnRound: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerStateText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFF',
-  },
-  smallHeaderIllustrationContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  smallHeaderIllustration: {
-    width: Platform.OS === 'web' ? 120 : 140,
-    height: Platform.OS === 'web' ? 90 : 100,
-  },
-
-  // Form Card / Bottom Sheet
-  bottomSheet: {
-    backgroundColor: '#FFF',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    flex: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -8 },
     shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 24,
+    shadowRadius: 6,
+    elevation: 4,
+    maxWidth: 320,
   },
-  scrollForm: {
-    paddingHorizontal: 28,
-    paddingTop: 30,
-    paddingBottom: 40,
-  },
-  formGreeting: {
-    fontSize: 24,
+  pillButtonTextBlue: {
+    color: '#4C5BEE',
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#1E2532',
-    marginBottom: 6,
   },
-  formSubGreeting: {
-    fontSize: 13,
-    color: '#828C9A',
-    marginBottom: 24,
+  indicatorRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 16,
+    gap: 8,
+  },
+  indicatorDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  indicatorActive: {
+    backgroundColor: '#FFFFFF',
+  },
+
+  // Floating Login Elements style
+  headerTopRowFloating: {
+    paddingHorizontal: 24,
+    paddingTop: Platform.OS === 'web' ? 20 : 10,
+  },
+  backBtnRoundFloating: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  floatingCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 32,
+    marginHorizontal: 24,
+    marginBottom: Platform.OS === 'web' ? 24 : 12,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 10,
+    maxHeight: '64%',
+  },
+  scrollFormFloating: {
+    paddingVertical: 2,
   },
   errorBox: {
     color: '#FF3B30',
@@ -609,100 +574,102 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     textAlign: 'center',
   },
-  inputContainer: {
-    width: '100%',
-  },
-  inputLabel: {
-    color: '#1E2532',
-    marginBottom: 8,
-    marginLeft: 4,
-    fontWeight: '600',
-    fontSize: 12,
-  },
-  inputWrapper: {
+  floatingInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    height: 54,
-    backgroundColor: '#F4F6FB',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    paddingVertical: 6,
+    height: 46,
   },
-  inputIcon: {
-    marginRight: 10,
+  floatingInputIcon: {
+    marginRight: 12,
   },
-  input: {
+  floatingInput: {
     flex: 1,
-    color: '#1E2532',
-    fontSize: 14,
+    color: '#0F172A',
+    fontSize: 15,
     height: '100%',
   },
-  optionsRow: {
+  optionsRowFloating: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 18,
-    marginBottom: 24,
+    marginTop: 12,
+    marginBottom: 16,
   },
-  rememberMe: { flexDirection: 'row', alignItems: 'center' },
-  checkbox: {
+  rememberMeFloating: { flexDirection: 'row', alignItems: 'center' },
+  checkboxFloating: {
     width: 18,
     height: 18,
-    borderRadius: 6,
+    borderRadius: 5,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  optionsText: {
-    color: '#828C9A',
+  optionsTextFloating: {
+    color: '#64748B',
     marginLeft: 8,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
   },
-  forgotBtn: {
-    color: '#4C5BEE',
+  forgotBtnFloating: {
+    color: '#2B5BEE',
     fontWeight: '600',
-    fontSize: 12,
+    fontSize: 13,
   },
-  primaryButton: {
-    backgroundColor: '#4C5BEE',
-    height: 56,
-    borderRadius: 28,
+  primaryButtonFloating: {
+    backgroundColor: '#2B5BEE',
+    height: 50,
+    borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#4C5BEE',
+    shadowColor: '#2B5BEE',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 6,
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 5,
+    marginTop: 4,
   },
-  primaryButtonText: {
+  primaryButtonInnerFloating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    position: 'relative',
+  },
+  primaryButtonTextFloating: {
     color: '#FFF',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: 'bold',
   },
-  separatorContainer: {
+  primaryButtonArrowFloating: {
+    position: 'absolute',
+    right: 20,
+  },
+  separatorContainerFloating: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 26,
-    marginBottom: 18,
+    marginTop: 18,
+    marginBottom: 12,
   },
-  separatorLine: { flex: 1, height: 1, backgroundColor: '#E8ECF2' },
-  separatorText: {
-    color: '#828C9A',
+  separatorLineFloating: { flex: 1, height: 1, backgroundColor: '#F1F5F9' },
+  separatorTextFloating: {
+    color: '#94A3B8',
     marginHorizontal: 12,
-    fontSize: 12,
+    fontSize: 13,
   },
-  socialRow: {
+  socialRowFloating: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 20,
-    marginBottom: 20,
+    gap: 16,
+    marginBottom: 12,
   },
-  socialButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  socialCircleButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     borderWidth: 1,
-    borderColor: '#E8ECF2',
+    borderColor: '#E2E8F0',
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#FFF',
@@ -712,14 +679,14 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  toggleStateBtn: {
+  toggleStateBtnFloating: {
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 6,
+    marginBottom: 6,
   },
-  toggleStateText: {
-    color: '#4C5BEE',
-    fontSize: 13,
-    fontWeight: '600',
+  toggleStateTextFloating: {
+    fontSize: 14,
   },
 });
+
 
