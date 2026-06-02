@@ -15,6 +15,9 @@ import {
   PanResponder,
   ScrollView
 } from 'react-native';
+
+// En web, useNativeDriver no soporta translateY — usar JS driver
+const USE_NATIVE_DRIVER = Platform.OS !== 'web';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Google from 'expo-auth-session/providers/google';
 import { Feather, FontAwesome5 } from '@expo/vector-icons';
@@ -145,14 +148,14 @@ export const LoginScreen = ({ navigation }: any) => {
     setErrorMessage('');
     if (newState === 'welcome') {
       Animated.parallel([
-        Animated.timing(slideAnim, { toValue: SCREEN_HEIGHT, duration: 400, useNativeDriver: true }),
-        Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true })
+        Animated.timing(slideAnim, { toValue: SCREEN_HEIGHT, duration: 400, useNativeDriver: USE_NATIVE_DRIVER }),
+        Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: USE_NATIVE_DRIVER })
       ]).start(() => setViewState(newState));
     } else {
       setViewState(newState);
       Animated.parallel([
-        Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
-        Animated.timing(fadeAnim, { toValue: 0, duration: 300, useNativeDriver: true })
+        Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: USE_NATIVE_DRIVER }),
+        Animated.timing(fadeAnim, { toValue: 0, duration: 300, useNativeDriver: USE_NATIVE_DRIVER })
       ]).start();
     }
   };
@@ -533,7 +536,7 @@ const styles = StyleSheet.create({
 
   // Header for Login/Register State
   cardHeaderArea: {
-    height: '35%',
+    height: Platform.OS === 'web' ? 220 : '35%',
     justifyContent: 'center',
     paddingHorizontal: 24,
     paddingTop: Platform.OS === 'web' ? 10 : 30,
@@ -563,8 +566,8 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   smallHeaderIllustration: {
-    width: 140,
-    height: 100,
+    width: Platform.OS === 'web' ? 120 : 140,
+    height: Platform.OS === 'web' ? 90 : 100,
   },
 
   // Form Card / Bottom Sheet
