@@ -1,5 +1,5 @@
 {
-  "buildCommand": "",
+  "buildCommand": "rm -rf /tmp/metro-cache node_modules/.cache && npx cross-env NODE_ENV=production expo export -p web",
   "outputDirectory": "dist",
   "rewrites": [
     {
