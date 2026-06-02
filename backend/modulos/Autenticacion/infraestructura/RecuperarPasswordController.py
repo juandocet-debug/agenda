@@ -47,8 +47,10 @@ class SolicitarRecuperacionController(APIView):
             )
             caso_uso.run(email)
         except Exception as e:
-            # Log interno pero no exponer al cliente (seguridad + UX)
+            import traceback
             print(f"[RecuperarPassword] Error interno: {e}")
+            # DEBUG TEMPORAL — remover después de diagnosticar
+            return Response({'ok': False, 'debug_error': str(e), 'trace': traceback.format_exc()}, status=500)
 
         # Siempre responder con el mismo mensaje (anti-enumeración de emails)
         return Response({
