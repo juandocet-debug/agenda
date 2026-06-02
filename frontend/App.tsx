@@ -1,7 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AppNavigator } from './src/presentacion/navigation/AppNavigator';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { decode, encode } from 'base-64';
 
 // ─── Polyfill atob/btoa para Android nativo ───────────────────────────────────
@@ -54,7 +54,8 @@ export default function App() {
   const [updateAvailable, setUpdateAvailable] = React.useState(false);
 
   React.useEffect(() => {
-    if (__DEV__) return;
+    // expo-updates solo funciona en iOS/Android, no en web
+    if (__DEV__ || Platform.OS === 'web') return;
 
     // Escuchar eventos de actualización
     const subscription = Updates.addListener((event) => {
