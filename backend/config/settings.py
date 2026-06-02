@@ -203,6 +203,9 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL') or EMAIL_HOST_USER or 
 # Timeout de 8s para la conexión SMTP — evita que gunicorn mate al worker por timeout
 EMAIL_TIMEOUT = 8
 
+# ── Resend (API HTTP para emails — funciona en Railway sin restricciones SMTP) ──
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
+
 # ── Límite de uploads (multipart) ─────────────────────────────────────────────
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10_485_760  # 10MB
 

@@ -17,7 +17,7 @@ from rest_framework.permissions import AllowAny
 from .DjangoAutenticacionRepository import DjangoAutenticacionRepository
 from .DjangoPasswordResetRepository import DjangoPasswordResetRepository
 from .DjangoPasswordHasher import DjangoPasswordHasher
-from .DjangoEmailAdapter import DjangoEmailAdapter
+from .ResendEmailAdapter import ResendEmailAdapter
 from modulos.Autenticacion.aplicacion.RecuperarPassword.SolicitarRecuperacion import SolicitarRecuperacion
 from modulos.Autenticacion.aplicacion.RecuperarPassword.RestablecerPassword import RestablecerPassword
 
@@ -43,7 +43,7 @@ class SolicitarRecuperacionController(APIView):
             caso_uso = SolicitarRecuperacion(
                 auth_repo=DjangoAutenticacionRepository(),
                 reset_repo=DjangoPasswordResetRepository(),
-                email_port=DjangoEmailAdapter(),
+                email_port=ResendEmailAdapter(),
             )
             caso_uso.run(email)
         except BaseException as e:
