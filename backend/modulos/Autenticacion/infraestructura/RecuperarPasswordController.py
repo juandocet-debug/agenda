@@ -47,10 +47,9 @@ class SolicitarRecuperacionController(APIView):
             )
             caso_uso.run(email)
         except Exception as e:
-            import traceback
-            print(f"[RecuperarPassword] Error interno: {e}")
-            # DEBUG TEMPORAL — remover después de diagnosticar
-            return Response({'ok': False, 'debug_error': str(e), 'trace': traceback.format_exc()}, status=500)
+            # Si el email falla (ej: no configurado en env), igual respondemos 200
+            # para no revelar si el email existe (seguridad anti-enumeración)
+            print(f"[RecuperarPassword] Error interno (no crítico): {e}")
 
         # Siempre responder con el mismo mensaje (anti-enumeración de emails)
         return Response({
