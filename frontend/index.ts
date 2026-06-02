@@ -1,3 +1,5 @@
+// v2 - rediseño Login + alerta actualizaciones
+export const _BUILD = 'v2';
 import { registerRootComponent } from 'expo';
 
 import App from './App';
