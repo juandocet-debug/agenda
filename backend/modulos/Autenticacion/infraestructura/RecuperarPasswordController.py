@@ -25,9 +25,12 @@ from modulos.Autenticacion.aplicacion.RecuperarPassword.RestablecerPassword impo
 
 
 class RecuperarPasswordThrottle(AnonRateThrottle):
-    """Límite específico para prevenir abuso del endpoint de recuperación."""
-    rate = '5/min'
-    scope = 'recuperar_password'
+    """Límite específico para prevenir abuso del endpoint de recuperación.
+    Usa scope 'anon' (ya definido en settings) para no requerir config extra."""
+    scope = 'anon'
+
+    def get_rate(self):
+        return '5/min'
 
 
 class SolicitarRecuperacionController(APIView):
