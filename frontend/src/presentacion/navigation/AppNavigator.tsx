@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { PanResponder, View, ActivityIndicator } from 'react-native';
-import { LoginScreen } from '../screens/LoginScreen';
+import { LoginScreen } from '../screens/LoginScreenNuevo';
 import { MainNavigator } from './MainNavigator';
 import { EmpresaNavigator } from './EmpresaNavigator';
 import { EmpresaDetailScreen } from '../screens/EmpresaDetailScreen';
