@@ -21,8 +21,12 @@ class IniciarSesion:
         if not credencial.activo:
             raise ValueError("El usuario está desactivado.")
             
+        # Detectar cuentas creadas solo con Google (sin contraseña manual)
+        if credencial.password_hash.value == 'google-oauth2-no-password':
+            raise ValueError("Esta cuenta fue creada con Google. Usa el botón 'Continuar con Google' para ingresar.")
+
         es_valido = self.hasher.verify(password_plano, credencial.password_hash.value)
         if not es_valido:
-            raise ValueError("Credenciales inválidas.")
+            raise ValueError("Contraseña incorrecta. Verifica tu contraseña e intenta de nuevo.")
             
         return (credencial.usuario_id, credencial.rol)
