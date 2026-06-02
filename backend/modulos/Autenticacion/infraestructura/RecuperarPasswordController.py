@@ -46,9 +46,8 @@ class SolicitarRecuperacionController(APIView):
                 email_port=DjangoEmailAdapter(),
             )
             caso_uso.run(email)
-        except Exception as e:
-            # Si el email falla (ej: no configurado en env), igual respondemos 200
-            # para no revelar si el email existe (seguridad anti-enumeración)
+        except BaseException as e:
+            # BaseException captura también SystemExit (gunicorn timeout en SMTP)
             print(f"[RecuperarPassword] Error interno (no crítico): {e}")
 
         # Siempre responder con el mismo mensaje (anti-enumeración de emails)

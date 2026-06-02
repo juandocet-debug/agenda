@@ -199,6 +199,8 @@ EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 # NUNCA hardcodear contraseñas. Si no está en env, el email falla silenciosamente.
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER or 'noreply@agenda.app'
+# Timeout de 8s para la conexión SMTP — evita que gunicorn mate al worker por timeout
+EMAIL_TIMEOUT = 8
 
 # ── Límite de uploads (multipart) ─────────────────────────────────────────────
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10_485_760  # 10MB
