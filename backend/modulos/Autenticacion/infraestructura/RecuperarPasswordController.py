@@ -7,14 +7,12 @@ Endpoints:
 
 Seguridad:
   - Ambos endpoints son AllowAny (no requieren JWT)
-  - Rate limiting aplicado vía throttle class personalizada
   - El endpoint de solicitud siempre devuelve 200 (no revela si el email existe)
   - El token es de un solo uso y expira en 30 minutos
 """
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
-from rest_framework.throttling import AnonRateThrottle
 
 from .DjangoAutenticacionRepository import DjangoAutenticacionRepository
 from .DjangoPasswordResetRepository import DjangoPasswordResetRepository
@@ -24,15 +22,6 @@ from modulos.Autenticacion.aplicacion.RecuperarPassword.SolicitarRecuperacion im
 from modulos.Autenticacion.aplicacion.RecuperarPassword.RestablecerPassword import RestablecerPassword
 
 
-class RecuperarPasswordThrottle(AnonRateThrottle):
-    """Límite específico para prevenir abuso del endpoint de recuperación.
-    Usa scope 'anon' (ya definido en settings) para no requerir config extra."""
-    scope = 'anon'
-
-    def get_rate(self):
-        return '5/min'
-
-
 class SolicitarRecuperacionController(APIView):
     """
     POST /api/auth/recuperar-password/
@@ -40,7 +29,7 @@ class SolicitarRecuperacionController(APIView):
     Respuesta: siempre 200 (por seguridad, no revela si el email existe).
     """
     permission_classes = [AllowAny]
-    throttle_classes = [RecuperarPasswordThrottle]
+    throttle_classes = []
 
     def post(self, request):
         email = request.data.get('email', '').strip().lower()
@@ -75,7 +64,7 @@ class RestablecerPasswordController(APIView):
     Respuesta: { ok: true, rol: "empresa"|"cliente"|"superadmin" }
     """
     permission_classes = [AllowAny]
-    throttle_classes = [RecuperarPasswordThrottle]
+    throttle_classes = []
 
     def post(self, request):
         token_str = request.data.get('token', '').strip()
