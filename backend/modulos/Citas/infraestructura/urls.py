@@ -8,6 +8,7 @@ from .ReservaController import (
     IniciarPagoWompiController,
     CitasEmpresaController,
     CitasClienteController,
+    GestionCitaController,
 )
 
 urlpatterns = [
@@ -32,5 +33,8 @@ urlpatterns = [
 
     # Panel cliente: ver sus propias citas
     path('mis-citas-cliente/', CitasClienteController.as_view(), name='citas_cliente'),
+
+    # Gestión de citas (cancelar / reprogramar) — solo empresa autenticada
+    path('<str:cita_id>/<str:accion>/', GestionCitaController.as_view(), name='gestion_cita'),
 ]
 

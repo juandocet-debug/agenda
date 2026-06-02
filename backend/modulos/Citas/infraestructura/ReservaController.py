@@ -593,6 +593,8 @@ class CitasEmpresaController(APIView):
         datos = [
             {
                 'id': c.id,
+                'empresa_id': str(c.empresa_id),
+                'servicio_id': str(c.servicio_id),
                 'fecha': str(c.fecha),
                 'hora_inicio': c.hora_inicio.strftime('%H:%M'),
                 'hora_fin': c.hora_fin.strftime('%H:%M'),
@@ -657,3 +659,59 @@ class CitasClienteController(APIView):
             pass
         datos = [{'id': str(c.id), 'fecha': str(c.fecha), 'hora_inicio': c.hora_inicio.strftime('%H:%M'), 'hora_fin': c.hora_fin.strftime('%H:%M') if c.hora_fin else '', 'estado': c.estado, 'servicio_nombre': servicios_map.get(str(c.servicio_id), 'Servicio'), 'empresa_nombre': empresas_map.get(str(c.empresa_id), 'Empresa'), 'monto': (c.monto_centavos / 100) if c.monto_centavos else 0} for c in citas]
         return Response({'ok': True, 'datos': datos, 'total': len(datos)})
+
+
+# ─── Gestión de cita: cancelar / reprogramar ─────────────────────────────────
+
+class GestionCitaController(APIView):
+    """
+    PATCH /api/citas/<cita_id>/cancelar/    → cambia estado a CANCELADA
+    PATCH /api/citas/<cita_id>/reprogramar/ → cambia fecha y hora
+    Solo la empresa dueña de la cita puede operar sobre ella.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, cita_id, accion):
+        empresa_id = str(request.user.usuario_id)
+
+        try:
+            cita = CitaModel.objects.get(id=cita_id, empresa_id=empresa_id)
+        except CitaModel.DoesNotExist:
+            return Response({'ok': False, 'error': 'Cita no encontrada o sin permisos.'}, status=404)
+
+        if accion == 'cancelar':
+            if cita.estado == 'CANCELADA':
+                return Response({'ok': False, 'error': 'La cita ya está cancelada.'}, status=400)
+            cita.estado = 'CANCELADA'
+            cita.save(update_fields=['estado'])
+            return Response({'ok': True, 'mensaje': 'Cita cancelada correctamente.'})
+
+        elif accion == 'reprogramar':
+            nueva_fecha = request.data.get('fecha')
+            nueva_hora = request.data.get('hora_inicio')
+
+            if not nueva_fecha or not nueva_hora:
+                return Response({'ok': False, 'error': 'fecha y hora_inicio son requeridos.'}, status=400)
+
+            try:
+                fecha_obj = datetime.strptime(nueva_fecha, '%Y-%m-%d').date()
+                h_inicio = datetime.strptime(nueva_hora, '%H:%M').time()
+            except ValueError:
+                return Response({'ok': False, 'error': 'Formato de fecha u hora inválido.'}, status=400)
+
+            try:
+                servicio = ServicioModel.objects.get(id=cita.servicio_id)
+                duracion = servicio.duracion_minutos or 60
+            except ServicioModel.DoesNotExist:
+                duracion = 60
+
+            h_fin = (datetime.combine(fecha_obj, h_inicio) + timedelta(minutes=duracion)).time()
+
+            cita.fecha = fecha_obj
+            cita.hora_inicio = h_inicio
+            cita.hora_fin = h_fin
+            cita.save(update_fields=['fecha', 'hora_inicio', 'hora_fin'])
+            return Response({'ok': True, 'mensaje': 'Cita reprogramada correctamente.'})
+
+        return Response({'ok': False, 'error': f'Acción "{accion}" no válida.'}, status=400)
+
