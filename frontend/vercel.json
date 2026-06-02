@@ -1,5 +1,5 @@
 {
-  "buildCommand": "rm -rf /tmp/metro-cache node_modules/.cache && npx cross-env NODE_ENV=production expo export -p web",
+  "buildCommand": "npx cross-env NODE_ENV=production expo export -p web --clear",
   "outputDirectory": "dist",
   "rewrites": [
     {
@@ -10,14 +10,6 @@
   "headers": [
     {
       "source": "/(.*).html",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
-        { "key": "Pragma", "value": "no-cache" },
-        { "key": "Expires", "value": "0" }
-      ]
-    },
-    {
-      "source": "/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
       ]
