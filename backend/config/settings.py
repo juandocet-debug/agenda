@@ -177,6 +177,7 @@ REST_FRAMEWORK = {
         'reserva_guest': '10/min',   # Máx 10 reservas/min por IP
         'slots': '60/min',           # Máx 60 consultas de slots/min
         'upload_imagen': '20/min',   # Máx 20 uploads/min
+        'recuperar_password': '5/min',
     },
 }
 
