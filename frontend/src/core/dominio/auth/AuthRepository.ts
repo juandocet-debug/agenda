@@ -24,4 +24,8 @@ export interface AuthRepository {
   login(credenciales: Credenciales): Promise<TokenJWT>;
   register(datos: RegistroData): Promise<string>;
   logout(): Promise<void>;
+  /** Solicita el envío de un email de recuperación de contraseña. */
+  solicitarRecuperacion(email: string): Promise<void>;
+  /** Valida el token y establece la nueva contraseña. Devuelve el rol del usuario. */
+  restablecerPassword(token: string, nuevaPassword: string): Promise<string>;
 }

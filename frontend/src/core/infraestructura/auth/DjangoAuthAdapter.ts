@@ -73,5 +73,40 @@ export class DjangoAuthAdapter implements AuthRepository {
   async logout(): Promise<void> {
     return Promise.resolve();
   }
+
+  async solicitarRecuperacion(email: string): Promise<void> {
+    let response: Response;
+    try {
+      response = await fetch(`${BASE_URL}/auth/recuperar-password/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+    } catch (networkError: any) {
+      throw new Error(`Error de conexión: ${networkError?.message || 'Sin internet'}`);
+    }
+    const data = await response.json();
+    if (!data.ok) {
+      throw new Error(data.error || 'No se pudo enviar el email de recuperación.');
+    }
+  }
+
+  async restablecerPassword(token: string, nuevaPassword: string): Promise<string> {
+    let response: Response;
+    try {
+      response = await fetch(`${BASE_URL}/auth/reset-password/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ token, nueva_password: nuevaPassword }),
+      });
+    } catch (networkError: any) {
+      throw new Error(`Error de conexión: ${networkError?.message || 'Sin internet'}`);
+    }
+    const data = await response.json();
+    if (!data.ok) {
+      throw new Error(data.error || 'No se pudo restablecer la contraseña.');
+    }
+    return data.rol;
+  }
 }
 

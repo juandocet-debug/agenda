@@ -358,7 +358,7 @@ export const LoginScreen = ({ navigation }: any) => {
                     </Text>
                   </TouchableOpacity>
                   {viewState === 'login' && (
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => navigation.navigate('RecuperarPassword')}>
                       <Text style={styles.forgotBtnFloating}>¿Olvidaste tu contraseña?</Text>
                     </TouchableOpacity>
                   )}

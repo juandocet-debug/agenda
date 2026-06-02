@@ -16,6 +16,8 @@ import { ClienteHomeScreen } from '../screens/ClienteHomeScreen';
 import { ExplorarEmpresasScreen } from '../screens/ExplorarEmpresasScreen';
 import { MuroPublicacionesScreen } from '../screens/MuroPublicacionesScreen';
 import { HorariosConfigScreen } from '../screens/HorariosConfigScreen';
+import { RecuperarPasswordScreen } from '../screens/RecuperarPasswordScreen';
+import { ResetearPasswordScreen } from '../screens/ResetearPasswordScreen';
 import { obtenerTokenLocal } from '../../core/infraestructura/auth/TokenStorageAdapter';
 import { colors } from '../theme/colors';
 import { useInactividadLogout } from '../hooks/useInactividadLogout';
@@ -25,15 +27,17 @@ const Stack = createNativeStackNavigator();
 
 // Configuración de deep linking
 const linking = {
-  prefixes: ['http://localhost:19006', 'https://agendapro.app', 'agendaapp://'],
+  prefixes: ['http://localhost:19006', 'https://agenda-pi-bice.vercel.app', 'agendaapp://'],
   config: {
     screens: {
-      AgendarPublico: 'agendar/:empresaId',   // Nuevo flujo público
-      ReservarPublico: 'reservar/:empresaId',  // Flujo anterior (compatibilidad)
+      AgendarPublico: 'agendar/:empresaId',
+      ReservarPublico: 'reservar/:empresaId',
       ConfirmacionReserva: 'pago-exitoso/:citaId',
       Carrito: 'carrito',
       Login: 'login',
       EmpresaTabs: 'empresa',
+      RecuperarPassword: 'recuperar-password',
+      ResetearPassword: 'reset-password/:token',
     },
   },
 };
@@ -119,6 +123,9 @@ export const AppNavigator = () => {
             <Stack.Screen name="MuroPublicaciones" component={MuroPublicacionesScreen} options={{ animation: 'slide_from_right' }} />
             {/* Se mapea la ruta antigua al nuevo componente para retrocompatibilidad de links ya compartidos */}
             <Stack.Screen name="ReservarPublico" component={AgendarPublicoScreen} options={{ animation: 'slide_from_bottom' }} />
+            {/* Recuperación de contraseña */}
+            <Stack.Screen name="RecuperarPassword" component={RecuperarPasswordScreen} options={{ animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="ResetearPassword" component={ResetearPasswordScreen} options={{ animation: 'slide_from_bottom' }} />
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="MainTabs" component={MainNavigator} />
             <Stack.Screen name="EmpresaTabs" component={EmpresaNavigator} />
