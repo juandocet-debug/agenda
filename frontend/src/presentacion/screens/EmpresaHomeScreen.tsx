@@ -154,7 +154,7 @@ const st = StyleSheet.create({
 
   /* Header */
   header: {
-    paddingTop: Platform.OS === 'web' ? 24 : 16,
+    paddingTop: Platform.OS === 'web' ? 28 : 55,
     paddingBottom: 32,
     paddingHorizontal: 20,
     borderBottomLeftRadius: 28,

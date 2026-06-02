@@ -12,7 +12,8 @@ import {
   Alert,
   Dimensions,
   Image,
-  PanResponder
+  PanResponder,
+  ScrollView
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Google from 'expo-auth-session/providers/google';
@@ -20,6 +21,7 @@ import { Feather, FontAwesome5 } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 
 // Arquitectura Hexagonal
 import { LoginUseCase } from '../../core/aplicacion/auth/LoginUseCase';
@@ -215,241 +217,289 @@ export const LoginScreen = ({ navigation }: any) => {
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View style={styles.background}>
-        
-        {/* PANTALLA 1: WELCOME (Flowy Style) */}
-        <Animated.View 
-          style={[styles.welcomeLayer, { opacity: fadeAnim }]} 
-          pointerEvents={viewState === 'welcome' ? 'auto' : 'none'}
-          {...panResponder.panHandlers}
+      
+      {/* PANTALLA 1: WELCOME (Con Fondo Degradado) */}
+      {viewState === 'welcome' && (
+        <LinearGradient 
+          colors={['#4C5BEE', '#2532B3']} 
+          style={styles.backgroundGradient}
         >
-          <SafeAreaView style={styles.welcomeContent}>
-            
-            <View style={styles.welcomeTextContainer}>
-              <Text style={[typography.h1, { color: '#FFF', fontSize: 20, textAlign: 'center', fontWeight: '500' }]}>
-                Agenda tu servicio <Text style={{ color: colors.textTitle }}>en segundos.</Text>
+          <Animated.View 
+            style={[styles.welcomeLayer, { opacity: fadeAnim }]} 
+            {...panResponder.panHandlers}
+          >
+            <SafeAreaView style={styles.welcomeContent}>
+              
+              <View style={styles.welcomeTextContainer}>
+                <Text style={styles.appTitle}>Flowy</Text>
+                <Text style={styles.welcomeSubtitle}>
+                  Agenda tu servicio <Text style={{ fontWeight: '700', color: '#FFF' }}>en segundos.</Text>
+                </Text>
+              </View>
+
+              <View style={styles.illustrationContainer}>
+                 <Image 
+                   source={require('../../../assets/images/logo2.png')} 
+                   style={styles.illustration} 
+                   resizeMode="contain" 
+                 />
+              </View>
+
+              <View style={styles.welcomeBottomBar}>
+                <TouchableOpacity style={styles.pillButtonDark} onPress={() => switchView('login')}>
+                  <Text style={styles.pillButtonText}>INGRESAR</Text>
+                </TouchableOpacity>
+                
+                <Text style={styles.orText}>
+                  ¿No tienes una cuenta?
+                </Text>
+
+                <TouchableOpacity style={styles.pillButtonDark} onPress={() => switchView('register')}>
+                  <Text style={styles.pillButtonText}>REGISTRARSE</Text>
+                </TouchableOpacity>
+              </View>
+            </SafeAreaView>
+          </Animated.View>
+        </LinearGradient>
+      )}
+
+      {/* PANTALLAS 2 Y 3: LOGIN / REGISTRO */}
+      {(viewState === 'login' || viewState === 'register') && (
+        <LinearGradient 
+          colors={['#4C5BEE', '#2532B3']} 
+          style={styles.backgroundGradient}
+        >
+          <SafeAreaView style={styles.cardHeaderArea}>
+            <View style={styles.headerTopRow}>
+              <TouchableOpacity style={styles.backBtnRound} onPress={() => switchView('welcome')}>
+                <Feather name="arrow-left" size={22} color="#FFF" />
+              </TouchableOpacity>
+              <Text style={styles.headerStateText}>
+                {viewState === 'login' ? 'Iniciar Sesión' : 'Nueva Cuenta'}
               </Text>
             </View>
-
-            <View style={styles.illustrationContainer}>
+            
+            {/* Logo/Icono central de cabecera tipo la pantalla de la derecha */}
+            <View style={styles.smallHeaderIllustrationContainer}>
                <Image 
                  source={require('../../../assets/images/logo2.png')} 
-                 style={styles.illustration} 
+                 style={styles.smallHeaderIllustration} 
                  resizeMode="contain" 
                />
             </View>
+          </SafeAreaView>
 
-            <View style={styles.welcomeBottomBar}>
-              <TouchableOpacity style={styles.pillButtonDark} onPress={() => switchView('login')}>
-                <Text style={[typography.h3, { color: '#FFF', fontSize: 16, fontWeight: '500', letterSpacing: 1 }]}>INGRESAR</Text>
-              </TouchableOpacity>
-              
-              <Text style={[typography.body, { color: 'rgba(255,255,255,0.8)', textAlign: 'center', marginVertical: 15, fontSize: 14 }]}>
-                ¿No tienes una cuenta?
+          <Animated.View 
+            style={[styles.bottomSheet, { transform: [{ translateY: slideAnim }] }]}
+            {...panResponderDown.panHandlers}
+          >
+            <ScrollView 
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.scrollForm}
+            >
+              <Text style={styles.formGreeting}>
+                {viewState === 'login' ? '¡Hola de nuevo!' : 'Crea tu Cuenta'}
+              </Text>
+              <Text style={styles.formSubGreeting}>
+                {viewState === 'login' ? 'Ingresa tus credenciales para continuar' : 'Registra tu negocio en nuestra plataforma'}
               </Text>
 
-              <TouchableOpacity style={styles.pillButtonDark} onPress={() => switchView('register')}>
-                <Text style={[typography.h3, { color: '#FFF', fontSize: 16, fontWeight: '500', letterSpacing: 1 }]}>REGISTRARSE</Text>
-              </TouchableOpacity>
-            </View>
-          </SafeAreaView>
-        </Animated.View>
-
-        {/* PANTALLAS 2 Y 3: TARJETA BLANCA */}
-        {(viewState === 'login' || viewState === 'register') && (
-          <View style={styles.cardOverlay}>
-            <SafeAreaView style={{ paddingTop: 10 }}>
-              <TouchableOpacity style={styles.backButton} onPress={() => switchView('welcome')}>
-                <Feather name="chevron-left" size={20} color="#FFF" />
-                <Text style={[typography.body, { color: '#FFF', marginLeft: 2, fontSize: 14, fontWeight: '500' }]}>Atrás</Text>
-              </TouchableOpacity>
-            </SafeAreaView>
-
-            <Animated.View 
-              style={[styles.bottomSheet, { transform: [{ translateY: slideAnim }] }]}
-              {...panResponderDown.panHandlers}
-            >
-              <View style={{ flex: 1, paddingBottom: 10 }}>
-                
-                <Text style={[typography.h1, styles.title]}>
-                  {viewState === 'login' ? 'Ingresar' : 'Crear Cuenta'}
+              {errorMessage ? (
+                <Text style={styles.errorBox}>
+                  {errorMessage}
                 </Text>
+              ) : null}
 
-                {errorMessage ? (
-                  <Text style={{ color: '#FF3B30', fontSize: 13, marginBottom: 10, fontWeight: '500', backgroundColor: '#FFEBEA', padding: 10, borderRadius: 8, overflow: 'hidden', textAlign: 'center' }}>
-                    {errorMessage}
-                  </Text>
-                ) : null}
-
-                {/* Formulario Registro */}
-                {viewState === 'register' && (
-                  <>
-                    <View style={styles.inputContainer}>
-                      <Text style={styles.inputLabel}>Nombre de la Empresa</Text>
-                      <View style={styles.inputWrapper}>
-                        <TextInput
-                          style={styles.input}
-                          placeholder="Ej. Barbería VIP"
-                          placeholderTextColor={colors.textSubtitle}
-                          value={nombreEmpresa}
-                          onChangeText={setNombreEmpresa}
-                        />
-                      </View>
-                    </View>
-
-                    <View style={[styles.inputContainer, { marginTop: 15 }]}>
-                      <Text style={styles.inputLabel}>Correo Electrónico</Text>
-                      <View style={styles.inputWrapper}>
-                        <TextInput
-                          style={styles.input}
-                          placeholder="hola@flowy.com"
-                          placeholderTextColor={colors.textSubtitle}
-                          keyboardType="email-address"
-                          autoCapitalize="none"
-                          value={correoEmpresa}
-                          onChangeText={setCorreoEmpresa}
-                        />
-                      </View>
-                    </View>
-
-                    <View style={[styles.inputContainer, { marginTop: 15 }]}>
-                      <Text style={styles.inputLabel}>Nombre de Usuario</Text>
-                      <View style={styles.inputWrapper}>
-                        <TextInput
-                          style={styles.input}
-                          placeholder="usuario_flowy"
-                          placeholderTextColor={colors.textSubtitle}
-                          autoCapitalize="none"
-                          value={username}
-                          onChangeText={setUsername}
-                        />
-                      </View>
-                    </View>
-                  </>
-                )}
-
-                {/* Formulario Login */}
-                {viewState === 'login' && (
-                  <View style={[styles.inputContainer, { marginTop: 25 }]}>
-                    <Text style={styles.inputLabel}>Usuario o Correo</Text>
+              {/* Formulario Registro */}
+              {viewState === 'register' && (
+                <>
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.inputLabel}>Nombre de la Empresa</Text>
                     <View style={styles.inputWrapper}>
+                      <Feather name="briefcase" size={18} color="#828C9A" style={styles.inputIcon} />
                       <TextInput
                         style={styles.input}
-                        placeholder="admin@flowy.com"
+                        placeholder="Ej. Barbería VIP"
                         placeholderTextColor={colors.textSubtitle}
-                        autoCapitalize="none"
-                        value={email}
-                        onChangeText={setEmail}
+                        value={nombreEmpresa}
+                        onChangeText={setNombreEmpresa}
                       />
                     </View>
                   </View>
-                )}
 
-                {/* Password Input */}
-                <View style={[styles.inputContainer, { marginTop: 15 }]}>
-                  <Text style={styles.inputLabel}>Contraseña</Text>
+                  <View style={[styles.inputContainer, { marginTop: 16 }]}>
+                    <Text style={styles.inputLabel}>Correo Electrónico</Text>
+                    <View style={styles.inputWrapper}>
+                      <Feather name="mail" size={18} color="#828C9A" style={styles.inputIcon} />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="hola@flowy.com"
+                        placeholderTextColor={colors.textSubtitle}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        value={correoEmpresa}
+                        onChangeText={setCorreoEmpresa}
+                      />
+                    </View>
+                  </View>
+
+                  <View style={[styles.inputContainer, { marginTop: 16 }]}>
+                    <Text style={styles.inputLabel}>Nombre de Usuario</Text>
+                    <View style={styles.inputWrapper}>
+                      <Feather name="user" size={18} color="#828C9A" style={styles.inputIcon} />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="usuario_flowy"
+                        placeholderTextColor={colors.textSubtitle}
+                        autoCapitalize="none"
+                        value={username}
+                        onChangeText={setUsername}
+                      />
+                    </View>
+                  </View>
+                </>
+              )}
+
+              {/* Formulario Login */}
+              {viewState === 'login' && (
+                <View style={[styles.inputContainer, { marginTop: 8 }]}>
+                  <Text style={styles.inputLabel}>Usuario o Correo</Text>
                   <View style={styles.inputWrapper}>
+                    <Feather name="mail" size={18} color="#828C9A" style={styles.inputIcon} />
                     <TextInput
                       style={styles.input}
-                      placeholder="••••••••••••"
+                      placeholder="admin@flowy.com"
                       placeholderTextColor={colors.textSubtitle}
-                      secureTextEntry={!showPassword}
-                      value={password}
-                      onChangeText={setPassword}
+                      autoCapitalize="none"
+                      value={email}
+                      onChangeText={setEmail}
                     />
                   </View>
                 </View>
+              )}
 
-                {/* Options Row */}
-                <View style={styles.optionsRow}>
-                  <TouchableOpacity style={styles.rememberMe}>
-                    <View style={styles.checkbox}>
-                      <Feather name="check" size={12} color="#FFF" />
-                    </View>
-                    <Text style={[typography.caption, { color: colors.textSubtitle, marginLeft: 8, fontSize: 12 }]}>
-                      {viewState === 'login' ? 'Recordarme' : 'Acepto los términos'}
-                    </Text>
-                  </TouchableOpacity>
-                  {viewState === 'login' && (
-                    <TouchableOpacity>
-                      <Text style={[typography.caption, { color: colors.primary, fontWeight: '500', fontSize: 12 }]}>¿Olvidó su contraseña?</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-
-                {/* Main Action Button */}
-                <TouchableOpacity 
-                  style={styles.primaryButton} 
-                  onPress={viewState === 'login' ? handleLogin : handleRegister}
-                  disabled={isLoading}
-                >
-                  {isLoading ? <ActivityIndicator color="#FFF" /> : (
-                    <Text style={[typography.h3, { color: '#FFF', fontSize: 16 }]}>
-                      {viewState === 'login' ? 'Ingresar' : 'Registrarse'}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-
-                {/* Social Login */}
-                <View style={styles.separatorContainer}>
-                  <View style={styles.separatorLine} />
-                  <Text style={[typography.caption, { color: colors.textSubtitle, marginHorizontal: 15, fontSize: 11 }]}>
-                    O continúa con
-                  </Text>
-                  <View style={styles.separatorLine} />
-                </View>
-
-                <View style={styles.socialRow}>
-                  <TouchableOpacity style={styles.socialButton} onPress={() => promptAsync()}>
-                    <FontAwesome5 name="google" size={20} color="#DB4437" />
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.socialButton}>
-                    <FontAwesome5 name="apple" size={22} color="#000" />
+              {/* Password Input */}
+              <View style={[styles.inputContainer, { marginTop: 16 }]}>
+                <Text style={styles.inputLabel}>Contraseña</Text>
+                <View style={styles.inputWrapper}>
+                  <Feather name="lock" size={18} color="#828C9A" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="••••••••••••"
+                    placeholderTextColor={colors.textSubtitle}
+                    secureTextEntry={!showPassword}
+                    value={password}
+                    onChangeText={setPassword}
+                  />
+                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                    <Feather name={showPassword ? "eye" : "eye-off"} size={18} color="#828C9A" />
                   </TouchableOpacity>
                 </View>
-
               </View>
-            </Animated.View>
-          </View>
-        )}
-      </View>
+
+              {/* Options Row */}
+              <View style={styles.optionsRow}>
+                <TouchableOpacity style={styles.rememberMe} onPress={() => {}}>
+                  <View style={[styles.checkbox, { backgroundColor: colors.primary }]}>
+                    <Feather name="check" size={12} color="#FFF" />
+                  </View>
+                  <Text style={styles.optionsText}>
+                    {viewState === 'login' ? 'Recordarme' : 'Acepto los términos'}
+                  </Text>
+                </TouchableOpacity>
+                {viewState === 'login' && (
+                  <TouchableOpacity>
+                    <Text style={styles.forgotBtn}>¿Olvidó su contraseña?</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Main Action Button */}
+              <TouchableOpacity 
+                style={styles.primaryButton} 
+                onPress={viewState === 'login' ? handleLogin : handleRegister}
+                disabled={isLoading}
+              >
+                {isLoading ? <ActivityIndicator color="#FFF" /> : (
+                  <Text style={styles.primaryButtonText}>
+                    {viewState === 'login' ? 'Ingresar' : 'Registrarse'}
+                  </Text>
+                )}
+              </TouchableOpacity>
+
+              {/* Social Login */}
+              <View style={styles.separatorContainer}>
+                <View style={styles.separatorLine} />
+                <Text style={styles.separatorText}>O continúa con</Text>
+                <View style={styles.separatorLine} />
+              </View>
+
+              <View style={styles.socialRow}>
+                <TouchableOpacity style={styles.socialButton} onPress={() => promptAsync()}>
+                  <FontAwesome5 name="google" size={18} color="#DB4437" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.socialButton}>
+                  <FontAwesome5 name="apple" size={20} color="#000" />
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity 
+                style={styles.toggleStateBtn}
+                onPress={() => switchView(viewState === 'login' ? 'register' : 'login')}
+              >
+                <Text style={styles.toggleStateText}>
+                  {viewState === 'login' ? '¿No tienes cuenta? Registrate aquí' : '¿Ya tienes una cuenta? Ingresa aquí'}
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </Animated.View>
+        </LinearGradient>
+      )}
     </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.primary, height: '100%' },
-  background: { flex: 1, width: '100%', height: '100%', backgroundColor: colors.primary },
+  container: { flex: 1, backgroundColor: '#4C5BEE' },
+  backgroundGradient: { flex: 1, width: '100%' },
   
-  // Welcome Layer
+  // Welcome/Onboarding
   welcomeLayer: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.primary
+    flex: 1,
   },
   welcomeContent: {
     flex: 1,
-    paddingHorizontal: 35,
+    paddingHorizontal: 30,
     justifyContent: 'space-between',
     paddingBottom: 40,
-    paddingTop: 20
+    paddingTop: 40
   },
   welcomeTextContainer: {
     marginTop: 20,
+    alignItems: 'center',
+  },
+  appTitle: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#FFF',
+    letterSpacing: 1.5,
+    marginBottom: 8,
+  },
+  welcomeSubtitle: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.85)',
+    textAlign: 'center',
   },
   illustrationContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 5,
-    marginTop: 40,
     width: '100%',
-    alignSelf: 'center',
   },
   illustration: {
-    width: '100%',
-    height: '100%',
-    maxHeight: 550,
-    transform: [{ scale: 1.4 }]
+    width: '90%',
+    height: '90%',
+    maxHeight: 280,
   },
   welcomeBottomBar: {
     width: '100%',
@@ -459,124 +509,214 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 56,
     borderRadius: 28,
-    backgroundColor: colors.primaryDark,
+    backgroundColor: '#000000',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 8,
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  pillButtonText: {
+    color: '#FFF',
+    fontSize: 15,
+    fontWeight: '600',
+    letterSpacing: 1.2,
+  },
+  orText: {
+    color: 'rgba(255,255,255,0.7)',
+    textAlign: 'center',
+    marginVertical: 14,
+    fontSize: 14,
   },
 
-  // Card Layer
-  cardOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'flex-start',
+  // Header for Login/Register State
+  cardHeaderArea: {
+    height: '35%',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingTop: Platform.OS === 'web' ? 10 : 30,
   },
-  backButton: {
+  headerTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)', 
-    alignSelf: 'flex-start',
-    borderRadius: 20,
-    marginLeft: 20,
-    marginTop: 10
+    gap: 16,
   },
+  backBtnRound: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerStateText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFF',
+  },
+  smallHeaderIllustrationContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  smallHeaderIllustration: {
+    width: 140,
+    height: 100,
+  },
+
+  // Form Card / Bottom Sheet
   bottomSheet: {
     backgroundColor: '#FFF',
-    borderTopLeftRadius: 35,
-    borderTopRightRadius: 35,
-    paddingHorizontal: 30,
-    paddingTop: 35,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     flex: 1,
-    marginTop: 20, 
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -5 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 30,
+    shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 24,
   },
-  title: {
-    color: colors.primary,
-    textAlign: 'left',
-    fontSize: 28,
-    marginBottom: 10,
-    fontWeight: '500'
+  scrollForm: {
+    paddingHorizontal: 28,
+    paddingTop: 30,
+    paddingBottom: 40,
   },
-  inputContainer: { width: '100%' },
-  inputLabel: {
-    color: '#888',
+  formGreeting: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1E2532',
     marginBottom: 6,
-    marginLeft: 5,
+  },
+  formSubGreeting: {
+    fontSize: 13,
+    color: '#828C9A',
+    marginBottom: 24,
+  },
+  errorBox: {
+    color: '#FF3B30',
+    fontSize: 13,
+    marginBottom: 16,
     fontWeight: '500',
+    backgroundColor: '#FFEBEA',
+    padding: 12,
+    borderRadius: 12,
+    overflow: 'hidden',
+    textAlign: 'center',
+  },
+  inputContainer: {
+    width: '100%',
+  },
+  inputLabel: {
+    color: '#1E2532',
+    marginBottom: 8,
+    marginLeft: 4,
+    fontWeight: '600',
     fontSize: 12,
   },
   inputWrapper: {
-    borderWidth: 1.5,
-    borderColor: '#E5E9F2',
-    borderRadius: 14,
-    paddingHorizontal: 15,
-    height: 52,
-    backgroundColor: '#FAFAFC',
-    justifyContent: 'center'
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    height: 54,
+    backgroundColor: '#F4F6FB',
+  },
+  inputIcon: {
+    marginRight: 10,
   },
   input: {
     flex: 1,
-    color: '#333',
+    color: '#1E2532',
     fontSize: 14,
+    height: '100%',
   },
   optionsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 30,
+    marginTop: 18,
+    marginBottom: 24,
   },
   rememberMe: { flexDirection: 'row', alignItems: 'center' },
   checkbox: {
     width: 18,
     height: 18,
-    borderRadius: 5,
-    backgroundColor: colors.primary,
+    borderRadius: 6,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  optionsText: {
+    color: '#828C9A',
+    marginLeft: 8,
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  forgotBtn: {
+    color: '#4C5BEE',
+    fontWeight: '600',
+    fontSize: 12,
+  },
   primaryButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: '#4C5BEE',
     height: 56,
-    borderRadius: 14,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: colors.primary,
+    shadowColor: '#4C5BEE',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.3,
     shadowRadius: 10,
     elevation: 6,
   },
+  primaryButtonText: {
+    color: '#FFF',
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
   separatorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 30,
-    marginBottom: 20,
+    marginTop: 26,
+    marginBottom: 18,
   },
-  separatorLine: { flex: 1, height: 1, backgroundColor: '#E5E9F2' },
+  separatorLine: { flex: 1, height: 1, backgroundColor: '#E8ECF2' },
+  separatorText: {
+    color: '#828C9A',
+    marginHorizontal: 12,
+    fontSize: 12,
+  },
   socialRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 25,
-    marginBottom: 20
+    gap: 20,
+    marginBottom: 20,
   },
   socialButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#E5E9F2',
+    borderColor: '#E8ECF2',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFF'
-  }
+    backgroundColor: '#FFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  toggleStateBtn: {
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  toggleStateText: {
+    color: '#4C5BEE',
+    fontSize: 13,
+    fontWeight: '600',
+  },
 });
+

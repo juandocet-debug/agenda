@@ -61,6 +61,28 @@ export const CrearPublicacionScreen = ({ navigation }: any) => {
   const [cargando, setCargando] = useState(false);
   const [subiendo, setSubiendo] = useState(false);
   const [error, setError] = useState('');
+  const [empresaLogo, setEmpresaLogo] = useState<string | null>(null);
+
+  // Cargar el logo de la empresa al montar
+  React.useEffect(() => {
+    const cargarLogo = async () => {
+      try {
+        const token = await obtenerTokenLocal();
+        if (!token?.access) return;
+        const payload = JSON.parse(atob(token.access.split('.')[1]));
+        const userId = payload.user_id;
+        if (!userId) return;
+
+        // Intentar obtener logo del API
+        const res = await fetch(`https://agenda-production-ae37.up.railway.app/api/empresas/${userId}/publico/`);
+        const data = await res.json();
+        if (data?.ok && data?.datos?.logo_url) {
+          setEmpresaLogo(data.datos.logo_url);
+        }
+      } catch {}
+    };
+    cargarLogo();
+  }, []);
 
   const seleccionarImagen = async () => {
     if (imagenes.length >= 10) {
@@ -165,7 +187,11 @@ export const CrearPublicacionScreen = ({ navigation }: any) => {
         {/* Texto */}
         <View style={styles.textArea}>
           <View style={styles.avatarPlaceholder}>
-            <Feather name="briefcase" size={20} color={colors.primary} />
+            {empresaLogo ? (
+              <Image source={{ uri: empresaLogo }} style={{ width: '100%', height: '100%', borderRadius: 22 }} />
+            ) : (
+              <Feather name="briefcase" size={20} color={colors.primary} />
+            )}
           </View>
           <View style={{ flex: 1, gap: 8 }}>
             <TextInput
@@ -253,7 +279,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'web' ? 16 : 50,
+    paddingBottom: 12,
     borderBottomWidth: 1, borderBottomColor: '#EFEFEF',
   },
   headerBtn: { padding: 4 },

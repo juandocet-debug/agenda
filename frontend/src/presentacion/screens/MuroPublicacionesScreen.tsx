@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef } from 'react';
 import {
   View, Text, StyleSheet, FlatList, Image, TouchableOpacity,
   SafeAreaView, ActivityIndicator, Alert, Dimensions, ScrollView, Share,
+  Platform, Animated,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -10,6 +11,48 @@ import { ApiPublicacionRepository } from '../../core/infraestructura/publicacion
 import { ListarPublicacionesUseCase, EliminarPublicacionUseCase } from '../../core/aplicacion/publicaciones/PublicacionesUseCases';
 import { obtenerTokenLocal } from '../../core/infraestructura/auth/TokenStorageAdapter';
 import { useWindowDimensions } from 'react-native';
+
+// ── Caché simple para perfil de empresa (evita re-fetch en cada focus) ──
+const perfilCache: Record<string, { nombre: string; logo: string | null; ts: number }> = {};
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+
+// ── Skeleton shimmer para carga rápida percibida ──
+const SkeletonPost = () => {
+  const shimmer = useRef(new Animated.Value(0.3)).current;
+  React.useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmer, { toValue: 1, duration: 800, useNativeDriver: true }),
+        Animated.timing(shimmer, { toValue: 0.3, duration: 800, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, []);
+  return (
+    <Animated.View style={[skel.card, { opacity: shimmer }]}>
+      <View style={skel.header}>
+        <View style={skel.avatar} />
+        <View style={{ flex: 1, gap: 6 }}>
+          <View style={[skel.line, { width: '40%' }]} />
+          <View style={[skel.line, { width: '25%', height: 8 }]} />
+        </View>
+      </View>
+      <View style={skel.image} />
+      <View style={{ padding: 12, gap: 8 }}>
+        <View style={[skel.line, { width: '60%' }]} />
+        <View style={[skel.line, { width: '80%' }]} />
+      </View>
+    </Animated.View>
+  );
+};
+const skel = StyleSheet.create({
+  card: { backgroundColor: '#FFF', width: '100%', maxWidth: 600, alignSelf: 'center', marginBottom: 1 },
+  header: { flexDirection: 'row', alignItems: 'center', padding: 12, gap: 10 },
+  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#E5E7EB' },
+  line: { height: 10, borderRadius: 5, backgroundColor: '#E5E7EB' },
+  image: { width: '100%', aspectRatio: 1, backgroundColor: '#F3F4F6' },
+});
 
 const BASE_URL = 'https://agenda-production-ae37.up.railway.app/api/publicaciones';
 
@@ -192,22 +235,41 @@ export const MuroPublicacionesScreen = ({ route, isOwner = false, empresaId }: a
       const offset = pageNum * LIMIT;
 
       if (isInitial) {
-        // ✅ PARALELO: perfil + publicaciones al mismo tiempo
-        const [perfilRes, lista] = await Promise.all([
-          fetch(`https://agenda-production-ae37.up.railway.app/api/empresas/${idEmpresa}/publico/`)
-            .then(r => r.json())
-            .catch(() => null),
-          new ListarPublicacionesUseCase(repo).ejecutar(idEmpresa, LIMIT, 0),
-        ]);
+        // ── Usar caché de perfil si existe y no ha expirado ──
+        const cached = perfilCache[idEmpresa];
+        const usarCache = cached && (Date.now() - cached.ts) < CACHE_TTL;
 
-        if (perfilRes?.ok && perfilRes?.datos) {
-          if (perfilRes.datos.nombre_empresa) setEmpresaNombre(perfilRes.datos.nombre_empresa);
-          if (perfilRes.datos.logo_url) setEmpresaLogo(perfilRes.datos.logo_url);
+        if (usarCache) {
+          // Aplicar datos cacheados inmediatamente (sin esperar red)
+          setEmpresaNombre(cached.nombre);
+          setEmpresaLogo(cached.logo);
+          // Solo cargar publicaciones
+          const lista = await new ListarPublicacionesUseCase(repo).ejecutar(idEmpresa, LIMIT, 0);
+          if (lista.length < LIMIT) setHasMore(false);
+          setPublicaciones(lista);
+          setPage(1);
+        } else {
+          // ✅ PARALELO: perfil + publicaciones al mismo tiempo
+          const [perfilRes, lista] = await Promise.all([
+            fetch(`https://agenda-production-ae37.up.railway.app/api/empresas/${idEmpresa}/publico/`)
+              .then(r => r.json())
+              .catch(() => null),
+            new ListarPublicacionesUseCase(repo).ejecutar(idEmpresa, LIMIT, 0),
+          ]);
+
+          if (perfilRes?.ok && perfilRes?.datos) {
+            const nombre = perfilRes.datos.nombre_empresa || 'Mi Empresa';
+            const logo = perfilRes.datos.logo_url || null;
+            setEmpresaNombre(nombre);
+            setEmpresaLogo(logo);
+            // Guardar en caché
+            perfilCache[idEmpresa] = { nombre, logo, ts: Date.now() };
+          }
+
+          if (lista.length < LIMIT) setHasMore(false);
+          setPublicaciones(lista);
+          setPage(1);
         }
-
-        if (lista.length < LIMIT) setHasMore(false);
-        setPublicaciones(lista);
-        setPage(1);
       } else {
         const lista = await new ListarPublicacionesUseCase(repo).ejecutar(idEmpresa, LIMIT, offset);
         if (lista.length < LIMIT) setHasMore(false);
@@ -320,7 +382,10 @@ export const MuroPublicacionesScreen = ({ route, isOwner = false, empresaId }: a
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 60 }} />
+        <View style={{ flex: 1 }}>
+          <SkeletonPost />
+          <SkeletonPost />
+        </View>
       ) : publicaciones.length === 0 ? (
         <View style={s.empty}>
           <Feather name="camera" size={64} color="#C7C7C7" />
@@ -466,7 +531,9 @@ const s = StyleSheet.create({
 
   topBar: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'web' ? 16 : 50,
+    paddingBottom: 12,
     backgroundColor: '#FFF', borderBottomWidth: 0.5, borderBottomColor: '#DBDBDB',
   },
   topTitle: { fontSize: 17, fontWeight: '500', color: '#262626' },

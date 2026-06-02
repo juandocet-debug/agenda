@@ -48,11 +48,56 @@ class ErrorBoundary extends Component<{ children: ReactNode }, EBState> {
   }
 }
 
+import * as Updates from 'expo-updates';
+
 export default function App() {
+  const [updateAvailable, setUpdateAvailable] = React.useState(false);
+
+  React.useEffect(() => {
+    if (__DEV__) return;
+
+    // Escuchar eventos de actualización
+    const subscription = Updates.addListener((event) => {
+      if (event.type === Updates.UpdateEventType.UPDATE_AVAILABLE) {
+        setUpdateAvailable(true);
+      }
+    });
+
+    // Validar al iniciar
+    async function checkUpdates() {
+      try {
+        const check = await Updates.checkForUpdateAsync();
+        if (check.isAvailable) {
+          await Updates.fetchUpdateAsync();
+          setUpdateAvailable(true);
+        }
+      } catch (err) {
+        console.log('Error checking updates:', err);
+      }
+    }
+    checkUpdates();
+
+    return () => subscription.remove();
+  }, []);
+
   return (
     <ErrorBoundary>
       <SafeAreaProvider>
         <AppNavigator />
+        {updateAvailable && (
+          <View style={s.updateBanner}>
+            <View style={s.updateTextCol}>
+              <Text style={s.updateEmoji}>🔄</Text>
+              <View>
+                <Text style={s.updateTitle}>Actualización lista</Text>
+                <Text style={s.updateSubtitle}>Toca para aplicar los cambios</Text>
+              </View>
+            </View>
+            <TouchableOpacity style={s.updateBtn} onPress={() => Updates.reloadAsync()}>
+              <Text style={s.updateBtnText}>Actualizar</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </SafeAreaProvider>
     </ErrorBoundary>
   );
@@ -66,4 +111,53 @@ const s = StyleSheet.create({
   crashText: { fontSize: 11, color: '#e94560', fontFamily: 'monospace', lineHeight: 18 },
   crashBtn: { marginTop: 20, backgroundColor: '#6C63FF', paddingHorizontal: 32, paddingVertical: 14, borderRadius: 10 },
   crashBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  
+  // Banner de actualización
+  updateBanner: {
+    position: 'absolute',
+    bottom: 30,
+    left: 20,
+    right: 20,
+    backgroundColor: '#1E2532',
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 10,
+    zIndex: 99999,
+  },
+  updateTextCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  updateEmoji: {
+    fontSize: 22,
+  },
+  updateTitle: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  updateSubtitle: {
+    color: '#828C9A',
+    fontSize: 12,
+    marginTop: 2,
+  },
+  updateBtn: {
+    backgroundColor: '#4C5BEE',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  updateBtnText: {
+    color: '#FFF',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
 });
