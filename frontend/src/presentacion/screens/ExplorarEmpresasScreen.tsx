@@ -228,9 +228,17 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
 
   return (
     <SafeAreaView style={s.root}>
-      {/* ── Header Flotante ── */}
+      {/* ── Header Flotante Tipo Netflix ── */}
       <View style={s.headerAbs}>
-        <LinearGradient colors={['rgba(15,25,80,0.8)', 'transparent']} style={StyleSheet.absoluteFillObject} />
+        <LinearGradient colors={['rgba(0,0,0,0.9)', 'transparent']} style={StyleSheet.absoluteFillObject} />
+        
+        <View style={s.headerTopRow}>
+          <Text style={s.logoText}>AGENDA</Text>
+          <TouchableOpacity style={s.loginBtn} onPress={() => navigation.navigate('Login')}>
+            <Text style={s.loginBtnTxt}>Iniciar sesión</Text>
+          </TouchableOpacity>
+        </View>
+
         <View style={s.searchBar}>
           <Feather name="search" size={16} color="#94A3B8" style={{ marginRight: 8 }} />
           <TextInput
@@ -250,13 +258,13 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refresco} onRefresh={() => { setRefresco(true); cargar(true); }} tintColor={colors.primary} />}
+        refreshControl={<RefreshControl refreshing={refresco} onRefresh={() => { setRefresco(true); cargar(true); }} tintColor="#E50914" />}
         contentContainerStyle={{ paddingBottom: 60 }}
       >
         {/* ── Hero Banner (Solo si no hay búsqueda) ── */}
         {!busqueda && banners.length > 0 && <HeroBanner banners={banners} />}
-        {!busqueda && banners.length === 0 && <View style={{ height: 120 }} />}
-        {busqueda ? <View style={{ height: 120 }} /> : null}
+        {!busqueda && banners.length === 0 && <View style={{ height: 160 }} />}
+        {busqueda ? <View style={{ height: 160 }} /> : null}
 
         {/* ── Contenido ── */}
         {cargando ? (
@@ -285,7 +293,7 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
           </View>
         ) : (
           // Filas tipo Netflix
-          <View style={{ marginTop: -20, zIndex: 10 }}>
+          <View style={{ marginTop: -40, zIndex: 10 }}>
             <RowCategoria titulo="Destacados de hoy" data={destacadas} />
             <RowCategoria titulo="Nuevas opciones" data={populares} />
             <RowCategoria titulo="Cerca de ti" data={cercaDeTi} />
@@ -304,14 +312,26 @@ const s = StyleSheet.create({
   headerAbs: {
     position: 'absolute', top: 0, left: 0, right: 0, zIndex: 100,
     paddingTop: Platform.OS === 'web' ? 20 : 40,
-    paddingHorizontal: 16, paddingBottom: 20,
+    paddingHorizontal: 16, paddingBottom: 30,
   },
+  headerTopRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginBottom: 16,
+  },
+  logoText: {
+    color: '#E50914', fontSize: 24, fontWeight: '900', letterSpacing: 1,
+    textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2,
+  },
+  loginBtn: {
+    backgroundColor: '#E50914', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 4,
+  },
+  loginBtnTxt: { color: '#FFF', fontSize: 13, fontWeight: '600' },
   searchBar: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.15)', // Glassmorphism
-    borderRadius: 12, paddingHorizontal: 16,
+    backgroundColor: 'rgba(0,0,0,0.5)', // Más oscuro y cinematográfico
+    borderRadius: 8, paddingHorizontal: 16,
     paddingVertical: Platform.OS === 'web' ? 12 : 10,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
   },
   searchInput: {
     flex: 1, fontSize: 14, color: '#FFF',
@@ -346,8 +366,12 @@ const s = StyleSheet.create({
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#FFF' },
 
   // Listas Horizontales
-  rowSection: { marginBottom: 28 },
-  rowTitle: { fontSize: 18, fontWeight: '700', color: '#1E293B', marginLeft: 16, marginBottom: 12 },
+  rowSection: { marginBottom: 32 },
+  rowTitle: { 
+    fontSize: 20, fontWeight: '700', color: '#FFF', 
+    marginLeft: 16, marginBottom: 12,
+    textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4,
+  },
   rowList: { paddingHorizontal: 12 },
 
   // Tarjeta Horizontal
