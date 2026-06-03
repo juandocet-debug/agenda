@@ -79,13 +79,13 @@ const EmpresaHorizontalCard = ({
 import { useWindowDimensions } from 'react-native';
 
 const HeroBanner = ({ banners }: { banners: any[] }) => {
-  const { width, height } = useWindowDimensions();
-  const bannerHeight = Platform.OS === 'web' ? Math.min(width * 0.6, 600) : width * 1.3;
+  const { width } = useWindowDimensions();
+  const bannerWidth = width - 32;
+  const bannerHeight = bannerWidth * 0.65;
   const scrollX = useRef(new Animated.Value(0)).current;
   const flatListRef = useRef<FlatList>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Auto-play
   useEffect(() => {
     if (banners.length <= 1) return;
     const interval = setInterval(() => {
@@ -103,46 +103,39 @@ const HeroBanner = ({ banners }: { banners: any[] }) => {
     <TouchableOpacity 
       activeOpacity={item.link_url ? 0.8 : 1}
       onPress={() => item.link_url && Linking.openURL(item.link_url)}
-      style={{ width, height: bannerHeight, position: 'relative' }}
+      style={{ width: bannerWidth, height: bannerHeight, borderRadius: 16, overflow: 'hidden' }}
     >
       <Image source={item.local_source ? item.local_source : { uri: item.imagen_url }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
       <LinearGradient
-        colors={['transparent', 'rgba(15,25,80,0.8)', colors.background]}
-        locations={[0.4, 0.8, 1]}
+        colors={['transparent', 'rgba(0,0,0,0.8)']}
+        locations={[0.5, 1]}
         style={StyleSheet.absoluteFillObject}
       />
       <View style={s.bannerContent}>
         <Text style={s.bannerTitle} numberOfLines={2}>{item.titulo}</Text>
-        {item.link_url ? (
-          <View style={s.bannerAction}>
-            <Feather name="info" size={14} color="#FFF" />
-            <Text style={s.bannerActionTxt}>Más información</Text>
-          </View>
-        ) : null}
       </View>
     </TouchableOpacity>
   );
 
   return (
-    <View style={{ width, height: bannerHeight, position: 'relative' }}>
-      <FlatList
-        ref={flatListRef}
-        data={banners}
-        keyExtractor={b => b.id}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], { useNativeDriver: false })}
-        renderItem={renderItem}
-        onMomentumScrollEnd={(e) => {
-          const index = Math.round(e.nativeEvent.contentOffset.x / width);
-          setCurrentIndex(index);
-        }}
-      />
+    <View style={{ marginTop: 16, alignItems: 'center' }}>
+      <View style={[s.heroShadow, { width: bannerWidth, height: bannerHeight }]}>
+        <FlatList
+          ref={flatListRef}
+          data={banners}
+          keyExtractor={b => b.id}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], { useNativeDriver: false })}
+          renderItem={renderItem}
+          onMomentumScrollEnd={(e) => setCurrentIndex(Math.round(e.nativeEvent.contentOffset.x / bannerWidth))}
+        />
+      </View>
       <View style={s.dotsContainer}>
         {banners.map((_, i) => {
           const opacity = scrollX.interpolate({
-            inputRange: [(i - 1) * width, i * width, (i + 1) * width],
+            inputRange: [(i - 1) * bannerWidth, i * bannerWidth, (i + 1) * bannerWidth],
             outputRange: [0.3, 1, 0.3],
             extrapolate: 'clamp',
           });
@@ -160,7 +153,7 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
   const [busqueda, setBusqueda]   = useState('');
   const [cargando, setCargando]   = useState(false);
   const [refresco, setRefresco]   = useState(false);
-  const scrollY = useRef(new Animated.Value(0)).current;
+  const [mostrarBusqueda, setMostrarBusqueda] = useState(false);
 
   const cargar = async (silencioso = false) => {
     if (!silencioso) setCargando(true);
@@ -209,7 +202,10 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
     if (data.length === 0) return null;
     return (
       <View style={s.rowSection}>
-        <Text style={s.rowTitle}>{titulo}</Text>
+        <View style={s.rowHeader}>
+          <Text style={s.rowTitle}>{titulo}</Text>
+          <Feather name="arrow-right" size={20} color="#1E293B" />
+        </View>
         <FlatList
           data={data}
           horizontal
@@ -222,54 +218,62 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
     );
   };
 
-  const headerBgOpacity = scrollY.interpolate({
-    inputRange: [0, 80],
-    outputRange: [0, 1],
-    extrapolate: 'clamp'
-  });
-
   return (
     <SafeAreaView style={s.root}>
-      {/* ── Header Flotante Tipo Netflix ── */}
-      <View style={s.headerAbs}>
-        <Animated.View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#000', opacity: headerBgOpacity }]} />
-        <LinearGradient colors={['rgba(0,0,0,0.8)', 'transparent']} style={StyleSheet.absoluteFillObject} />
+      {/* ── Header Light Theme ── */}
+      <View style={s.lightHeader}>
+        <TouchableOpacity style={s.headerBtn}>
+          <Feather name="menu" size={24} color="#1E293B" />
+        </TouchableOpacity>
         
-        <View style={s.headerTopRow}>
-          <Image source={require('../../../assets/logo3.png')} style={s.logoImg} resizeMode="contain" />
-          <TouchableOpacity style={s.loginBtn} onPress={() => navigation.navigate('Login')}>
-            <Text style={s.loginBtnTxt}>Iniciar sesión</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={s.searchBar}>
-          <Feather name="search" size={16} color="#94A3B8" style={{ marginRight: 8 }} />
-          <TextInput
-            style={s.searchInput}
-            placeholder="Busca servicios o experiencias..."
-            placeholderTextColor="#94A3B8"
-            value={busqueda}
-            onChangeText={setBusqueda}
-          />
-          {busqueda ? (
-            <TouchableOpacity onPress={() => setBusqueda('')}>
-              <Feather name="x" size={16} color="#94A3B8" />
-            </TouchableOpacity>
-          ) : null}
-        </View>
+        <Image source={require('../../../assets/logo3.png')} style={s.lightLogo} resizeMode="contain" />
+        
+        <TouchableOpacity style={s.headerBtn} onPress={() => setMostrarBusqueda(!mostrarBusqueda)}>
+          <Feather name="search" size={24} color="#1E293B" />
+        </TouchableOpacity>
       </View>
 
-      <Animated.ScrollView
+      {/* ── Barra de Búsqueda Desplegable ── */}
+      {mostrarBusqueda && (
+        <View style={s.searchBarContainer}>
+          <View style={s.searchBarLight}>
+            <Feather name="search" size={18} color="#94A3B8" style={{ marginRight: 8 }} />
+            <TextInput
+              style={s.searchInputLight}
+              placeholder="Busca servicios, empresas..."
+              placeholderTextColor="#94A3B8"
+              value={busqueda}
+              onChangeText={setBusqueda}
+              autoFocus
+            />
+            {busqueda ? (
+              <TouchableOpacity onPress={() => setBusqueda('')}>
+                <Feather name="x" size={18} color="#94A3B8" />
+              </TouchableOpacity>
+            ) : null}
+          </View>
+        </View>
+      )}
+
+      <ScrollView
         showsVerticalScrollIndicator={false}
-        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: false })}
-        scrollEventThrottle={16}
         refreshControl={<RefreshControl refreshing={refresco} onRefresh={() => { setRefresco(true); cargar(true); }} tintColor={colors.primary} />}
         contentContainerStyle={{ paddingBottom: 60 }}
       >
-        {/* ── Hero Banner (Solo si no hay búsqueda) ── */}
+        {/* ── Hero Banner ── */}
         {!busqueda && banners.length > 0 && <HeroBanner banners={banners} />}
-        {!busqueda && banners.length === 0 && <View style={{ height: 160 }} />}
-        {busqueda ? <View style={{ height: 160 }} /> : null}
+
+        {/* ── Action Buttons ── */}
+        {!busqueda && (
+          <View style={s.actionButtonsRow}>
+            <TouchableOpacity style={s.actionBtn}>
+              <Text style={s.actionBtnTxt}>EXPLORAR</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.actionBtn}>
+              <Text style={s.actionBtnTxt}>CATEGORÍAS</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* ── Contenido ── */}
         {cargando ? (
@@ -282,8 +286,7 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
             <Text style={s.emptyTxt}>Sin resultados</Text>
           </View>
         ) : busqueda ? (
-          // Vista en grilla si hay búsqueda (simulado en lista vertical por ahora)
-          <View style={{ paddingHorizontal: 16 }}>
+          <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
             <Text style={[s.rowTitle, { marginBottom: 16 }]}>Resultados de búsqueda</Text>
             {empresasMostradas.map(item => (
               <TouchableOpacity key={item.id} style={s.searchCard} onPress={() => onVerMuro(item.id)}>
@@ -297,99 +300,93 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
             ))}
           </View>
         ) : (
-          // Filas tipo Netflix
-          <View style={{ marginTop: -40, zIndex: 10 }}>
+          <View style={{ marginTop: 16 }}>
             <RowCategoria titulo="Destacados de hoy" data={destacadas} />
             <RowCategoria titulo="Nuevas opciones" data={populares} />
             <RowCategoria titulo="Cerca de ti" data={cercaDeTi} />
           </View>
         )}
-      </Animated.ScrollView>
+      </ScrollView>
     </SafeAreaView>
   );
 };
 
 // ─── Estilos ────────────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background }, // #0A0A0A por ejemplo, si colors.background es oscuro
+  root: { flex: 1, backgroundColor: '#F8F9FA' },
 
-  // Header Absoluto
-  headerAbs: {
-    position: 'absolute', top: 0, left: 0, right: 0, zIndex: 100,
-    paddingTop: Platform.OS === 'web' ? 20 : 40,
-    paddingHorizontal: 16, paddingBottom: 30,
+  // Header Light Theme
+  lightHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingTop: Platform.OS === 'web' ? 16 : 40,
+    paddingBottom: 16, backgroundColor: '#F8F9FA',
   },
-  headerTopRow: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    marginBottom: 16,
+  headerBtn: { padding: 4 },
+  lightLogo: { height: 36, width: 120 },
+
+  // Barra de Búsqueda Light
+  searchBarContainer: { paddingHorizontal: 16, paddingBottom: 16, backgroundColor: '#F8F9FA' },
+  searchBarLight: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF',
+    borderRadius: 12, paddingHorizontal: 16, paddingVertical: Platform.OS === 'web' ? 12 : 10,
+    ...shadows.soft,
   },
-  logoImg: {
-    width: 200, height: 80, marginLeft: -20, marginTop: -10,
-  },
-  loginBtn: {
-    backgroundColor: colors.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 24,
-  },
-  loginBtnTxt: { color: '#FFF', fontSize: 13, fontWeight: '700' },
-  searchBar: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)', // Más oscuro y cinematográfico
-    borderRadius: 8, paddingHorizontal: 16,
-    paddingVertical: Platform.OS === 'web' ? 12 : 10,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
-  },
-  searchInput: {
-    flex: 1, fontSize: 14, color: '#FFF',
+  searchInputLight: {
+    flex: 1, fontSize: 15, color: '#1E293B',
     ...(Platform.OS === 'web' ? { outlineStyle: 'none' } as any : {}),
   },
 
-  // Hero
-  heroWrapper: { width, height: width * 1.3, position: 'relative' },
-  bannerContainer: { width, height: width * 1.3, position: 'relative' },
-  bannerImage: { ...StyleSheet.absoluteFillObject },
-  bannerGradient: { ...StyleSheet.absoluteFillObject },
+  // Hero Banner Light
+  heroShadow: {
+    borderRadius: 16, backgroundColor: '#FFF',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15, shadowRadius: 20, elevation: 8,
+  },
   bannerContent: {
-    position: 'absolute', bottom: 40, left: 20, right: 20,
-    alignItems: 'center',
+    position: 'absolute', bottom: 20, left: 20, right: 20,
   },
   bannerTitle: {
-    fontSize: 32, fontWeight: '800', color: '#FFF',
-    textAlign: 'center', textShadowColor: 'rgba(0,0,0,0.5)',
-    textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 4,
-    marginBottom: 16,
+    fontSize: 22, fontWeight: '800', color: '#FFF',
+    textShadowColor: 'rgba(0,0,0,0.6)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 6,
   },
-  bannerAction: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
-  },
-  bannerActionTxt: { color: '#FFF', fontWeight: '600', fontSize: 13 },
   dotsContainer: {
-    position: 'absolute', bottom: 16, left: 0, right: 0,
-    flexDirection: 'row', justifyContent: 'center', gap: 6,
+    flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 16,
   },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#FFF' },
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#CBD5E1' },
+
+  // Action Buttons
+  actionButtonsRow: {
+    flexDirection: 'row', justifyContent: 'center', gap: 16,
+    marginHorizontal: 16, marginTop: 24, marginBottom: 32,
+  },
+  actionBtn: {
+    flex: 1, backgroundColor: '#E11D48', borderRadius: 8,
+    paddingVertical: 14, alignItems: 'center',
+    shadowColor: '#E11D48', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3, shadowRadius: 8, elevation: 4,
+  },
+  actionBtnTxt: { color: '#FFF', fontWeight: '700', fontSize: 14, letterSpacing: 0.5 },
 
   // Listas Horizontales
   rowSection: { marginBottom: 32 },
-  rowTitle: { 
-    fontSize: 20, fontWeight: '700', color: '#FFF', 
-    marginLeft: 16, marginBottom: 12,
-    textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4,
+  rowHeader: { 
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 16, marginBottom: 16 
   },
+  rowTitle: { fontSize: 18, fontWeight: '700', color: '#1E293B' },
   rowList: { paddingHorizontal: 12 },
 
   // Tarjeta Horizontal
-  horCard: { width: 140, marginHorizontal: 4 },
+  horCard: { width: 130, marginHorizontal: 6 },
   horPortadaWrap: {
-    width: 140, height: 200, borderRadius: 8, overflow: 'hidden',
-    backgroundColor: '#1E293B', ...shadows.soft,
+    width: 130, height: 180, borderRadius: 12, overflow: 'hidden',
+    backgroundColor: '#FFFFFF', ...shadows.medium,
     justifyContent: 'center', alignItems: 'center',
   },
-  horPortadaOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.15)' },
-  fallbackLogo: { width: 80, height: 80, alignSelf: 'center', marginTop: 60 },
+  fallbackLogo: { width: 70, height: 70, alignSelf: 'center', marginTop: 50 },
   fallbackTextWrap: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  fallbackText: { fontSize: 60, fontWeight: '800', color: 'rgba(255,255,255,0.2)' },
-  horCardNombre: { fontSize: 13, fontWeight: '600', color: '#FFFFFF', marginTop: 8, textAlign: 'center' },
+  fallbackText: { fontSize: 50, fontWeight: '800', color: 'rgba(30,41,59,0.1)' },
+  horCardNombre: { fontSize: 13, fontWeight: '600', color: '#1E293B', marginTop: 8 },
 
   // Búsqueda en grilla
   searchCard: {
@@ -404,5 +401,5 @@ const s = StyleSheet.create({
   avatarLetra: { flex: 1, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' },
   avatarLetraTxt: { fontSize: 22, color: '#FFF', fontWeight: '600' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, gap: 12, marginTop: 100 },
-  emptyTxt: { fontSize: 16, fontWeight: '600', color: '#FFFFFF', textAlign: 'center' },
+  emptyTxt: { fontSize: 16, fontWeight: '600', color: '#64748B', textAlign: 'center' },
 });
