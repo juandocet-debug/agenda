@@ -379,7 +379,7 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
         {/* Fila 2: logo centrado con todo el ancho */}
         <View style={s.headerLogoRow}>
           <Image
-            source={require('../../../assets/logo4.png')}
+            source={require('../../../assets/logo3.png')}
             style={s.logoImg}
             resizeMode="contain"
           />
@@ -545,24 +545,30 @@ const s = StyleSheet.create({
   // Header en 2 filas
   header: {
     flexDirection: 'column',
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FFFFFF',
     paddingTop: Platform.OS === 'web' ? 12 : 44,
-    paddingBottom: 8,
+    paddingBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 4,
   },
   headerTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   headerLogoRow: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 4,
+    paddingHorizontal: 16,
   },
   headerBtn: { padding: 6 },
-  logoImg: { height: 120, width: '90%', maxWidth: 420 },
+  logoImg: { height: 56, width: '80%', maxWidth: 340 },
   loginBtn: {
     backgroundColor: colors.primary,
     paddingHorizontal: 16,
