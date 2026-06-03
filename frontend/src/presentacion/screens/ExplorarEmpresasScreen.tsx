@@ -549,7 +549,7 @@ const s = StyleSheet.create({
     backgroundColor: '#F8F9FA',
   },
   headerBtn: { padding: 6 },
-  logoImg: { height: 44, width: 160 },
+  logoImg: { height: 64, width: 220 },
   loginBtn: {
     backgroundColor: colors.primary,
     paddingHorizontal: 16,
