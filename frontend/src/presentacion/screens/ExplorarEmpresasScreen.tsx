@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, FlatList, SafeAreaView,
   TouchableOpacity, TextInput, ActivityIndicator, Image,
   Platform, RefreshControl, Animated, Linking, Modal,
-  ScrollView
+  ScrollView, Dimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -39,7 +39,7 @@ interface Categoria {
 const HeroBanner = ({ banners }: { banners: any[] }) => {
   const { width } = useWindowDimensions();
   const bannerWidth = width - 32;
-  const bannerHeight = bannerWidth * 0.55;
+  const bannerHeight = Math.min(bannerWidth * 0.55, 280);
   const scrollX = useRef(new Animated.Value(0)).current;
   const flatListRef = useRef<FlatList>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -50,7 +50,7 @@ const HeroBanner = ({ banners }: { banners: any[] }) => {
       const nextIndex = (currentIndex + 1) % banners.length;
       flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
       setCurrentIndex(nextIndex);
-    }, 4000);
+    }, 4500);
     return () => clearInterval(interval);
   }, [currentIndex, banners]);
 
@@ -60,7 +60,7 @@ const HeroBanner = ({ banners }: { banners: any[] }) => {
     <TouchableOpacity
       activeOpacity={item.link_url ? 0.8 : 1}
       onPress={() => item.link_url && Linking.openURL(item.link_url)}
-      style={{ width: bannerWidth, height: bannerHeight, borderRadius: 16, overflow: 'hidden' }}
+      style={{ width: bannerWidth, height: bannerHeight, borderRadius: 20, overflow: 'hidden' }}
     >
       <Image
         source={item.local_source ? item.local_source : { uri: item.imagen_url }}
@@ -69,7 +69,7 @@ const HeroBanner = ({ banners }: { banners: any[] }) => {
       />
       <LinearGradient
         colors={['transparent', 'rgba(0,0,0,0.75)']}
-        locations={[0.5, 1]}
+        locations={[0.4, 1]}
         style={StyleSheet.absoluteFillObject}
       />
       <View style={s.bannerContent}>
@@ -79,7 +79,7 @@ const HeroBanner = ({ banners }: { banners: any[] }) => {
   );
 
   return (
-    <View style={{ marginHorizontal: 16, marginTop: 8, alignItems: 'center' }}>
+    <View style={{ marginHorizontal: 16, marginTop: 8 }}>
       <View style={[s.heroShadow, { width: bannerWidth, height: bannerHeight }]}>
         <FlatList
           ref={flatListRef}
@@ -114,7 +114,7 @@ const HeroBanner = ({ banners }: { banners: any[] }) => {
   );
 };
 
-// ─── Tarjeta de empresa ─────────────────────────────────────────────────────────
+// ─── Tarjeta de empresa (foto grande + logo centrado si no hay foto) ────────────
 const EmpresaCard = ({
   empresa,
   onPress,
@@ -124,6 +124,7 @@ const EmpresaCard = ({
 }) => (
   <TouchableOpacity style={s.horCard} activeOpacity={0.85} onPress={() => onPress(empresa.id)}>
     <View style={s.horPortadaWrap}>
+      {/* Fondo: foto de portada o gradiente */}
       {empresa.foto_portada_url ? (
         <Image
           source={{ uri: empresa.foto_portada_url }}
@@ -132,23 +133,109 @@ const EmpresaCard = ({
         />
       ) : (
         <LinearGradient
-          colors={[colors.primary, '#1E40AF']}
+          colors={['#3B4FCD', '#1E3A8A']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFillObject}
         />
       )}
-      {empresa.logo_url && empresa.foto_portada_url === '' && (
-        <Image source={{ uri: empresa.logo_url }} style={s.fallbackLogo} resizeMode="contain" />
-      )}
-      {!empresa.foto_portada_url && !empresa.logo_url && (
-        <Text style={s.fallbackText}>{empresa.nombre.charAt(0).toUpperCase()}</Text>
+      {/* Overlay sutil */}
+      <View style={s.horCardOverlay} />
+      {/* Logo centrado grande */}
+      {empresa.logo_url ? (
+        <Image
+          source={{ uri: empresa.logo_url }}
+          style={s.horCardLogo}
+          resizeMode="contain"
+        />
+      ) : (
+        <View style={s.horCardLetra}>
+          <Text style={s.horCardLetraTxt}>
+            {empresa.nombre.charAt(0).toUpperCase()}
+          </Text>
+        </View>
       )}
     </View>
     <Text style={s.horCardNombre} numberOfLines={1}>{empresa.nombre}</Text>
-    {empresa.ciudad ? <Text style={s.horCardCiudad} numberOfLines={1}>{empresa.ciudad}</Text> : null}
+    {empresa.ciudad ? (
+      <Text style={s.horCardCiudad} numberOfLines={1}>
+        <Feather name="map-pin" size={10} color="#94A3B8" /> {empresa.ciudad}
+      </Text>
+    ) : null}
   </TouchableOpacity>
 );
+
+// ─── Menú Hamburguesa (Drawer lateral) ─────────────────────────────────────────
+const DrawerMenu = ({
+  visible,
+  onClose,
+  navigation,
+  onIrCategorias,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  navigation: any;
+  onIrCategorias: () => void;
+}) => {
+  const slideAnim = useRef(new Animated.Value(-320)).current;
+
+  useEffect(() => {
+    Animated.spring(slideAnim, {
+      toValue: visible ? 0 : -320,
+      useNativeDriver: true,
+      tension: 80,
+      friction: 12,
+    }).start();
+  }, [visible]);
+
+  const menuItems = [
+    { icon: 'home',         label: 'Inicio',        action: () => { onClose(); } },
+    { icon: 'grid',         label: 'Categorías',    action: () => { onClose(); onIrCategorias(); } },
+    { icon: 'star',         label: 'Destacados',    action: () => { onClose(); } },
+    { icon: 'message-circle', label: 'Sugerencias', action: () => { onClose(); Linking.openURL('mailto:soporte@flowy.app'); } },
+    { icon: 'info',         label: 'Sobre Flowy',   action: () => { onClose(); } },
+    { icon: 'log-in',       label: 'Iniciar sesión',action: () => { onClose(); navigation.navigate('Login'); } },
+  ];
+
+  if (!visible) return null;
+
+  return (
+    <View style={StyleSheet.absoluteFillObject} pointerEvents="box-none">
+      {/* Sombra fondo */}
+      <TouchableOpacity
+        style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.45)' }]}
+        activeOpacity={1}
+        onPress={onClose}
+      />
+      {/* Panel deslizable */}
+      <Animated.View style={[s.drawer, { transform: [{ translateX: slideAnim }] }]}>
+        {/* Header del drawer */}
+        <LinearGradient colors={[colors.primary, '#1E40AF']} style={s.drawerHeader}>
+          <Image source={require('../../../assets/logo3.png')} style={s.drawerLogo} resizeMode="contain" />
+          <Text style={s.drawerTagline}>Servicios y experiencias</Text>
+        </LinearGradient>
+
+        {/* Items del menú */}
+        <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+          {menuItems.map((item, i) => (
+            <TouchableOpacity key={i} style={s.drawerItem} onPress={item.action} activeOpacity={0.7}>
+              <View style={s.drawerItemIcon}>
+                <Feather name={item.icon as any} size={20} color={colors.primary} />
+              </View>
+              <Text style={s.drawerItemLabel}>{item.label}</Text>
+              <Feather name="chevron-right" size={16} color="#CBD5E1" />
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {/* Footer */}
+        <View style={s.drawerFooter}>
+          <Text style={s.drawerFooterTxt}>© 2025 Flowy · v1.0</Text>
+        </View>
+      </Animated.View>
+    </View>
+  );
+};
 
 // ─── Modal de Categorías ────────────────────────────────────────────────────────
 const CategoriasModal = ({
@@ -160,7 +247,7 @@ const CategoriasModal = ({
   visible: boolean;
   categorias: Categoria[];
   onClose: () => void;
-  onSelectCategoria: (cat: Categoria) => void;
+  onSelectCategoria: (cat: Categoria | null) => void;
 }) => (
   <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
     <TouchableOpacity style={s.modalOverlay} activeOpacity={1} onPress={onClose} />
@@ -168,6 +255,18 @@ const CategoriasModal = ({
       <View style={s.modalHandle} />
       <Text style={s.modalTitle}>Explorar por categoría</Text>
       <ScrollView showsVerticalScrollIndicator={false}>
+        <TouchableOpacity
+          style={s.modalCatRow}
+          onPress={() => { onClose(); onSelectCategoria(null); }}
+        >
+          <View style={s.modalCatIcon}>
+            <Feather name="grid" size={20} color={colors.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={s.modalCatNombre}>Todas las categorías</Text>
+          </View>
+          <Feather name="chevron-right" size={18} color="#94A3B8" />
+        </TouchableOpacity>
         {categorias.map(cat => (
           <TouchableOpacity
             key={cat.id}
@@ -179,14 +278,16 @@ const CategoriasModal = ({
             </View>
             <View style={{ flex: 1 }}>
               <Text style={s.modalCatNombre}>{cat.nombre}</Text>
-              <Text style={s.modalCatCount}>{cat.empresas.length} empresa{cat.empresas.length !== 1 ? 's' : ''}</Text>
+              <Text style={s.modalCatCount}>
+                {cat.empresas.length} empresa{cat.empresas.length !== 1 ? 's' : ''}
+              </Text>
             </View>
             <Feather name="chevron-right" size={18} color="#94A3B8" />
           </TouchableOpacity>
         ))}
         {categorias.length === 0 && (
           <Text style={{ color: '#94A3B8', textAlign: 'center', marginTop: 24 }}>
-            Sin categorías disponibles
+            Sin categorías disponibles aún
           </Text>
         )}
       </ScrollView>
@@ -196,14 +297,15 @@ const CategoriasModal = ({
 
 // ─── Pantalla principal ─────────────────────────────────────────────────────────
 export const ExplorarEmpresasScreen = ({ navigation }: any) => {
-  const [categorias, setCategorias]       = useState<Categoria[]>([]);
-  const [banners, setBanners]             = useState<BannerPublicitario[]>([]);
-  const [busqueda, setBusqueda]           = useState('');
-  const [cargando, setCargando]           = useState(false);
-  const [refresco, setRefresco]           = useState(false);
-  const [mostrarBusqueda, setMostrarBusqueda] = useState(false);
+  const [categorias, setCategorias]   = useState<Categoria[]>([]);
+  const [banners, setBanners]         = useState<BannerPublicitario[]>([]);
+  const [busqueda, setBusqueda]       = useState('');
+  const [cargando, setCargando]       = useState(false);
+  const [refresco, setRefresco]       = useState(false);
+  const [mostrarBusqueda, setMostrarBusqueda]     = useState(false);
   const [mostrarCategorias, setMostrarCategorias] = useState(false);
-  const [categoriaFiltro, setCategoriaFiltro] = useState<Categoria | null>(null);
+  const [mostrarDrawer, setMostrarDrawer]         = useState(false);
+  const [categoriaFiltro, setCategoriaFiltro]     = useState<Categoria | null>(null);
   const searchRef = useRef<TextInput>(null);
 
   const cargar = async (silencioso = false) => {
@@ -229,7 +331,7 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
             }];
 
       setBanners(bannersFinales);
-      if (catsRes.ok) setCategorias(catsRes.datos);
+      if (catsRes.ok) setCategorias(catsRes.datos || []);
     } catch {
       // silencioso
     } finally {
@@ -252,17 +354,9 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
       )
     : [];
 
-  // ── Handlers botones ────────────────────────────────────────────────────────
   const handleExplorar = () => {
     setMostrarBusqueda(true);
     setTimeout(() => searchRef.current?.focus(), 150);
-  };
-
-  const handleCategorias = () => setMostrarCategorias(true);
-
-  const handleSelectCategoria = (cat: Categoria) => {
-    setCategoriaFiltro(cat);
-    setBusqueda('');
   };
 
   const categoriasMostradas = categoriaFiltro
@@ -273,11 +367,16 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
     <SafeAreaView style={s.root}>
       {/* ── Header ── */}
       <View style={s.header}>
+        <TouchableOpacity style={s.headerBtn} onPress={() => setMostrarDrawer(true)}>
+          <Feather name="menu" size={26} color="#1E293B" />
+        </TouchableOpacity>
+
         <Image
           source={require('../../../assets/logo3.png')}
           style={s.logoImg}
           resizeMode="contain"
         />
+
         <TouchableOpacity style={s.loginBtn} onPress={() => navigation.navigate('Login')}>
           <Text style={s.loginBtnTxt}>Iniciar sesión</Text>
         </TouchableOpacity>
@@ -324,7 +423,7 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
               <Feather name="search" size={16} color="#FFF" style={{ marginRight: 6 }} />
               <Text style={s.actionBtnTxt}>EXPLORAR</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={s.actionBtn} onPress={handleCategorias}>
+            <TouchableOpacity style={s.actionBtn} onPress={() => setMostrarCategorias(true)}>
               <Feather name="grid" size={16} color="#FFF" style={{ marginRight: 6 }} />
               <Text style={s.actionBtnTxt}>CATEGORÍAS</Text>
             </TouchableOpacity>
@@ -361,15 +460,16 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
             ) : (
               empresasFiltradas.map(item => (
                 <TouchableOpacity key={item.id} style={s.searchCard} onPress={() => onVerMuro(item.id)}>
-                  {item.foto_portada_url ? (
-                    <Image source={{ uri: item.foto_portada_url }} style={s.searchImg} resizeMode="cover" />
-                  ) : (
-                    <View style={[s.searchImg, { backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' }]}>
-                      <Text style={{ fontSize: 28, color: '#FFF', fontWeight: '700' }}>
-                        {item.nombre.charAt(0).toUpperCase()}
-                      </Text>
-                    </View>
-                  )}
+                  <View style={[s.searchImg, { overflow: 'hidden', borderRadius: 0 }]}>
+                    {item.foto_portada_url ? (
+                      <Image source={{ uri: item.foto_portada_url }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+                    ) : (
+                      <LinearGradient colors={['#3B4FCD', '#1E3A8A']} style={StyleSheet.absoluteFillObject} />
+                    )}
+                    {item.logo_url && !item.foto_portada_url && (
+                      <Image source={{ uri: item.logo_url }} style={{ width: 50, height: 50, alignSelf: 'center', marginTop: 15 }} resizeMode="contain" />
+                    )}
+                  </View>
                   <View style={{ flex: 1, padding: 12 }}>
                     <Text style={s.searchTitle}>{item.nombre}</Text>
                     <Text style={s.searchSub}>{item.ciudad || 'Online'}</Text>
@@ -386,6 +486,9 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
               <View style={s.center}>
                 <Feather name="inbox" size={44} color="#CBD5E1" />
                 <Text style={s.emptyTxt}>Sin empresas disponibles</Text>
+                <Text style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', marginTop: 4 }}>
+                  Tira hacia abajo para refrescar
+                </Text>
               </View>
             ) : (
               categoriasMostradas.map(cat => (
@@ -393,7 +496,9 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
                   <View style={s.rowHeader}>
                     <Feather name={(cat.icono || 'grid') as any} size={18} color={colors.primary} style={{ marginRight: 8 }} />
                     <Text style={s.rowTitle}>{cat.nombre}</Text>
-                    <Text style={s.rowCount}>{cat.empresas.length}</Text>
+                    <View style={s.rowCountBadge}>
+                      <Text style={s.rowCountTxt}>{cat.empresas.length}</Text>
+                    </View>
                   </View>
                   <FlatList
                     data={cat.empresas}
@@ -415,7 +520,15 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
         visible={mostrarCategorias}
         categorias={categorias}
         onClose={() => setMostrarCategorias(false)}
-        onSelectCategoria={handleSelectCategoria}
+        onSelectCategoria={(cat) => setCategoriaFiltro(cat)}
+      />
+
+      {/* ── Drawer Hamburguesa ── */}
+      <DrawerMenu
+        visible={mostrarDrawer}
+        onClose={() => setMostrarDrawer(false)}
+        navigation={navigation}
+        onIrCategorias={() => setMostrarCategorias(true)}
       />
     </SafeAreaView>
   );
@@ -435,10 +548,11 @@ const s = StyleSheet.create({
     paddingBottom: 12,
     backgroundColor: '#F8F9FA',
   },
-  logoImg: { height: 48, width: 160 },
+  headerBtn: { padding: 6 },
+  logoImg: { height: 44, width: 160 },
   loginBtn: {
     backgroundColor: colors.primary,
-    paddingHorizontal: 18,
+    paddingHorizontal: 16,
     paddingVertical: 9,
     borderRadius: 24,
   },
@@ -468,22 +582,22 @@ const s = StyleSheet.create({
 
   // Hero Banner
   heroShadow: {
-    borderRadius: 16,
+    borderRadius: 20,
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.14,
+    shadowRadius: 20,
+    elevation: 8,
   },
-  bannerContent: { position: 'absolute', bottom: 16, left: 16, right: 16 },
+  bannerContent: { position: 'absolute', bottom: 18, left: 18, right: 18 },
   bannerTitle: {
     fontSize: 20,
     fontWeight: '800',
     color: '#FFF',
     textShadowColor: 'rgba(0,0,0,0.6)',
     textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    textShadowRadius: 6,
   },
   dotsContainer: {
     flexDirection: 'row',
@@ -507,7 +621,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#E11D48',
-    borderRadius: 10,
+    borderRadius: 12,
     paddingVertical: 14,
     shadowColor: '#E11D48',
     shadowOffset: { width: 0, height: 4 },
@@ -526,7 +640,7 @@ const s = StyleSheet.create({
     backgroundColor: '#EFF6FF',
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 12,
     gap: 8,
   },
   filtroTxt: { flex: 1, fontSize: 14, fontWeight: '600', color: colors.primary },
@@ -538,38 +652,52 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    marginBottom: 12,
+    marginBottom: 14,
     marginTop: 8,
   },
   rowTitle: { flex: 1, fontSize: 17, fontWeight: '700', color: '#1E293B' },
-  rowCount: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#FFF',
+  rowCountBadge: {
     backgroundColor: colors.primary,
+    borderRadius: 10,
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 10,
-    overflow: 'hidden',
   },
+  rowCountTxt: { fontSize: 11, fontWeight: '700', color: '#FFF' },
   rowList: { paddingHorizontal: 12 },
 
   // Tarjeta horizontal de empresa
-  horCard: { width: 140, marginHorizontal: 6 },
+  horCard: { width: 150, marginHorizontal: 6 },
   horPortadaWrap: {
-    width: 140,
-    height: 190,
-    borderRadius: 14,
+    width: 150,
+    height: 200,
+    borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: '#E2E8F0',
     justifyContent: 'center',
     alignItems: 'center',
     ...shadows.soft,
   },
-  fallbackLogo: { width: 70, height: 70 },
-  fallbackText: { fontSize: 52, fontWeight: '800', color: 'rgba(255,255,255,0.6)' },
-  horCardNombre: { fontSize: 13, fontWeight: '600', color: '#1E293B', marginTop: 8, marginLeft: 2 },
-  horCardCiudad: { fontSize: 11, color: '#64748B', marginLeft: 2 },
+  horCardOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.12)',
+  },
+  horCardLogo: {
+    width: 90,
+    height: 90,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+  },
+  horCardLetra: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  horCardLetraTxt: { fontSize: 40, fontWeight: '800', color: '#FFF' },
+  horCardNombre: { fontSize: 13, fontWeight: '700', color: '#1E293B', marginTop: 10, marginLeft: 2 },
+  horCardCiudad: { fontSize: 11, color: '#94A3B8', marginLeft: 2, marginTop: 2 },
 
   // Resultados de búsqueda
   searchCard: {
@@ -581,15 +709,60 @@ const s = StyleSheet.create({
     overflow: 'hidden',
     ...shadows.soft,
   },
-  searchImg: { width: 80, height: 80 },
+  searchImg: { width: 80, height: 80, backgroundColor: '#CBD5E1', justifyContent: 'center', alignItems: 'center' },
   searchTitle: { fontSize: 15, fontWeight: '600', color: '#1E293B' },
   searchSub: { fontSize: 12, color: '#64748B', marginTop: 4 },
 
-  // Modal de categorías
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+  // Drawer lateral
+  drawer: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 300,
+    backgroundColor: '#FFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 4, height: 0 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 20,
   },
+  drawerHeader: {
+    paddingTop: Platform.OS === 'web' ? 40 : 60,
+    paddingBottom: 28,
+    paddingHorizontal: 24,
+    alignItems: 'flex-start',
+  },
+  drawerLogo: { width: 140, height: 48, marginBottom: 8 },
+  drawerTagline: { fontSize: 13, color: 'rgba(255,255,255,0.75)', fontWeight: '500' },
+  drawerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    gap: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  drawerItemIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#EFF6FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  drawerItemLabel: { flex: 1, fontSize: 15, fontWeight: '600', color: '#1E293B' },
+  drawerFooter: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    alignItems: 'center',
+  },
+  drawerFooterTxt: { fontSize: 12, color: '#94A3B8' },
+
+  // Modal de categorías
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' },
   modalSheet: {
     backgroundColor: '#FFF',
     borderTopLeftRadius: 24,
@@ -607,12 +780,7 @@ const s = StyleSheet.create({
     alignSelf: 'center',
     marginBottom: 20,
   },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1E293B',
-    marginBottom: 16,
-  },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: '#1E293B', marginBottom: 16 },
   modalCatRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -632,14 +800,14 @@ const s = StyleSheet.create({
   modalCatNombre: { fontSize: 15, fontWeight: '600', color: '#1E293B' },
   modalCatCount: { fontSize: 12, color: '#64748B', marginTop: 2 },
 
-  // Utilidades
+  // Utils
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
     gap: 12,
-    marginTop: 60,
+    marginTop: 40,
   },
   emptyTxt: { fontSize: 16, fontWeight: '600', color: '#64748B', textAlign: 'center' },
 });
