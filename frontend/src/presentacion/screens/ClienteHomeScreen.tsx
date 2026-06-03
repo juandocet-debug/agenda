@@ -51,14 +51,17 @@ const StatCard = ({ icon, value, label }: any) => (
 );
 
 const EstadoBadge = ({ estado }: { estado: string }) => {
+  // El backend devuelve estados en MAYÚSCULAS — normalizamos para el lookup
   const cfg: Record<string, { color: string; bg: string; label: string }> = {
+    programada: { color: '#D97706', bg: '#FFFBEB', label: 'Programada' },
     pendiente:  { color: '#D97706', bg: '#FFFBEB', label: 'Pendiente'  },
     confirmada: { color: '#059669', bg: '#ECFDF5', label: 'Confirmada' },
     pagada:     { color: '#2563EB', bg: '#EFF6FF', label: 'Pagada'     },
     cancelada:  { color: '#DC2626', bg: '#FEF2F2', label: 'Cancelada'  },
     completada: { color: '#6D28D9', bg: '#F5F3FF', label: 'Completada' },
   };
-  const c = cfg[estado] ?? { color: '#64748B', bg: '#F8FAFC', label: estado };
+  const key = (estado || '').toLowerCase();
+  const c = cfg[key] ?? { color: '#64748B', bg: '#F8FAFC', label: estado };
   return (
     <View style={[st.badge, { backgroundColor: c.bg }]}>
       <Text style={[st.badgeTxt, { color: c.color }]}>{c.label}</Text>
@@ -132,10 +135,15 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
 
   const proximas = citas.filter(c => {
     const hoy = new Date().toISOString().split('T')[0];
-    return c.fecha >= hoy && c.estado !== 'cancelada';
+    const est = (c.estado || '').toUpperCase();
+    return c.fecha >= hoy && est !== 'CANCELADA';
   }).length;
 
-  const pagadas = citas.filter(c => c.estado === 'pagada').length;
+  // CONFIRMADA y PAGADA son equivalentes a "pagada" (el webhook pone CONFIRMADA)
+  const pagadas = citas.filter(c => {
+    const est = (c.estado || '').toUpperCase();
+    return est === 'CONFIRMADA' || est === 'PAGADA';
+  }).length;
 
   return (
     <SafeAreaView style={st.root}>
