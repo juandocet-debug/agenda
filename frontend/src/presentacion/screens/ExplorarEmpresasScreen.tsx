@@ -305,7 +305,7 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
             <RowCategoria titulo="Cerca de ti" data={cercaDeTi} />
           </View>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
     </SafeAreaView>
   );
 };
