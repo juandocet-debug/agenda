@@ -12,6 +12,7 @@ import { AgendarPublicoScreen } from '../screens/AgendarPublicoScreen';
 import { CarritoScreen } from '../screens/CarritoScreen';
 import { RegistroClienteScreen } from '../screens/RegistroClienteScreen';
 import { ConfirmacionReservaScreen } from '../screens/ConfirmacionReservaScreen';
+import { PagoExitosoScreen } from '../screens/PagoExitosoScreen';
 import { ClienteHomeScreen } from '../screens/ClienteHomeScreen';
 import { ExplorarEmpresasScreen } from '../screens/ExplorarEmpresasScreen';
 import { MuroPublicacionesScreen } from '../screens/MuroPublicacionesScreen';
@@ -32,7 +33,7 @@ const linking = {
     screens: {
       AgendarPublico: 'agendar/:empresaId',
       ReservarPublico: 'reservar/:empresaId',
-      ConfirmacionReserva: 'pago-exitoso/:citaId',
+      PagoExitoso: 'pago-exitoso/:citaId',
       Carrito: 'carrito',
       Login: 'login',
       EmpresaTabs: 'empresa',
@@ -134,6 +135,7 @@ export const AppNavigator = () => {
             <Stack.Screen name="HorariosConfig" component={HorariosConfigScreen} options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="CrearCita" component={ReservarScreen} />
             <Stack.Screen name="ConfirmacionReserva" component={ConfirmacionReservaScreen} />
+            <Stack.Screen name="PagoExitoso" component={PagoExitosoScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       </View>

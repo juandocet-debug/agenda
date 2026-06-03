@@ -107,7 +107,7 @@ export const RecuperarPasswordScreen = ({ navigation }: any) => {
               <Text style={styles.subtitle}>
                 Revisa tu bandeja de entrada (y carpeta de spam). El link expira en 30 minutos.
               </Text>
-              <TouchableOpacity style={styles.primaryBtn} onPress={() => navigation.goBack()}>
+              <TouchableOpacity style={styles.primaryBtn} onPress={() => navigation.navigate('Login')}>
                 <Text style={styles.primaryBtnText}>Volver al inicio de sesión</Text>
               </TouchableOpacity>
             </>

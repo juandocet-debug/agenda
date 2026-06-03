@@ -191,6 +191,7 @@ export const CarritoScreen = ({ navigation }: any) => {
           checkoutUrl: resultados[0].checkout_url,
           resumen: resultados[0],
           totalItems: resultados.length,
+          empresaId: empresaId,
         });
       }
     } catch (e: any) {

@@ -6,6 +6,7 @@ from .ReservaController import (
     ReservarGuestController,
     WompiWebhookController,
     IniciarPagoWompiController,
+    VerificarPagoWompiController,
     CitasEmpresaController,
     CitasClienteController,
     GestionCitaController,
@@ -27,6 +28,7 @@ urlpatterns = [
     # Pago Wompi
     path('pago/iniciar/', IniciarPagoWompiController.as_view(), name='iniciar_pago_wompi'),
     path('pago/webhook/', WompiWebhookController.as_view(), name='wompi_webhook'),
+    path('pago/verificar/', VerificarPagoWompiController.as_view(), name='verificar_pago_wompi'),
 
     # Panel empresa: ver sus citas
     path('mis-citas/', CitasEmpresaController.as_view(), name='citas_empresa'),

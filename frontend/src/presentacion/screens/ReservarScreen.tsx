@@ -205,6 +205,7 @@ export const ReservarScreen = ({ route, navigation }: any) => {
           citaId: data.datos.cita_id,
           checkoutUrl: data.datos.checkout_url,
           resumen: data.datos,
+          empresaId: idToUse,
         });
       } else {
         Alert.alert('Error', data.error || 'No se pudo crear la cita.');

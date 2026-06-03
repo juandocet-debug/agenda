@@ -45,7 +45,7 @@ export const ConfirmacionReservaScreen = ({ route, navigation }: any) => {
           </View>
           <Text style={s.title}>Cita Separada</Text>
           <Text style={s.subtitle}>
-            Tu espacio ha sido reservado y confirmado exitosamente. ¡Te esperamos!
+            Una vez pagues quedará apartada tu cita.
           </Text>
         </View>
 
@@ -54,9 +54,9 @@ export const ConfirmacionReservaScreen = ({ route, navigation }: any) => {
           <View style={s.ticketTop}>
             <Text style={s.ticketHeaderLabel}>CÓDIGO DE RESERVA</Text>
             <Text style={s.codeText}>{codigoCita}</Text>
-            <View style={[s.badgeContainer, { backgroundColor: '#E0F2FE' }]}>
-              <View style={[s.badgeDot, { backgroundColor: '#0284C7' }]} />
-              <Text style={[s.badgeText, { color: '#0284C7' }]}>CONFIRMADA</Text>
+            <View style={[s.badgeContainer, { backgroundColor: '#FEF3C7' }]}>
+              <View style={[s.badgeDot, { backgroundColor: '#D97706' }]} />
+              <Text style={[s.badgeText, { color: '#D97706' }]}>PAGO PENDIENTE</Text>
             </View>
           </View>
 

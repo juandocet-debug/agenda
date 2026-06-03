@@ -531,6 +531,97 @@ class WompiWebhookController(APIView):
         return Response({'ok': True})
 
 
+# ─── Verificar Pago Wompi (fallback automático) ──────────────────────────────
+
+class VerificarPagoWompiController(APIView):
+    """
+    GET /api/citas/pago/verificar/?cita_id=<id>
+
+    Fallback automático: el frontend llama este endpoint cuando el cliente
+    llega a la pantalla "pago exitoso". Consulta la API de Wompi directamente
+    con la referencia guardada en la cita y actualiza el estado si el pago
+    fue aprobado. Esto resuelve cualquier caso donde el webhook falló.
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        import logging
+        import urllib.request
+        logger = logging.getLogger(__name__)
+
+        cita_id = request.GET.get('cita_id', '').strip()
+        if not cita_id:
+            return Response({'ok': False, 'error': 'cita_id requerido.'}, status=400)
+
+        try:
+            cita = CitaModel.objects.get(id=cita_id)
+        except CitaModel.DoesNotExist:
+            return Response({'ok': False, 'error': 'Cita no encontrada.'}, status=404)
+
+        # Si ya está confirmada no hay nada que hacer
+        if cita.estado == 'CONFIRMADA':
+            try:
+                pago = PagoModel.objects.get(cita_id=cita_id)
+                return Response({'ok': True, 'estado': 'CONFIRMADA', 'pago_estado': pago.estado})
+            except PagoModel.DoesNotExist:
+                return Response({'ok': True, 'estado': 'CONFIRMADA', 'pago_estado': 'PAGADO'})
+
+        referencia = cita.wompi_referencia
+        if not referencia:
+            return Response({'ok': False, 'error': 'Sin referencia de pago asociada.'}, status=400)
+
+        # Obtener llaves de la empresa
+        try:
+            empresa = EmpresaModel.objects.get(id=cita.empresa_id)
+            WOMPI_PRIV_KEY = empresa.wompi_events_secret or os.environ.get('WOMPI_PRIVATE_KEY', '')
+        except EmpresaModel.DoesNotExist:
+            WOMPI_PRIV_KEY = os.environ.get('WOMPI_PRIVATE_KEY', '')
+
+        # Consultar API de Wompi: buscar transacciones por referencia
+        try:
+            wompi_url = f'https://api.wompi.co/v1/transactions?reference={referencia}'
+            req = urllib.request.Request(
+                wompi_url,
+                headers={
+                    'Authorization': f'Bearer {WOMPI_PRIV_KEY}',
+                    'Accept': 'application/json',
+                }
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read().decode())
+        except Exception as e:
+            logger.error(f"[VerificarPago] Error consultando Wompi API: {e}")
+            return Response({'ok': False, 'error': 'No se pudo verificar con Wompi.'}, status=502)
+
+        transacciones = data.get('data', [])
+        if not transacciones:
+            return Response({'ok': True, 'estado': cita.estado, 'pago_estado': 'PENDIENTE', 'mensaje': 'Sin transacciones aún.'})
+
+        # Tomar la transacción más reciente
+        tx = transacciones[-1]
+        estado_wompi = tx.get('status', '')
+        logger.info(f"[VerificarPago] cita={cita_id} referencia={referencia} estado_wompi={estado_wompi}")
+
+        if estado_wompi == 'APPROVED':
+            cita.estado = 'CONFIRMADA'
+            cita.save()
+            PagoModel.objects.filter(cita_id=cita.id).update(
+                estado='PAGADO',
+                monto_pagado=tx.get('amount_in_cents', 0) / 100,
+                metodo_pago_ultimo=tx.get('payment_method_type', ''),
+            )
+            logger.info(f"[VerificarPago] Cita {cita.id} CONFIRMADA automáticamente vía verificación.")
+            return Response({'ok': True, 'estado': 'CONFIRMADA', 'pago_estado': 'PAGADO'})
+
+        elif estado_wompi in ('DECLINED', 'ERROR', 'VOIDED'):
+            cita.estado = 'CANCELADA'
+            cita.save()
+            PagoModel.objects.filter(cita_id=cita.id).update(estado='FALLIDO')
+            return Response({'ok': True, 'estado': 'CANCELADA', 'pago_estado': 'FALLIDO'})
+
+        return Response({'ok': True, 'estado': cita.estado, 'pago_estado': 'PENDIENTE', 'estado_wompi': estado_wompi})
+
+
 # ─── Iniciar Pago Wompi ───────────────────────────────────────────────────────
 
 class IniciarPagoWompiController(APIView):

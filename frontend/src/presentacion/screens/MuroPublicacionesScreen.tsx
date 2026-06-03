@@ -500,9 +500,8 @@ const PostCard = React.memo(({ item, empresaLogo, empresaNombre, isOwner, resolv
 
         <TouchableOpacity
           style={s.reservarBtn}
-          onPress={() => navigation.navigate('CrearCita', {
+          onPress={() => navigation.navigate('AgendarPublico', {
             empresaId: resolvedEmpresaId || item.empresa_id,
-            empresa_id: resolvedEmpresaId || item.empresa_id,
             origen: 'publicacion',
           })}
           activeOpacity={0.8}
