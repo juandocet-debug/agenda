@@ -772,7 +772,12 @@ class CitasClienteController(APIView):
             return Response({'ok': False, 'error': 'cliente_id requerido'}, status=400)
         if str(token_user_id) != str(cliente_id):
             return Response({'ok': False, 'error': 'Acceso denegado'}, status=403)
-        citas = CitaModel.objects.filter(cliente_id=cliente_id).order_by('-fecha', '-hora_inicio')[:50]
+        # Solo mostrar citas pagadas: CONFIRMADA o COMPLETADA
+        # Las PROGRAMADA son reservas sin pago y no deben aparecer
+        citas = CitaModel.objects.filter(
+            cliente_id=cliente_id,
+            estado__in=['CONFIRMADA', 'COMPLETADA'],
+        ).order_by('-fecha', '-hora_inicio')[:50]
         servicios_map = {}
         empresas_map = {}
         try:
