@@ -379,7 +379,7 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
         {/* Fila 2: logo centrado con todo el ancho */}
         <View style={s.headerLogoRow}>
           <Image
-            source={require('../../../assets/logo3.png')}
+            source={require('../../../assets/logo4.png')}
             style={s.logoImg}
             resizeMode="contain"
           />
@@ -562,7 +562,7 @@ const s = StyleSheet.create({
     paddingVertical: 4,
   },
   headerBtn: { padding: 6 },
-  logoImg: { height: 72, width: '85%', maxWidth: 360 },
+  logoImg: { height: 120, width: '90%', maxWidth: 420 },
   loginBtn: {
     backgroundColor: colors.primary,
     paddingHorizontal: 16,
