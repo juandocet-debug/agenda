@@ -367,19 +367,23 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
     <SafeAreaView style={s.root}>
       {/* ── Header ── */}
       <View style={s.header}>
-        <TouchableOpacity style={s.headerBtn} onPress={() => setMostrarDrawer(true)}>
-          <Feather name="menu" size={26} color="#1E293B" />
-        </TouchableOpacity>
-
-        <Image
-          source={require('../../../assets/logo3.png')}
-          style={s.logoImg}
-          resizeMode="contain"
-        />
-
-        <TouchableOpacity style={s.loginBtn} onPress={() => navigation.navigate('Login')}>
-          <Text style={s.loginBtnTxt}>Iniciar sesión</Text>
-        </TouchableOpacity>
+        {/* Fila 1: hamburguesa + login */}
+        <View style={s.headerTopRow}>
+          <TouchableOpacity style={s.headerBtn} onPress={() => setMostrarDrawer(true)}>
+            <Feather name="menu" size={26} color="#1E293B" />
+          </TouchableOpacity>
+          <TouchableOpacity style={s.loginBtn} onPress={() => navigation.navigate('Login')}>
+            <Text style={s.loginBtnTxt}>Iniciar sesión</Text>
+          </TouchableOpacity>
+        </View>
+        {/* Fila 2: logo centrado con todo el ancho */}
+        <View style={s.headerLogoRow}>
+          <Image
+            source={require('../../../assets/logo3.png')}
+            style={s.logoImg}
+            resizeMode="contain"
+          />
+        </View>
       </View>
 
       {/* ── Barra de búsqueda ── */}
@@ -538,18 +542,27 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#F8F9FA' },
 
-  // Header
+  // Header en 2 filas
   header: {
+    flexDirection: 'column',
+    backgroundColor: '#F8F9FA',
+    paddingTop: Platform.OS === 'web' ? 12 : 44,
+    paddingBottom: 8,
+  },
+  headerTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'web' ? 16 : 44,
-    paddingBottom: 12,
-    backgroundColor: '#F8F9FA',
+    marginBottom: 4,
+  },
+  headerLogoRow: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 4,
   },
   headerBtn: { padding: 6 },
-  logoImg: { height: 64, width: 220 },
+  logoImg: { height: 72, width: '85%', maxWidth: 360 },
   loginBtn: {
     backgroundColor: colors.primary,
     paddingHorizontal: 16,
