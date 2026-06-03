@@ -237,7 +237,7 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
         <LinearGradient colors={['rgba(0,0,0,0.8)', 'transparent']} style={StyleSheet.absoluteFillObject} />
         
         <View style={s.headerTopRow}>
-          <Image source={require('../../../../assets/logo3.png')} style={s.logoImg} resizeMode="contain" />
+          <Image source={require('../../../assets/logo3.png')} style={s.logoImg} resizeMode="contain" />
           <TouchableOpacity style={s.loginBtn} onPress={() => navigation.navigate('Login')}>
             <Text style={s.loginBtnTxt}>Iniciar sesión</Text>
           </TouchableOpacity>
