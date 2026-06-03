@@ -237,7 +237,7 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
         <LinearGradient colors={['rgba(0,0,0,0.8)', 'transparent']} style={StyleSheet.absoluteFillObject} />
         
         <View style={s.headerTopRow}>
-          <Text style={s.logoText}>AGENDA</Text>
+          <Image source={require('../../../../assets/logo3.png')} style={s.logoImg} resizeMode="contain" />
           <TouchableOpacity style={s.loginBtn} onPress={() => navigation.navigate('Login')}>
             <Text style={s.loginBtnTxt}>Iniciar sesión</Text>
           </TouchableOpacity>
@@ -264,7 +264,7 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
         showsVerticalScrollIndicator={false}
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: false })}
         scrollEventThrottle={16}
-        refreshControl={<RefreshControl refreshing={refresco} onRefresh={() => { setRefresco(true); cargar(true); }} tintColor="#E50914" />}
+        refreshControl={<RefreshControl refreshing={refresco} onRefresh={() => { setRefresco(true); cargar(true); }} tintColor={colors.primary} />}
         contentContainerStyle={{ paddingBottom: 60 }}
       >
         {/* ── Hero Banner (Solo si no hay búsqueda) ── */}
@@ -324,14 +324,13 @@ const s = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     marginBottom: 16,
   },
-  logoText: {
-    color: '#E50914', fontSize: 24, fontWeight: '900', letterSpacing: 1,
-    textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2,
+  logoImg: {
+    width: 140, height: 40,
   },
   loginBtn: {
-    backgroundColor: '#E50914', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 4,
+    backgroundColor: colors.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 24,
   },
-  loginBtnTxt: { color: '#FFF', fontSize: 13, fontWeight: '600' },
+  loginBtnTxt: { color: '#FFF', fontSize: 13, fontWeight: '700' },
   searchBar: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.5)', // Más oscuro y cinematográfico
