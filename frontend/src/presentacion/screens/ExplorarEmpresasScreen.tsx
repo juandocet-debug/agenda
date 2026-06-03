@@ -76,7 +76,11 @@ const EmpresaHorizontalCard = ({
   </TouchableOpacity>
 );
 
-const HeroBanner = ({ banners }: { banners: BannerPublicitario[] }) => {
+import { useWindowDimensions } from 'react-native';
+
+const HeroBanner = ({ banners }: { banners: any[] }) => {
+  const { width, height } = useWindowDimensions();
+  const bannerHeight = Platform.OS === 'web' ? Math.min(width * 0.6, 600) : width * 1.3;
   const scrollX = useRef(new Animated.Value(0)).current;
   const flatListRef = useRef<FlatList>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -99,13 +103,13 @@ const HeroBanner = ({ banners }: { banners: BannerPublicitario[] }) => {
     <TouchableOpacity 
       activeOpacity={item.link_url ? 0.8 : 1}
       onPress={() => item.link_url && Linking.openURL(item.link_url)}
-      style={s.bannerContainer}
+      style={{ width, height: bannerHeight, position: 'relative' }}
     >
-      <Image source={item.local_source ? item.local_source : { uri: item.imagen_url }} style={s.bannerImage} resizeMode="cover" />
+      <Image source={item.local_source ? item.local_source : { uri: item.imagen_url }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
       <LinearGradient
         colors={['transparent', 'rgba(15,25,80,0.8)', colors.background]}
         locations={[0.4, 0.8, 1]}
-        style={s.bannerGradient}
+        style={StyleSheet.absoluteFillObject}
       />
       <View style={s.bannerContent}>
         <Text style={s.bannerTitle} numberOfLines={2}>{item.titulo}</Text>
@@ -120,7 +124,7 @@ const HeroBanner = ({ banners }: { banners: BannerPublicitario[] }) => {
   );
 
   return (
-    <View style={s.heroWrapper}>
+    <View style={{ width, height: bannerHeight, position: 'relative' }}>
       <FlatList
         ref={flatListRef}
         data={banners}
