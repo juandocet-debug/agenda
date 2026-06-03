@@ -162,6 +162,7 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
   const [busqueda, setBusqueda]   = useState('');
   const [cargando, setCargando]   = useState(false);
   const [refresco, setRefresco]   = useState(false);
+  const scrollY = useRef(new Animated.Value(0)).current;
 
   const cargar = async (silencioso = false) => {
     if (!silencioso) setCargando(true);
@@ -171,7 +172,6 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
         fetch(`${API}/api/empresas/publicas/`).then(r => r.json()).catch(() => ({ ok: false, datos: [] }))
       ]);
 
-      // Si no hay banners del admin, mostramos uno por defecto muy premium
       const bannersFinales = bannersRes && bannersRes.length > 0 ? bannersRes : [{
         id: 'default',
         titulo: 'Encuentra los mejores servicios cerca de ti',
@@ -184,7 +184,6 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
       if (empresasRes.ok) setEmpresas(empresasRes.datos);
       
     } catch {
-      // Error silencioso
     } finally {
       setCargando(false);
       setRefresco(false);
@@ -195,7 +194,6 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
 
   const onVerMuro = (id: string) => navigation.navigate('MuroPublicaciones', { empresaId: id });
 
-  // ─── Filtrado y categorización (Estilo Netflix) ───
   let empresasMostradas = empresas;
   if (busqueda.trim()) {
     const q = busqueda.toLowerCase();
@@ -204,7 +202,6 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
     );
   }
 
-  // Dividir artificialmente para tener varias filas (solo visual, en Netflix real vendría categorizado del backend)
   const destacadas = [...empresasMostradas].reverse().slice(0, 5);
   const populares = [...empresasMostradas].slice(0, 10);
   const cercaDeTi = [...empresasMostradas].filter(e => e.ciudad).slice(0, 8);
@@ -226,11 +223,18 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
     );
   };
 
+  const headerBgOpacity = scrollY.interpolate({
+    inputRange: [0, 80],
+    outputRange: [0, 1],
+    extrapolate: 'clamp'
+  });
+
   return (
     <SafeAreaView style={s.root}>
       {/* ── Header Flotante Tipo Netflix ── */}
       <View style={s.headerAbs}>
-        <LinearGradient colors={['rgba(0,0,0,0.9)', 'transparent']} style={StyleSheet.absoluteFillObject} />
+        <Animated.View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#000', opacity: headerBgOpacity }]} />
+        <LinearGradient colors={['rgba(0,0,0,0.8)', 'transparent']} style={StyleSheet.absoluteFillObject} />
         
         <View style={s.headerTopRow}>
           <Text style={s.logoText}>AGENDA</Text>
@@ -256,8 +260,10 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
         </View>
       </View>
 
-      <ScrollView
+      <Animated.ScrollView
         showsVerticalScrollIndicator={false}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: false })}
+        scrollEventThrottle={16}
         refreshControl={<RefreshControl refreshing={refresco} onRefresh={() => { setRefresco(true); cargar(true); }} tintColor="#E50914" />}
         contentContainerStyle={{ paddingBottom: 60 }}
       >
