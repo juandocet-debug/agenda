@@ -13,12 +13,16 @@ from .SuperAdminEmpresaController import (
     ActualizarImagenesEmpresaController,
     ActualizarDatosEmpresaController,
 )
+from .BannersController import BannersPublicosController, BannersAdminController
 
 urlpatterns = [
     # Catálogo público — clientes exploran empresas activas (sin auth)
     path('publicas/', ListaEmpresasPublicasController.as_view(), name='lista_empresas_publicas'),
+    path('publicas/banners/', BannersPublicosController.as_view(), name='lista_banners_publicos'),
 
     # Panel SuperAdmin
+    path('admin/banners/', BannersAdminController.as_view(), name='admin_banners'),
+    path('admin/banners/<str:banner_id>/', BannersAdminController.as_view(), name='admin_banners_id'),
     path('admin/lista/', SuperAdminEmpresaController.as_view(), name='admin_lista_empresas'),
     path('admin/<str:empresa_id>/activar/', ActivarEmpresaController.as_view(), name='admin_activar_empresa'),
     path('admin/<str:empresa_id>/eliminar/', EliminarEmpresaController.as_view(), name='admin_eliminar_empresa'),

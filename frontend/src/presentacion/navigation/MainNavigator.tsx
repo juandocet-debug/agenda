@@ -9,8 +9,8 @@ import { HomeScreen } from '../screens/HomeScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { EmpresaSettingsScreen } from '../screens/EmpresaSettingsScreen';
 import { NoticiasDashboardScreen } from '../screens/NoticiasDashboardScreen';
+import { GestionBannersScreen } from '../screens/GestionBannersScreen';
 
-const PaymentScreen = () => <View style={{ flex: 1, backgroundColor: colors.background }}><Text>Payment</Text></View>;
 const AddActionScreen = () => null;
 
 const Tab = createBottomTabNavigator();
@@ -45,7 +45,7 @@ export const MainNavigator = () => {
             let iconName: any = 'home';
             if (route.name === 'Inicio') iconName = 'home';
             else if (route.name === 'Noticias') iconName = 'message-square';
-            else if (route.name === 'Pagos') iconName = 'dollar-sign';
+            else if (route.name === 'Banners') iconName = 'image';
             else if (route.name === 'Identidad') iconName = 'layout';
             
             return <Feather name={iconName} size={22} color={color} />;
@@ -67,7 +67,7 @@ export const MainNavigator = () => {
           }}
         />
         
-        <Tab.Screen name="Pagos" component={PaymentScreen} />
+        <Tab.Screen name="Banners" component={GestionBannersScreen} />
         <Tab.Screen name="Identidad" component={EmpresaSettingsScreen} />
       </Tab.Navigator>
   );

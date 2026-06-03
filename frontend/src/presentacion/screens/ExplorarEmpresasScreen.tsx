@@ -1,19 +1,23 @@
-/**
- * ExplorarEmpresasScreen — Catálogo público de empresas.
- * Diseño premium: tarjetas verticales full-width con imagen de portada,
- * avatar flotante, metadatos y botón de reserva.
- */
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, FlatList, SafeAreaView,
   TouchableOpacity, TextInput, ActivityIndicator, Image,
-  Platform, RefreshControl,
+  Platform, RefreshControl, Dimensions, Animated, ScrollView, Linking
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, shadows } from '../theme/colors';
 import { API_BASE as API } from '../../core/config/api';
+import { DjangoBannerRepository } from '../../core/infraestructura/banners/DjangoBannerRepository';
+import { ObtenerBannersPublicosCasoUso } from '../../core/aplicacion/banners/BannersCasosUso';
+import { BannerPublicitario } from '../../core/domain/banners/Banner';
+
+const { width } = Dimensions.get('window');
+
+// ─── Capa Aplicación / Dominio ──────────────────────────────────────────────────
+const bannerRepo = new DjangoBannerRepository();
+const obtenerBannersCasoUso = new ObtenerBannersPublicosCasoUso(bannerRepo);
 
 interface EmpresaPublica {
   id: string;
@@ -25,28 +29,26 @@ interface EmpresaPublica {
   telefono: string;
 }
 
-// ─── Avatar inicial ─────────────────────────────────────────────────────────────
+// ─── Componentes UI ─────────────────────────────────────────────────────────────
+
 const AvatarLetra = ({ nombre }: { nombre: string }) => (
   <View style={s.avatarLetra}>
     <Text style={s.avatarLetraTxt}>{nombre?.charAt(0)?.toUpperCase() || 'E'}</Text>
   </View>
 );
 
-// ─── Tarjeta de empresa (vertical, full-width) ──────────────────────────────────
-const EmpresaCard = ({
-  empresa, onReservar, onVerMuro,
+const EmpresaHorizontalCard = ({
+  empresa, onVerMuro,
 }: {
   empresa: EmpresaPublica;
-  onReservar: (id: string) => void;
   onVerMuro: (id: string) => void;
 }) => (
   <TouchableOpacity
-    style={s.card}
-    activeOpacity={0.92}
+    style={s.horCard}
+    activeOpacity={0.8}
     onPress={() => onVerMuro(empresa.id)}
   >
-    {/* Imagen de portada */}
-    <View style={s.portadaWrap}>
+    <View style={s.horPortadaWrap}>
       {empresa.foto_portada_url ? (
         <Image
           source={{ uri: empresa.foto_portada_url }}
@@ -56,94 +58,116 @@ const EmpresaCard = ({
       ) : (
         <LinearGradient
           colors={[colors.primary, '#2635c5']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFillObject}
         />
       )}
-      {/* Overlay sutil */}
-      <View style={s.portadaOverlay} />
-      {/* Badge activa */}
-      <View style={s.badgeActiva}>
-        <View style={s.badgeDot} />
-        <Text style={s.badgeTxt}>Activa</Text>
+      <View style={s.horPortadaOverlay} />
+      
+      {/* Play button indicator para dar el toque Netflix */}
+      <View style={s.playBtnOverlay}>
+        <Feather name="play" size={16} color="#FFF" style={{ marginLeft: 2 }} />
       </View>
     </View>
-
-    {/* Cuerpo de la tarjeta */}
-    <View style={s.cardBody}>
-      {/* Avatar flotante */}
-      <View style={s.avatarWrap}>
-        {empresa.logo_url ? (
-          <Image source={{ uri: empresa.logo_url }} style={s.avatarImg} />
-        ) : (
-          <AvatarLetra nombre={empresa.nombre} />
-        )}
-      </View>
-
-      {/* Info */}
-      <View style={s.infoCol}>
-        <Text style={s.cardNombre} numberOfLines={1}>{empresa.nombre}</Text>
-
-        <View style={s.metasRow}>
-          {empresa.ciudad ? (
-            <View style={s.metaChip}>
-              <Feather name="map-pin" size={11} color={colors.primary} />
-              <Text style={s.metaChipTxt}>{empresa.ciudad}</Text>
-            </View>
-          ) : null}
-          {empresa.telefono ? (
-            <View style={s.metaChip}>
-              <Feather name="phone" size={11} color={colors.primary} />
-              <Text style={s.metaChipTxt}>{empresa.telefono}</Text>
-            </View>
-          ) : null}
-        </View>
-
-        {empresa.direccion ? (
-          <View style={s.dirRow}>
-            <Feather name="navigation" size={11} color="#94A3B8" />
-            <Text style={s.dirTxt} numberOfLines={1}>{empresa.direccion}</Text>
-          </View>
-        ) : null}
-      </View>
-
-      {/* Botón reservar */}
-      <TouchableOpacity
-        style={s.reservarBtn}
-        onPress={() => onReservar(empresa.id)}
-        activeOpacity={0.85}
-      >
-        <Feather name="calendar" size={15} color="#FFF" />
-        <Text style={s.reservarTxt}>Reservar</Text>
-      </TouchableOpacity>
-    </View>
+    <Text style={s.horCardNombre} numberOfLines={1}>{empresa.nombre}</Text>
   </TouchableOpacity>
 );
+
+const HeroBanner = ({ banners }: { banners: BannerPublicitario[] }) => {
+  const scrollX = useRef(new Animated.Value(0)).current;
+  const flatListRef = useRef<FlatList>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Auto-play
+  useEffect(() => {
+    if (banners.length <= 1) return;
+    const interval = setInterval(() => {
+      let nextIndex = currentIndex + 1;
+      if (nextIndex >= banners.length) nextIndex = 0;
+      flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
+      setCurrentIndex(nextIndex);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [currentIndex, banners]);
+
+  if (banners.length === 0) return null;
+
+  const renderItem = ({ item }: { item: BannerPublicitario }) => (
+    <TouchableOpacity 
+      activeOpacity={item.link_url ? 0.8 : 1}
+      onPress={() => item.link_url && Linking.openURL(item.link_url)}
+      style={s.bannerContainer}
+    >
+      <Image source={{ uri: item.imagen_url }} style={s.bannerImage} resizeMode="cover" />
+      <LinearGradient
+        colors={['transparent', 'rgba(15,25,80,0.8)', colors.background]}
+        locations={[0.4, 0.8, 1]}
+        style={s.bannerGradient}
+      />
+      <View style={s.bannerContent}>
+        <Text style={s.bannerTitle} numberOfLines={2}>{item.titulo}</Text>
+        {item.link_url && (
+          <View style={s.bannerAction}>
+            <Feather name="info" size={14} color="#FFF" />
+            <Text style={s.bannerActionTxt}>Más información</Text>
+          </View>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+
+  return (
+    <View style={s.heroWrapper}>
+      <FlatList
+        ref={flatListRef}
+        data={banners}
+        keyExtractor={b => b.id}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], { useNativeDriver: false })}
+        renderItem={renderItem}
+        onMomentumScrollEnd={(e) => {
+          const index = Math.round(e.nativeEvent.contentOffset.x / width);
+          setCurrentIndex(index);
+        }}
+      />
+      <View style={s.dotsContainer}>
+        {banners.map((_, i) => {
+          const opacity = scrollX.interpolate({
+            inputRange: [(i - 1) * width, i * width, (i + 1) * width],
+            outputRange: [0.3, 1, 0.3],
+            extrapolate: 'clamp',
+          });
+          return <Animated.View key={i} style={[s.dot, { opacity }]} />;
+        })}
+      </View>
+    </View>
+  );
+};
 
 // ─── Pantalla principal ─────────────────────────────────────────────────────────
 export const ExplorarEmpresasScreen = ({ navigation }: any) => {
   const [empresas, setEmpresas]   = useState<EmpresaPublica[]>([]);
-  const [filtradas, setFiltradas] = useState<EmpresaPublica[]>([]);
+  const [banners, setBanners]     = useState<BannerPublicitario[]>([]);
   const [busqueda, setBusqueda]   = useState('');
   const [cargando, setCargando]   = useState(false);
   const [refresco, setRefresco]   = useState(false);
-  const [error, setError]         = useState('');
 
   const cargar = async (silencioso = false) => {
     if (!silencioso) setCargando(true);
-    setError('');
     try {
-      const res  = await fetch(`${API}/api/empresas/publicas/`);
-      const data = await res.json();
-      if (data.ok) {
-        setEmpresas(data.datos);
-        setFiltradas(data.datos);
-      } else {
-        setError('No se pudieron cargar las empresas.');
-      }
+      // Llamadas en paralelo
+      const [bannersRes, empresasRes] = await Promise.all([
+        obtenerBannersCasoUso.ejecutar().catch(() => []),
+        fetch(`${API}/api/empresas/publicas/`).then(r => r.json()).catch(() => ({ ok: false, datos: [] }))
+      ]);
+
+      setBanners(bannersRes || []);
+      if (empresasRes.ok) setEmpresas(empresasRes.datos);
+      
     } catch {
-      setError('Sin conexión al servidor.');
+      // Error silencioso
     } finally {
       setCargando(false);
       setRefresco(false);
@@ -152,244 +176,191 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
 
   useFocusEffect(useCallback(() => { cargar(); }, []));
 
-  const onBuscar = (texto: string) => {
-    setBusqueda(texto);
-    if (!texto.trim()) {
-      setFiltradas(empresas);
-    } else {
-      const q = texto.toLowerCase();
-      setFiltradas(
-        empresas.filter(
-          e =>
-            e.nombre.toLowerCase().includes(q) ||
-            (e.ciudad || '').toLowerCase().includes(q),
-        ),
-      );
-    }
-  };
+  const onVerMuro = (id: string) => navigation.navigate('MuroPublicaciones', { empresaId: id });
 
-  const onReservar = (id: string) => navigation.navigate('AgendarPublico', { empresaId: id });
-  const onVerMuro  = (id: string) => navigation.navigate('MuroPublicaciones', { empresaId: id });
+  // ─── Filtrado y categorización (Estilo Netflix) ───
+  let empresasMostradas = empresas;
+  if (busqueda.trim()) {
+    const q = busqueda.toLowerCase();
+    empresasMostradas = empresas.filter(e => 
+      e.nombre.toLowerCase().includes(q) || (e.ciudad || '').toLowerCase().includes(q)
+    );
+  }
+
+  // Dividir artificialmente para tener varias filas (solo visual, en Netflix real vendría categorizado del backend)
+  const destacadas = [...empresasMostradas].reverse().slice(0, 5);
+  const populares = [...empresasMostradas].slice(0, 10);
+  const cercaDeTi = [...empresasMostradas].filter(e => e.ciudad).slice(0, 8);
+
+  const RowCategoria = ({ titulo, data }: { titulo: string, data: EmpresaPublica[] }) => {
+    if (data.length === 0) return null;
+    return (
+      <View style={s.rowSection}>
+        <Text style={s.rowTitle}>{titulo}</Text>
+        <FlatList
+          data={data}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={s.rowList}
+          keyExtractor={item => item.id}
+          renderItem={({ item }) => <EmpresaHorizontalCard empresa={item} onVerMuro={onVerMuro} />}
+        />
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView style={s.root}>
-
-      {/* ── Header gradiente ── */}
-      <LinearGradient
-        colors={[colors.primary, '#2635c5']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={s.header}
-      >
-        {/* Círculos decorativos */}
-        <View style={s.decoBig} />
-        <View style={s.decoSmall} />
-
-        <View style={s.headerRow}>
-          {navigation.canGoBack() && (
-            <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()}>
-              <Feather name="arrow-left" size={20} color="#FFF" />
-            </TouchableOpacity>
-          )}
-          <View style={{ flex: 1, marginLeft: navigation.canGoBack() ? 14 : 0 }}>
-            <Text style={s.headerTitle}>Explorar</Text>
-            <Text style={s.headerSub}>Descubre y reserva servicios</Text>
-          </View>
-          <View style={s.headerIcon}>
-            <Feather name="compass" size={22} color="#FFF" />
-          </View>
-        </View>
-
-        {/* Buscador */}
+      {/* ── Header Flotante ── */}
+      <View style={s.headerAbs}>
+        <LinearGradient colors={['rgba(15,25,80,0.8)', 'transparent']} style={StyleSheet.absoluteFillObject} />
         <View style={s.searchBar}>
           <Feather name="search" size={16} color="#94A3B8" style={{ marginRight: 8 }} />
           <TextInput
             style={s.searchInput}
-            placeholder="Buscar por nombre o ciudad…"
+            placeholder="Series, películas... o servicios"
             placeholderTextColor="#94A3B8"
             value={busqueda}
-            onChangeText={onBuscar}
-            returnKeyType="search"
+            onChangeText={setBusqueda}
           />
           {busqueda ? (
-            <TouchableOpacity onPress={() => onBuscar('')}>
+            <TouchableOpacity onPress={() => setBusqueda('')}>
               <Feather name="x" size={16} color="#94A3B8" />
             </TouchableOpacity>
           ) : null}
         </View>
-      </LinearGradient>
+      </View>
 
-      {/* ── Contenido ── */}
-      {cargando ? (
-        <View style={s.center}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={s.loadingTxt}>Cargando empresas…</Text>
-        </View>
-      ) : error ? (
-        <View style={s.center}>
-          <Feather name="wifi-off" size={44} color="#CBD5E1" />
-          <Text style={s.emptyTxt}>{error}</Text>
-          <TouchableOpacity style={s.retryBtn} onPress={() => cargar()}>
-            <Text style={s.retryTxt}>Reintentar</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <FlatList
-          data={filtradas}
-          keyExtractor={item => item.id}
-          contentContainerStyle={s.listContent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refresco}
-              onRefresh={() => { setRefresco(true); cargar(true); }}
-              tintColor={colors.primary}
-            />
-          }
-          ListEmptyComponent={() => (
-            <View style={s.center}>
-              <Feather name="search" size={44} color="#CBD5E1" />
-              <Text style={s.emptyTxt}>
-                {busqueda ? 'Sin resultados para tu búsqueda' : 'Sin empresas disponibles'}
-              </Text>
-              <Text style={s.emptySub}>
-                {busqueda ? 'Prueba con otro nombre o ciudad' : 'Pronto habrá más opciones'}
-              </Text>
-            </View>
-          )}
-          renderItem={({ item }) => (
-            <EmpresaCard empresa={item} onReservar={onReservar} onVerMuro={onVerMuro} />
-          )}
-        />
-      )}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refresco} onRefresh={() => { setRefresco(true); cargar(true); }} tintColor={colors.primary} />}
+        contentContainerStyle={{ paddingBottom: 60 }}
+      >
+        {/* ── Hero Banner (Solo si no hay búsqueda) ── */}
+        {!busqueda && banners.length > 0 && <HeroBanner banners={banners} />}
+        {!busqueda && banners.length === 0 && <View style={{ height: 120 }} />}
+        {busqueda ? <View style={{ height: 120 }} /> : null}
+
+        {/* ── Contenido ── */}
+        {cargando ? (
+          <View style={s.center}>
+            <ActivityIndicator size="large" color={colors.primary} />
+          </View>
+        ) : empresasMostradas.length === 0 ? (
+          <View style={s.center}>
+            <Feather name="search" size={44} color="#CBD5E1" />
+            <Text style={s.emptyTxt}>Sin resultados</Text>
+          </View>
+        ) : busqueda ? (
+          // Vista en grilla si hay búsqueda (simulado en lista vertical por ahora)
+          <View style={{ paddingHorizontal: 16 }}>
+            <Text style={[s.rowTitle, { marginBottom: 16 }]}>Resultados de búsqueda</Text>
+            {empresasMostradas.map(item => (
+              <TouchableOpacity key={item.id} style={s.searchCard} onPress={() => onVerMuro(item.id)}>
+                <Image source={{ uri: item.foto_portada_url || item.logo_url }} style={s.searchImg} />
+                <View style={{ flex: 1, padding: 12 }}>
+                  <Text style={s.searchTitle}>{item.nombre}</Text>
+                  <Text style={s.searchSub}>{item.ciudad || 'Online'}</Text>
+                </View>
+                <Feather name="chevron-right" size={20} color="#94A3B8" style={{ marginRight: 12 }} />
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : (
+          // Filas tipo Netflix
+          <View style={{ marginTop: -20, zIndex: 10 }}>
+            <RowCategoria titulo="Destacados de hoy" data={destacadas} />
+            <RowCategoria titulo="Nuevas opciones" data={populares} />
+            <RowCategoria titulo="Cerca de ti" data={cercaDeTi} />
+          </View>
+        )}
+      </ScrollView>
     </SafeAreaView>
   );
 };
 
 // ─── Estilos ────────────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F1F5F9' },
+  root: { flex: 1, backgroundColor: colors.background }, // #0A0A0A por ejemplo, si colors.background es oscuro
 
-  // Header
-  header: {
-    paddingTop:    Platform.OS === 'web' ? 24 : 16,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
-    borderBottomLeftRadius:  28,
-    borderBottomRightRadius: 28,
-    overflow: 'hidden',
-  },
-  decoBig: {
-    position: 'absolute', width: 220, height: 220, borderRadius: 110,
-    backgroundColor: 'rgba(255,255,255,0.07)', top: -70, right: -50,
-  },
-  decoSmall: {
-    position: 'absolute', width: 130, height: 130, borderRadius: 65,
-    backgroundColor: 'rgba(255,255,255,0.05)', bottom: 0, left: -30,
-  },
-  headerRow:   { flexDirection: 'row', alignItems: 'center', marginBottom: 18 },
-  backBtn: {
-    width: 38, height: 38, borderRadius: 19,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    justifyContent: 'center', alignItems: 'center',
-  },
-  headerTitle: { fontSize: 22, color: '#FFF', fontWeight: '600' },
-  headerSub:   { fontSize: 12, color: 'rgba(255,255,255,0.72)', marginTop: 2 },
-  headerIcon: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    justifyContent: 'center', alignItems: 'center',
+  // Header Absoluto
+  headerAbs: {
+    position: 'absolute', top: 0, left: 0, right: 0, zIndex: 100,
+    paddingTop: Platform.OS === 'web' ? 20 : 40,
+    paddingHorizontal: 16, paddingBottom: 20,
   },
   searchBar: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#FFF', borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical:   Platform.OS === 'web' ? 12 : 10,
-    ...shadows.soft,
+    backgroundColor: 'rgba(255,255,255,0.15)', // Glassmorphism
+    borderRadius: 12, paddingHorizontal: 16,
+    paddingVertical: Platform.OS === 'web' ? 12 : 10,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
   },
   searchInput: {
-    flex: 1, fontSize: 14, color: '#1E293B',
+    flex: 1, fontSize: 14, color: '#FFF',
     ...(Platform.OS === 'web' ? { outlineStyle: 'none' } as any : {}),
   },
 
-  // Lista
-  listContent: { paddingHorizontal: 16, paddingTop: 18, paddingBottom: 48 },
-
-  // Tarjeta vertical
-  card: {
-    backgroundColor: '#FFF',
-    borderRadius: 20,
+  // Hero
+  heroWrapper: { width, height: width * 1.3, position: 'relative' },
+  bannerContainer: { width, height: width * 1.3, position: 'relative' },
+  bannerImage: { ...StyleSheet.absoluteFillObject },
+  bannerGradient: { ...StyleSheet.absoluteFillObject },
+  bannerContent: {
+    position: 'absolute', bottom: 40, left: 20, right: 20,
+    alignItems: 'center',
+  },
+  bannerTitle: {
+    fontSize: 32, fontWeight: '800', color: '#FFF',
+    textAlign: 'center', textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 4,
     marginBottom: 16,
-    overflow: 'hidden',
-    ...shadows.medium,
   },
-  portadaWrap: { height: 130, position: 'relative' },
-  portadaOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(15,25,80,0.22)',
+  bannerAction: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
   },
-  badgeActiva: {
-    position: 'absolute', bottom: 10, right: 12,
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20,
+  bannerActionTxt: { color: '#FFF', fontWeight: '600', fontSize: 13 },
+  dotsContainer: {
+    position: 'absolute', bottom: 16, left: 0, right: 0,
+    flexDirection: 'row', justifyContent: 'center', gap: 6,
   },
-  badgeDot:  { width: 7, height: 7, borderRadius: 4, backgroundColor: '#4ADE80' },
-  badgeTxt:  { fontSize: 11, color: '#FFF', fontWeight: '600' },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#FFF' },
 
-  // Cuerpo
-  cardBody: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 16, paddingTop: 14, paddingBottom: 16,
-    gap: 12,
-  },
-  avatarWrap: {
-    width: 52, height: 52, borderRadius: 26,
-    borderWidth: 2.5, borderColor: '#FFF',
-    backgroundColor: '#FFF', overflow: 'hidden',
-    ...shadows.soft,
-    flexShrink: 0,
-  },
-  avatarImg:    { width: '100%', height: '100%' },
-  avatarLetra: {
-    flex: 1, backgroundColor: colors.primary,
+  // Listas Horizontales
+  rowSection: { marginBottom: 28 },
+  rowTitle: { fontSize: 18, fontWeight: '700', color: '#1E293B', marginLeft: 16, marginBottom: 12 },
+  rowList: { paddingHorizontal: 12 },
+
+  // Tarjeta Horizontal
+  horCard: { width: 140, marginHorizontal: 4 },
+  horPortadaWrap: {
+    width: 140, height: 200, borderRadius: 8, overflow: 'hidden',
+    backgroundColor: '#1E293B', ...shadows.soft,
     justifyContent: 'center', alignItems: 'center',
   },
+  horPortadaOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.15)' },
+  playBtnOverlay: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    justifyContent: 'center', alignItems: 'center',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)',
+  },
+  horCardNombre: { fontSize: 13, fontWeight: '500', color: '#1E293B', marginTop: 8, textAlign: 'center' },
+
+  // Búsqueda en grilla
+  searchCard: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF',
+    borderRadius: 12, marginBottom: 12, ...shadows.soft, overflow: 'hidden',
+  },
+  searchImg: { width: 80, height: 80, backgroundColor: '#CBD5E1' },
+  searchTitle: { fontSize: 15, fontWeight: '600', color: '#1E293B' },
+  searchSub: { fontSize: 12, color: '#64748B', marginTop: 4 },
+
+  // Utils
+  avatarLetra: { flex: 1, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' },
   avatarLetraTxt: { fontSize: 22, color: '#FFF', fontWeight: '600' },
-
-  infoCol: { flex: 1 },
-  cardNombre: { fontSize: 16, fontWeight: '600', color: '#1E293B', marginBottom: 6 },
-
-  metasRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 4 },
-  metaChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: 'rgba(76,91,238,0.08)',
-    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20,
-  },
-  metaChipTxt: { fontSize: 11, color: colors.primary, fontWeight: '500' },
-
-  dirRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  dirTxt: { fontSize: 11, color: '#94A3B8', flex: 1 },
-
-  // Botón
-  reservarBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: colors.primary,
-    paddingHorizontal: 14, paddingVertical: 10,
-    borderRadius: 12,
-    flexShrink: 0,
-  },
-  reservarTxt: { color: '#FFF', fontSize: 13, fontWeight: '600' },
-
-  // Estados
-  center:     { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, gap: 12 },
-  emptyTxt:   { fontSize: 15, fontWeight: '500', color: '#94A3B8', textAlign: 'center' },
-  emptySub:   { fontSize: 13, color: '#CBD5E1', textAlign: 'center' },
-  loadingTxt: { fontSize: 14, color: '#94A3B8', marginTop: 8 },
-  retryBtn: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 24, paddingVertical: 10,
-    borderRadius: 12, marginTop: 4,
-  },
-  retryTxt: { color: '#FFF', fontWeight: '600' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, gap: 12, marginTop: 100 },
+  emptyTxt: { fontSize: 15, fontWeight: '500', color: '#94A3B8', textAlign: 'center' },
 });

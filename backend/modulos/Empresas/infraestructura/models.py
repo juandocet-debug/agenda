@@ -35,3 +35,14 @@ class NoticiaModel(models.Model):
 
     class Meta:
         db_table = 'empresas_noticias'
+
+class BannerPublicitarioModel(models.Model):
+    id = models.CharField(max_length=36, primary_key=True)
+    titulo = models.CharField(max_length=150)
+    imagen_url = models.TextField()
+    link_url = models.TextField(blank=True, null=True)
+    activo = models.BooleanField(default=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'empresas_banners'
