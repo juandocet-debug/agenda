@@ -71,12 +71,6 @@ const EmpresaHorizontalCard = ({
           )}
         </View>
       )}
-      <View style={s.horPortadaOverlay} />
-      
-      {/* Play button indicator para dar el toque Netflix */}
-      <View style={s.playBtnOverlay}>
-        <Feather name="play" size={16} color="#FFF" style={{ marginLeft: 2 }} />
-      </View>
     </View>
     <Text style={s.horCardNombre} numberOfLines={1}>{empresa.nombre}</Text>
   </TouchableOpacity>
@@ -172,10 +166,11 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
         fetch(`${API}/api/empresas/publicas/`).then(r => r.json()).catch(() => ({ ok: false, datos: [] }))
       ]);
 
+      // Si no hay banners del admin, mostramos uno por defecto usando una imagen local
       const bannersFinales = bannersRes && bannersRes.length > 0 ? bannersRes : [{
         id: 'default',
         titulo: 'Encuentra los mejores servicios cerca de ti',
-        imagen_url: 'https://images.unsplash.com/photo-1556761175-5973dc0f32d7?q=80&w=1632&auto=format&fit=crop',
+        imagen_url: Image.resolveAssetSource(require('../../../../assets/images/page1.png')).uri,
         link_url: '',
         activo: true
       }];
@@ -325,7 +320,7 @@ const s = StyleSheet.create({
     marginBottom: 16,
   },
   logoImg: {
-    width: 160, height: 60, marginLeft: -8,
+    width: 200, height: 80, marginLeft: -20, marginTop: -10,
   },
   loginBtn: {
     backgroundColor: colors.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 24,
@@ -390,12 +385,6 @@ const s = StyleSheet.create({
   fallbackLogo: { width: 80, height: 80, alignSelf: 'center', marginTop: 60 },
   fallbackTextWrap: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   fallbackText: { fontSize: 60, fontWeight: '800', color: 'rgba(255,255,255,0.2)' },
-  playBtnOverlay: {
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    justifyContent: 'center', alignItems: 'center',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)',
-  },
   horCardNombre: { fontSize: 13, fontWeight: '500', color: '#1E293B', marginTop: 8, textAlign: 'center' },
 
   // Búsqueda en grilla
