@@ -174,7 +174,7 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
         id: 'default',
         titulo: 'Encuentra los mejores servicios cerca de ti',
         imagen_url: '',
-        local_source: require('../../../assets/images/page1.png'),
+        local_source: require('../../../assets/images/scheduling_banner.png'),
         link_url: '',
         activo: true
       }];
@@ -230,9 +230,6 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
 
   return (
     <SafeAreaView style={s.root}>
-      <Image source={require('../../../assets/images/page1.png')} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
-      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(10,15,30,0.85)' }]} />
-      
       {/* ── Header Flotante Tipo Netflix ── */}
       <View style={s.headerAbs}>
         <Animated.View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#000', opacity: headerBgOpacity }]} />
@@ -392,7 +389,7 @@ const s = StyleSheet.create({
   fallbackLogo: { width: 80, height: 80, alignSelf: 'center', marginTop: 60 },
   fallbackTextWrap: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   fallbackText: { fontSize: 60, fontWeight: '800', color: 'rgba(255,255,255,0.2)' },
-  horCardNombre: { fontSize: 13, fontWeight: '500', color: '#1E293B', marginTop: 8, textAlign: 'center' },
+  horCardNombre: { fontSize: 13, fontWeight: '600', color: '#FFFFFF', marginTop: 8, textAlign: 'center' },
 
   // Búsqueda en grilla
   searchCard: {
