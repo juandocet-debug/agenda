@@ -230,6 +230,10 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
 
   return (
     <SafeAreaView style={s.root}>
+      {/* ── Fondo absoluto para que siempre haya una imagen detrás ── */}
+      <Image source={require('../../../../assets/images/page1.png')} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(10,15,30,0.85)' }]} />
+      
       {/* ── Header Flotante Tipo Netflix ── */}
       <View style={s.headerAbs}>
         <Animated.View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#000', opacity: headerBgOpacity }]} />
@@ -404,5 +408,5 @@ const s = StyleSheet.create({
   avatarLetra: { flex: 1, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' },
   avatarLetraTxt: { fontSize: 22, color: '#FFF', fontWeight: '600' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, gap: 12, marginTop: 100 },
-  emptyTxt: { fontSize: 15, fontWeight: '500', color: '#94A3B8', textAlign: 'center' },
+  emptyTxt: { fontSize: 16, fontWeight: '600', color: '#FFFFFF', textAlign: 'center' },
 });
