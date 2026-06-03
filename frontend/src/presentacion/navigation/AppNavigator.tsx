@@ -31,6 +31,7 @@ const linking = {
   prefixes: ['http://localhost:19006', 'https://agenda-pi-bice.vercel.app', 'agendaapp://'],
   config: {
     screens: {
+      ExplorarEmpresas: 'explorar',
       AgendarPublico: 'agendar/:empresaId',
       ReservarPublico: 'reservar/:empresaId',
       PagoExitoso: 'pago-exitoso/:citaId',
