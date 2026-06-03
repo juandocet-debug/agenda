@@ -27,6 +27,12 @@ export const EditarEmpresaScreen = ({ route, navigation }: any) => {
   const [moneda, setMoneda] = useState('');
   const [mensajeAdvertencia, setMensajeAdvertencia] = useState('');
   
+  // Categoría
+  const [categoriaId, setCategoriaId] = useState<string | null>(null);
+  const [categoriaNombre, setCategoriaNombre] = useState('');
+  const [categorias, setCategorias] = useState<{ id: string; nombre: string; icono: string | null }[]>([]);
+  const [showCategoriaModal, setShowCategoriaModal] = useState(false);
+  
   const [showMonedaModal, setShowMonedaModal] = useState(false);
   
   // API Data
@@ -63,6 +69,8 @@ export const EditarEmpresaScreen = ({ route, navigation }: any) => {
             setMoneda(data.moneda || 'COP');
             setMensajeAdvertencia(data.mensaje_advertencia || '');
             setLogoUrl(data.logo_url || null);
+            setCategoriaId(data.categoria_id || null);
+            setCategoriaNombre(data.categoria_nombre || '');
 
             // Fetch cities if country is already set
             if (data.pais) {
@@ -76,6 +84,13 @@ export const EditarEmpresaScreen = ({ route, navigation }: any) => {
             .then(json => {
               if (!json.error) setCountries(json.data);
             }).catch(e => console.error("Error fetching countries:", e));
+
+          // Fetch categorías (endpoint público, sin auth)
+          fetch('https://agenda-production-ae37.up.railway.app/api/empresas/publicas/categorias/')
+            .then(res => res.json())
+            .then(json => {
+              if (json.ok) setCategorias(json.datos || []);
+            }).catch(() => {});
         }
       } catch (e) {
         console.error("Error init EditarEmpresa:", e);
@@ -137,6 +152,19 @@ export const EditarEmpresaScreen = ({ route, navigation }: any) => {
       // Guardar imagenes si cambió
       if (logoBase64) {
         await empresaRepository.actualizarImagenes(empresaId, logoBase64);
+      }
+
+      // Guardar categoría si cambió
+      if (categoriaId !== undefined) {
+        const token = await (await import('../../core/infraestructura/auth/TokenStorageAdapter')).obtenerTokenLocal();
+        await fetch(`https://agenda-production-ae37.up.railway.app/api/empresas/admin/${empresaId}/categoria/`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token?.access ? { Authorization: `Bearer ${token.access}` } : {}),
+          },
+          body: JSON.stringify({ categoria_id: categoriaId }),
+        });
       }
 
       // Guardar datos
@@ -205,6 +233,13 @@ export const EditarEmpresaScreen = ({ route, navigation }: any) => {
           <Text style={styles.sectionLabel}>INFORMACIÓN BÁSICA</Text>
           <View style={styles.fieldCard}>
             <InputRow icon="briefcase" label="Nombre de la Empresa" value={nombre} onChangeText={setNombre} placeholder="Ej: Mi Negocio" />
+            <View style={styles.divider} />
+            <SelectRow
+              icon="grid"
+              label="Categoría"
+              value={categoriaNombre}
+              onPress={() => setShowCategoriaModal(true)}
+            />
           </View>
 
           <Text style={styles.sectionLabel}>INFORMACIÓN DE UBICACIÓN</Text>
@@ -278,6 +313,42 @@ export const EditarEmpresaScreen = ({ route, navigation }: any) => {
           </Text>
 
         </ScrollView>
+      )}
+
+      {/* Categoria Modal */}
+      {showCategoriaModal && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Seleccionar Categoría</Text>
+            <ScrollView keyboardShouldPersistTaps="handled">
+              <TouchableOpacity
+                style={styles.modalOption}
+                onPress={() => { setCategoriaId(null); setCategoriaNombre('Sin categoría'); setShowCategoriaModal(false); }}
+              >
+                <Text style={styles.modalOptionText}>Sin categoría</Text>
+                {!categoriaId && <Feather name="check" size={20} color={colors.primary} />}
+              </TouchableOpacity>
+              {categorias.map(cat => (
+                <TouchableOpacity
+                  key={cat.id}
+                  style={styles.modalOption}
+                  onPress={() => { setCategoriaId(cat.id); setCategoriaNombre(cat.nombre); setShowCategoriaModal(false); }}
+                >
+                  <Text style={styles.modalOptionText}>{cat.nombre}</Text>
+                  {categoriaId === cat.id && <Feather name="check" size={20} color={colors.primary} />}
+                </TouchableOpacity>
+              ))}
+              {categorias.length === 0 && (
+                <Text style={{ textAlign: 'center', marginVertical: 20, color: colors.textSubtitle }}>
+                  No hay categorías creadas aún.
+                </Text>
+              )}
+            </ScrollView>
+            <TouchableOpacity style={styles.modalCancel} onPress={() => setShowCategoriaModal(false)}>
+              <Text style={styles.modalCancelText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       )}
 
       {/* Moneda Modal */}

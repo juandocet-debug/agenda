@@ -113,6 +113,8 @@ class DetalleEmpresaPrivadoController(APIView):
                     'wompi_integrity_key': getattr(empresa, 'wompi_integrity_key', ''),
                     'wompi_events_secret': getattr(empresa, 'wompi_events_secret', ''),
                     'mensaje_advertencia': getattr(empresa, 'mensaje_advertencia', ''),
+                    'categoria_id': str(empresa.categoria_id) if empresa.categoria_id else None,
+                    'categoria_nombre': empresa.categoria.nombre if empresa.categoria_id else '',
                 }
             }, status=200)
         except EmpresaModel.DoesNotExist:

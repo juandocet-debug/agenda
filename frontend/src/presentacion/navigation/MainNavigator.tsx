@@ -10,6 +10,7 @@ import { ProfileScreen } from '../screens/ProfileScreen';
 import { EmpresaSettingsScreen } from '../screens/EmpresaSettingsScreen';
 import { NoticiasDashboardScreen } from '../screens/NoticiasDashboardScreen';
 import { GestionBannersScreen } from '../screens/GestionBannersScreen';
+import { GestionCategoriasScreen } from '../screens/GestionCategoriasScreen';
 
 const AddActionScreen = () => null;
 
@@ -46,6 +47,7 @@ export const MainNavigator = () => {
             if (route.name === 'Inicio') iconName = 'home';
             else if (route.name === 'Noticias') iconName = 'message-square';
             else if (route.name === 'Banners') iconName = 'image';
+            else if (route.name === 'Categorias') iconName = 'grid';
             else if (route.name === 'Identidad') iconName = 'layout';
             
             return <Feather name={iconName} size={22} color={color} />;
@@ -68,6 +70,7 @@ export const MainNavigator = () => {
         />
         
         <Tab.Screen name="Banners" component={GestionBannersScreen} />
+        <Tab.Screen name="Categorias" component={GestionCategoriasScreen} />
         <Tab.Screen name="Identidad" component={EmpresaSettingsScreen} />
       </Tab.Navigator>
   );
