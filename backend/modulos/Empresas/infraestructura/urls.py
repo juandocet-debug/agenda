@@ -14,26 +14,39 @@ from .SuperAdminEmpresaController import (
     ActualizarDatosEmpresaController,
 )
 from .BannersController import BannersPublicosController, BannersAdminController
+from .CategoriasController import (
+    CategoriasAdminController,
+    CategoriaDetalleAdminController,
+    AsignarCategoriaEmpresaController,
+    CategoriasPublicasController,
+)
 
 urlpatterns = [
-    # Catálogo público — clientes exploran empresas activas (sin auth)
+    # ── Catálogo público (sin auth) ─────────────────────────────────────────
     path('publicas/', ListaEmpresasPublicasController.as_view(), name='lista_empresas_publicas'),
     path('publicas/banners/', BannersPublicosController.as_view(), name='lista_banners_publicos'),
+    path('publicas/categorias/', CategoriasPublicasController.as_view(), name='lista_categorias_publicas'),
 
-    # Panel SuperAdmin
+    # ── Panel SuperAdmin ─────────────────────────────────────────────────────
+    # Banners
     path('admin/banners/', BannersAdminController.as_view(), name='admin_banners'),
     path('admin/banners/<str:banner_id>/', BannersAdminController.as_view(), name='admin_banners_id'),
+    # Categorías (requieren JWT + rol superadmin)
+    path('admin/categorias/', CategoriasAdminController.as_view(), name='admin_categorias'),
+    path('admin/categorias/<str:cat_id>/', CategoriaDetalleAdminController.as_view(), name='admin_categoria_detalle'),
+    path('admin/<str:empresa_id>/categoria/', AsignarCategoriaEmpresaController.as_view(), name='admin_asignar_categoria'),
+    # Empresas
     path('admin/lista/', SuperAdminEmpresaController.as_view(), name='admin_lista_empresas'),
     path('admin/<str:empresa_id>/activar/', ActivarEmpresaController.as_view(), name='admin_activar_empresa'),
     path('admin/<str:empresa_id>/eliminar/', EliminarEmpresaController.as_view(), name='admin_eliminar_empresa'),
     path('admin/<str:empresa_id>/imagenes/', ActualizarImagenesEmpresaController.as_view(), name='admin_actualizar_imagenes'),
     path('admin/<str:empresa_id>/datos/', ActualizarDatosEmpresaController.as_view(), name='admin_actualizar_datos'),
 
-    # Empresa config por slug
+    # ── Empresa config por slug ──────────────────────────────────────────────
     path('<str:slug>/config/', EmpresaVisualConfigController.as_view(), name='empresa_config'),
     path('<str:empresa_id>/publico/', PerfilPublicoEmpresaController.as_view(), name='empresa_publico'),
 
-    # Perfil privado
+    # ── Perfil privado (requiere auth) ───────────────────────────────────────
     path('privado/<str:empresa_id>/', DetalleEmpresaPrivadoController.as_view(), name='empresa_privada'),
     path('privado/<str:empresa_id>/wompi/', ConfigurarWompiController.as_view(), name='configurar_wompi'),
 ]

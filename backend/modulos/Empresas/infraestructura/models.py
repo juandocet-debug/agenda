@@ -1,4 +1,26 @@
+import uuid
 from django.db import models
+
+
+class CategoriaModel(models.Model):
+    """Categoría de empresa administrable desde el Super Admin."""
+    id = models.CharField(max_length=36, primary_key=True, default=uuid.uuid4, editable=False)
+    nombre = models.CharField(max_length=80, unique=True)
+    icono = models.CharField(
+        max_length=40, blank=True, null=True,
+        help_text='Nombre de ícono Feather, ej: scissors, coffee, heart'
+    )
+    orden = models.PositiveIntegerField(default=0)
+    activa = models.BooleanField(default=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'empresas_categorias'
+        ordering = ['orden', 'nombre']
+
+    def __str__(self):
+        return self.nombre
+
 
 class EmpresaModel(models.Model):
     id = models.CharField(max_length=36, primary_key=True)
@@ -15,6 +37,10 @@ class EmpresaModel(models.Model):
     correo_contacto = models.EmailField(blank=True, null=True)
     moneda = models.CharField(max_length=3, default='COP')
     mensaje_advertencia = models.TextField(blank=True, null=True)
+    categoria = models.ForeignKey(
+        CategoriaModel, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='empresas', db_column='categoria_id'
+    )
     
     # Credenciales de Wompi (BYOG)
     wompi_public_key = models.CharField(max_length=100, blank=True, null=True)
