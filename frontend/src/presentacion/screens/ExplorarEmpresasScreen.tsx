@@ -247,7 +247,7 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
           <Feather name="search" size={16} color="#94A3B8" style={{ marginRight: 8 }} />
           <TextInput
             style={s.searchInput}
-            placeholder="Series, películas... o servicios"
+            placeholder="Busca servicios o experiencias..."
             placeholderTextColor="#94A3B8"
             value={busqueda}
             onChangeText={setBusqueda}
@@ -325,7 +325,7 @@ const s = StyleSheet.create({
     marginBottom: 16,
   },
   logoImg: {
-    width: 140, height: 40,
+    width: 160, height: 60, marginLeft: -8,
   },
   loginBtn: {
     backgroundColor: colors.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 24,
