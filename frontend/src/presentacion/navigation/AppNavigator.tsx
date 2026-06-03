@@ -47,7 +47,7 @@ const linking = {
 export const AppNavigator = () => {
   const [isLoading, setIsLoading]   = useState(true);
   const [isLogueado, setIsLogueado] = useState(false);
-  const [initialRoute, setInitialRoute] = useState<'Login' | 'MainTabs' | 'EmpresaTabs'>('Login');
+  const [userRol, setUserRol]       = useState<string | null>(null);
   const navigationRef = useRef<NavigationContainerRef<any>>(null);
 
   useEffect(() => {
@@ -55,7 +55,7 @@ export const AppNavigator = () => {
       const token = await obtenerTokenLocal();
       if (token && token.access) {
         setIsLogueado(true);
-        setInitialRoute(token.rol === 'superadmin' ? 'MainTabs' : 'EmpresaTabs');
+        setUserRol(token.rol || null);
       }
       setIsLoading(false);
     };
@@ -65,10 +65,9 @@ export const AppNavigator = () => {
   // ── Auto-logout por inactividad (30 min) ──────────────────────────────────
   const handleLogout = useCallback(() => {
     setIsLogueado(false);
-    navigationRef.current?.reset({
-      index: 0,
-      routes: [{ name: 'Login' }],
-    });
+    setUserRol(null);
+    // React Navigation removerá automáticamente las pantallas protegidas
+    // al cambiar el estado isLogueado a false, redirigiendo a Login o la ruta base.
   }, []);
 
   const { reiniciarTimer } = useInactividadLogout({
@@ -81,20 +80,13 @@ export const AppNavigator = () => {
     PanResponder.create({
       onStartShouldSetPanResponderCapture: () => {
         reiniciarTimer();
-        return false; // No consume el evento — lo pasan a los hijos normalmente
+        return false;
       },
     })
   ).current;
 
-  // ── Listener de navegación — saber cuándo el usuario llega a Login ─────────
-  const handleNavStateChange = useCallback(() => {
-    const currentRoute = navigationRef.current?.getCurrentRoute()?.name;
-    if (currentRoute === 'Login') {
-      setIsLogueado(false);
-    } else if (currentRoute === 'EmpresaTabs' || currentRoute === 'MainTabs') {
-      setIsLogueado(true);
-    }
-  }, []);
+  // Ya no necesitamos onStateChange para rastrear manualmente la sesión
+  // ya que la sesión dicta las pantallas renderizadas, no al revés.
 
   if (isLoading) {
     return (
@@ -110,33 +102,44 @@ export const AppNavigator = () => {
         <NavigationContainer
           linking={linking}
           ref={navigationRef}
-          onStateChange={handleNavStateChange}
         >
-          <Stack.Navigator
-            initialRouteName={initialRoute}
-            screenOptions={{ headerShown: false, animation: 'fade' }}
-          >
-            {/* Rutas públicas — sin login requerido */}
-            <Stack.Screen name="AgendarPublico" component={AgendarPublicoScreen} options={{ animation: 'slide_from_bottom' }} />
-            <Stack.Screen name="Carrito" component={CarritoScreen} options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen name="RegistroCliente" component={RegistroClienteScreen} options={{ animation: 'slide_from_bottom' }} />
-            <Stack.Screen name="ClienteHome" component={ClienteHomeScreen} options={{ animation: 'slide_from_bottom' }} />
-            <Stack.Screen name="ExplorarEmpresas" component={ExplorarEmpresasScreen} options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen name="MuroPublicaciones" component={MuroPublicacionesScreen} options={{ animation: 'slide_from_right' }} />
-            {/* Se mapea la ruta antigua al nuevo componente para retrocompatibilidad de links ya compartidos */}
-            <Stack.Screen name="ReservarPublico" component={AgendarPublicoScreen} options={{ animation: 'slide_from_bottom' }} />
-            {/* Recuperación de contraseña */}
-            <Stack.Screen name="RecuperarPassword" component={RecuperarPasswordScreen} options={{ animation: 'slide_from_bottom' }} />
-            <Stack.Screen name="ResetearPassword" component={ResetearPasswordScreen} options={{ animation: 'slide_from_bottom' }} />
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="MainTabs" component={MainNavigator} />
-            <Stack.Screen name="EmpresaTabs" component={EmpresaNavigator} />
-            <Stack.Screen name="EmpresaDetail" component={EmpresaDetailScreen} options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen name="EditarEmpresa" component={EditarEmpresaScreen} options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen name="HorariosConfig" component={HorariosConfigScreen} options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen name="CrearCita" component={ReservarScreen} />
-            <Stack.Screen name="ConfirmacionReserva" component={ConfirmacionReservaScreen} />
-            <Stack.Screen name="PagoExitoso" component={PagoExitosoScreen} />
+          <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
+            
+            {/* 1. RUTAS PÚBLICAS Y COMPARTIDAS (Siempre accesibles) */}
+            <Stack.Group>
+              <Stack.Screen name="ExplorarEmpresas" component={ExplorarEmpresasScreen} options={{ animation: 'slide_from_right' }} />
+              <Stack.Screen name="AgendarPublico" component={AgendarPublicoScreen} options={{ animation: 'slide_from_bottom' }} />
+              <Stack.Screen name="ReservarPublico" component={AgendarPublicoScreen} options={{ animation: 'slide_from_bottom' }} />
+              <Stack.Screen name="Carrito" component={CarritoScreen} options={{ animation: 'slide_from_right' }} />
+              <Stack.Screen name="MuroPublicaciones" component={MuroPublicacionesScreen} options={{ animation: 'slide_from_right' }} />
+              <Stack.Screen name="RegistroCliente" component={RegistroClienteScreen} options={{ animation: 'slide_from_bottom' }} />
+              <Stack.Screen name="ClienteHome" component={ClienteHomeScreen} options={{ animation: 'slide_from_bottom' }} />
+              <Stack.Screen name="ConfirmacionReserva" component={ConfirmacionReservaScreen} />
+              <Stack.Screen name="PagoExitoso" component={PagoExitosoScreen} />
+            </Stack.Group>
+
+            {/* 2. RUTAS DE AUTH (Solo si NO hay sesión) */}
+            {!isLogueado ? (
+              <Stack.Group>
+                <Stack.Screen name="Login" component={LoginScreen} />
+                <Stack.Screen name="RecuperarPassword" component={RecuperarPasswordScreen} options={{ animation: 'slide_from_bottom' }} />
+                <Stack.Screen name="ResetearPassword" component={ResetearPasswordScreen} options={{ animation: 'slide_from_bottom' }} />
+              </Stack.Group>
+            ) : (
+            /* 3. RUTAS PROTEGIDAS (Solo si HAY sesión) */
+              <Stack.Group>
+                {userRol === 'superadmin' ? (
+                  <Stack.Screen name="MainTabs" component={MainNavigator} />
+                ) : (
+                  <Stack.Screen name="EmpresaTabs" component={EmpresaNavigator} />
+                )}
+                <Stack.Screen name="EmpresaDetail" component={EmpresaDetailScreen} options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="EditarEmpresa" component={EditarEmpresaScreen} options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="HorariosConfig" component={HorariosConfigScreen} options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="CrearCita" component={ReservarScreen} />
+              </Stack.Group>
+            )}
+
           </Stack.Navigator>
         </NavigationContainer>
       </View>
