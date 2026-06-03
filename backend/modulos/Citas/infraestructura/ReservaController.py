@@ -368,7 +368,7 @@ class ReservarGuestController(APIView):
                 f'&amount-in-cents={monto_centavos}'
                 f'&reference={wompi_ref}'
                 f'&signature:integrity={firma_integridad}'
-                f'&redirect-url=https://agenda-pi-bice.vercel.app/confirmacion-reserva'
+                f'&redirect-url=https://agenda-pi-bice.vercel.app/pago-exitoso/{cita_id}'
             )
 
         CitaModel.objects.create(
@@ -432,9 +432,16 @@ class WompiWebhookController(APIView):
 
     def post(self, request):
         """
-        Wompi envía un POST con firma HMAC-SHA256.
-        Verifica la firma y actualiza el estado de la cita.
+        Wompi envía un POST con firma SHA256 (NO es HMAC).
+        Algoritmo de validación oficial Wompi:
+          1. Tomar los campos indicados en signature.properties (en orden)
+          2. Concatenar sus valores + timestamp del evento + events_secret
+          3. Calcular SHA256 de esa cadena
+          4. Comparar con X-Event-Checksum (o signature.checksum)
         """
+        import logging
+        logger = logging.getLogger(__name__)
+
         body_raw = request.body
         try:
             evento = json.loads(body_raw)
@@ -445,27 +452,52 @@ class WompiWebhookController(APIView):
         referencia = transaccion.get('reference', '')
         estado_wompi = transaccion.get('status', '')
 
+        logger.info(f"[Wompi Webhook] referencia={referencia} estado={estado_wompi}")
+
         try:
             cita = CitaModel.objects.get(wompi_referencia=referencia)
         except CitaModel.DoesNotExist:
-            return Response({'ok': True}) # Ignorar silenciosamente
+            logger.warning(f"[Wompi Webhook] Cita no encontrada para referencia={referencia}")
+            return Response({'ok': True})  # Ignorar silenciosamente
 
-        # Obtener secreto de la empresa para validar (BYOG)
+        # Obtener secreto de eventos de la empresa (BYOG) o del entorno
         try:
             empresa = EmpresaModel.objects.get(id=cita.empresa_id)
-            WOMPI_SECRET = empresa.wompi_events_secret
+            WOMPI_SECRET = empresa.wompi_events_secret or os.environ.get('WOMPI_EVENTS_SECRET', '')
         except EmpresaModel.DoesNotExist:
-            return Response({'ok': False, 'error': 'Empresa no encontrada.'}, status=404)
+            WOMPI_SECRET = os.environ.get('WOMPI_EVENTS_SECRET', '')
 
-        # Verificar firma HMAC-SHA256
-        checksum = request.headers.get('X-Event-Checksum', '')
+        # ── Validar firma SHA256 según documentación oficial de Wompi ──────────
+        # Wompi NO usa HMAC. La firma se construye así:
+        #   SHA256( concat(valores de signature.properties) + timestamp + secret )
         if WOMPI_SECRET:
-            firma_esperada = hmac.new(
-                WOMPI_SECRET.encode(),
-                body_raw,
-                hashlib.sha256
-            ).hexdigest()
-            if not hmac.compare_digest(checksum, firma_esperada):
+            checksum_recibido = (
+                request.headers.get('X-Event-Checksum', '')
+                or evento.get('signature', {}).get('checksum', '')
+            )
+            timestamp = str(evento.get('timestamp', ''))
+            properties = evento.get('signature', {}).get('properties', [])
+
+            # Construir cadena navegando cada ruta de propiedad (ej: "data.transaction.id")
+            cadena = ''
+            for prop in properties:
+                partes = prop.split('.')
+                valor = evento
+                for parte in partes:
+                    if isinstance(valor, dict):
+                        valor = valor.get(parte, '')
+                    else:
+                        valor = ''
+                        break
+                cadena += str(valor) if valor is not None else ''
+            cadena += timestamp
+            cadena += WOMPI_SECRET
+
+            firma_esperada = hashlib.sha256(cadena.encode('utf-8')).hexdigest()
+            logger.info(f"[Wompi Webhook] checksum_recibido={checksum_recibido} firma_esperada={firma_esperada}")
+
+            if checksum_recibido and not hmac.compare_digest(checksum_recibido, firma_esperada):
+                logger.error(f"[Wompi Webhook] Firma inválida — ignorando evento.")
                 return Response({'ok': False, 'error': 'Firma inválida.'}, status=401)
 
         if estado_wompi == 'APPROVED':
@@ -476,6 +508,7 @@ class WompiWebhookController(APIView):
                 monto_pagado=transaccion.get('amount_in_cents', 0) / 100,
                 metodo_pago_ultimo=transaccion.get('payment_method_type', ''),
             )
+            logger.info(f"[Wompi Webhook] Cita {cita.id} CONFIRMADA y pago PAGADO.")
             # Email de confirmación
             if cita.cliente_email:
                 _enviar_email_cita(
@@ -493,6 +526,7 @@ class WompiWebhookController(APIView):
             cita.estado = 'CANCELADA'
             cita.save()
             PagoModel.objects.filter(cita_id=cita.id).update(estado='FALLIDO')
+            logger.info(f"[Wompi Webhook] Cita {cita.id} CANCELADA por estado={estado_wompi}.")
 
         return Response({'ok': True})
 
@@ -550,7 +584,7 @@ class IniciarPagoWompiController(APIView):
             f'&amount-in-cents={monto_centavos}'
             f'&reference={referencia}'
             f'&signature:integrity={firma_integridad}'
-            f'&redirect-url=agendaapp://pago-exitoso/{cita_id}'
+            f'&redirect-url=https://agenda-pi-bice.vercel.app/pago-exitoso/{cita_id}'
         )
 
         return Response({
@@ -657,7 +691,16 @@ class CitasClienteController(APIView):
                 empresas_map[str(emp.id)] = emp.nombre_empresa
         except Exception:
             pass
-        datos = [{'id': str(c.id), 'fecha': str(c.fecha), 'hora_inicio': c.hora_inicio.strftime('%H:%M'), 'hora_fin': c.hora_fin.strftime('%H:%M') if c.hora_fin else '', 'estado': c.estado, 'servicio_nombre': servicios_map.get(str(c.servicio_id), 'Servicio'), 'empresa_nombre': empresas_map.get(str(c.empresa_id), 'Empresa'), 'monto': (c.monto_centavos / 100) if c.monto_centavos else 0} for c in citas]
+        citas_ids = [str(c.id) for c in citas]
+        pagos_map = {}
+        try:
+            pagos = PagoModel.objects.filter(cita_id__in=citas_ids)
+            for p in pagos:
+                pagos_map[str(p.cita_id)] = float(p.monto_total)
+        except Exception:
+            pass
+
+        datos = [{'id': str(c.id), 'fecha': str(c.fecha), 'hora_inicio': c.hora_inicio.strftime('%H:%M'), 'hora_fin': c.hora_fin.strftime('%H:%M') if c.hora_fin else '', 'estado': c.estado, 'servicio_nombre': servicios_map.get(str(c.servicio_id), 'Servicio'), 'empresa_nombre': empresas_map.get(str(c.empresa_id), 'Empresa'), 'monto': pagos_map.get(str(c.id), 0)} for c in citas]
         return Response({'ok': True, 'datos': datos, 'total': len(datos)})
 
 
