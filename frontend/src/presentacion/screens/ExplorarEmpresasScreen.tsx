@@ -95,13 +95,13 @@ const HeroBanner = ({ banners }: { banners: BannerPublicitario[] }) => {
 
   if (banners.length === 0) return null;
 
-  const renderItem = ({ item }: { item: BannerPublicitario }) => (
+  const renderItem = ({ item }: { item: any }) => (
     <TouchableOpacity 
       activeOpacity={item.link_url ? 0.8 : 1}
       onPress={() => item.link_url && Linking.openURL(item.link_url)}
       style={s.bannerContainer}
     >
-      <Image source={{ uri: item.imagen_url }} style={s.bannerImage} resizeMode="cover" />
+      <Image source={item.local_source ? item.local_source : { uri: item.imagen_url }} style={s.bannerImage} resizeMode="cover" />
       <LinearGradient
         colors={['transparent', 'rgba(15,25,80,0.8)', colors.background]}
         locations={[0.4, 0.8, 1]}
@@ -109,12 +109,12 @@ const HeroBanner = ({ banners }: { banners: BannerPublicitario[] }) => {
       />
       <View style={s.bannerContent}>
         <Text style={s.bannerTitle} numberOfLines={2}>{item.titulo}</Text>
-        {item.link_url && (
+        {item.link_url ? (
           <View style={s.bannerAction}>
             <Feather name="info" size={14} color="#FFF" />
             <Text style={s.bannerActionTxt}>Más información</Text>
           </View>
-        )}
+        ) : null}
       </View>
     </TouchableOpacity>
   );
@@ -166,11 +166,11 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
         fetch(`${API}/api/empresas/publicas/`).then(r => r.json()).catch(() => ({ ok: false, datos: [] }))
       ]);
 
-      // Si no hay banners del admin, mostramos uno por defecto usando una imagen local
       const bannersFinales = bannersRes && bannersRes.length > 0 ? bannersRes : [{
         id: 'default',
         titulo: 'Encuentra los mejores servicios cerca de ti',
-        imagen_url: Image.resolveAssetSource(require('../../../../assets/images/page1.png')).uri,
+        imagen_url: '',
+        local_source: require('../../../../assets/images/page1.png'),
         link_url: '',
         activo: true
       }];
