@@ -174,7 +174,7 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
         id: 'default',
         titulo: 'Encuentra los mejores servicios cerca de ti',
         imagen_url: '',
-        local_source: require('../../../../assets/images/page1.png'),
+        local_source: require('../../../assets/images/page1.png'),
         link_url: '',
         activo: true
       }];
@@ -230,8 +230,7 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
 
   return (
     <SafeAreaView style={s.root}>
-      {/* ── Fondo absoluto para que siempre haya una imagen detrás ── */}
-      <Image source={require('../../../../assets/images/page1.png')} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+      <Image source={require('../../../assets/images/page1.png')} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
       <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(10,15,30,0.85)' }]} />
       
       {/* ── Header Flotante Tipo Netflix ── */}
