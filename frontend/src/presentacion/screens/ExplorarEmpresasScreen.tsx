@@ -56,11 +56,20 @@ const EmpresaHorizontalCard = ({
           resizeMode="cover"
         />
       ) : (
-        <LinearGradient
-          colors={[colors.primary, '#2635c5']}
-          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFillObject}
-        />
+        <View style={StyleSheet.absoluteFillObject}>
+          <LinearGradient
+            colors={[colors.primary, '#1E293B']}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFillObject}
+          />
+          {empresa.logo_url ? (
+            <Image source={{ uri: empresa.logo_url }} style={s.fallbackLogo} resizeMode="contain" />
+          ) : (
+            <View style={s.fallbackTextWrap}>
+              <Text style={s.fallbackText}>{empresa.nombre.charAt(0).toUpperCase()}</Text>
+            </View>
+          )}
+        </View>
       )}
       <View style={s.horPortadaOverlay} />
       
@@ -157,13 +166,21 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
   const cargar = async (silencioso = false) => {
     if (!silencioso) setCargando(true);
     try {
-      // Llamadas en paralelo
       const [bannersRes, empresasRes] = await Promise.all([
         obtenerBannersCasoUso.ejecutar().catch(() => []),
         fetch(`${API}/api/empresas/publicas/`).then(r => r.json()).catch(() => ({ ok: false, datos: [] }))
       ]);
 
-      setBanners(bannersRes || []);
+      // Si no hay banners del admin, mostramos uno por defecto muy premium
+      const bannersFinales = bannersRes && bannersRes.length > 0 ? bannersRes : [{
+        id: 'default',
+        titulo: 'Encuentra los mejores servicios cerca de ti',
+        imagen_url: 'https://images.unsplash.com/photo-1556761175-5973dc0f32d7?q=80&w=1632&auto=format&fit=crop',
+        link_url: '',
+        activo: true
+      }];
+
+      setBanners(bannersFinales);
       if (empresasRes.ok) setEmpresas(empresasRes.datos);
       
     } catch {
@@ -341,6 +358,9 @@ const s = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   horPortadaOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.15)' },
+  fallbackLogo: { width: 80, height: 80, alignSelf: 'center', marginTop: 60 },
+  fallbackTextWrap: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  fallbackText: { fontSize: 60, fontWeight: '800', color: 'rgba(255,255,255,0.2)' },
   playBtnOverlay: {
     width: 36, height: 36, borderRadius: 18,
     backgroundColor: 'rgba(255,255,255,0.3)',
