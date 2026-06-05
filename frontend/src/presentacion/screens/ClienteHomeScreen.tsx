@@ -280,14 +280,14 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
 
             {/* Beneficios */}
             {[
-              { icon: '⏰', title: 'Recibe reservas 24/7 sin esfuerzo',        body: 'Tus clientes reservan mientras tú te enfocas en lo importante.' },
-              { icon: '📱', title: 'Gestiona tu agenda desde cualquier lugar', body: 'Todo tu negocio en tu celular, cuando y donde lo necesites.' },
-              { icon: '👥', title: 'Clientes llegan solos con tu perfil',      body: 'Tu negocio se ve profesional y genera confianza al instante.' },
-              { icon: '📈', title: 'Estadísticas y control de tus ingresos',  body: 'Toma mejores decisiones con datos claros de tu negocio.' },
+              { icon: 'clock',       title: 'Recibe reservas 24/7 sin esfuerzo',        body: 'Tus clientes reservan mientras tú te enfocas en lo importante.' },
+              { icon: 'calendar',    title: 'Gestiona tu agenda desde cualquier lugar', body: 'Todo tu negocio en tu celular, cuando y donde lo necesites.' },
+              { icon: 'users',       title: 'Clientes llegan solos con tu perfil',      body: 'Tu negocio se ve profesional y genera confianza al instante.' },
+              { icon: 'trending-up', title: 'Estadísticas y control de tus ingresos',  body: 'Toma mejores decisiones con datos claros de tu negocio.' },
             ].map((b, i) => (
               <View key={i} style={st.negocioBenefit}>
                 <View style={st.negocioBenefitIcon}>
-                  <Text style={{ fontSize: 18 }}>{b.icon}</Text>
+                  <Feather name={b.icon as any} size={20} color="#FFCE00" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={st.negocioBenefitTitle}>{b.title}</Text>
