@@ -681,11 +681,11 @@ const st = StyleSheet.create({
   },
   cardOverlayImage: {
     position: 'absolute',
-    top: -20, // Sobresale hacia arriba
+    top: -40, // Sube para sobresalir de la card
     left: 0,
     right: 0,
     width: '100%',
-    height: 140, // Más alto que el fondo para poder sobresalir
+    height: 160, // 160 de alto y empieza en -40 => termina exacto en 120 (el borde inferior de la caja azul)
     zIndex: 10,
   },
   cardBottom: {
