@@ -5,25 +5,19 @@ import { useFocusEffect } from '@react-navigation/native';
 import { colors } from '../theme/colors';
 import { eliminarTokenLocal, obtenerTokenLocal } from '../../core/infraestructura/auth/TokenStorageAdapter';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../../core/aplicacion/auth/AuthContext';
 import { DjangoEmpresaRepository } from '../../core/infraestructura/empresas/DjangoEmpresaRepository';
 
 const empresaRepository = new DjangoEmpresaRepository();
 
 export const EmpresaProfileScreen = ({ navigation }: any) => {
 
+  const { onLogout } = useAuth();
+
   const handleLogout = async () => {
     const salir = async () => {
-      // Eliminar TODOS los tokens guardados (agenda_pro_token + cliente_*)
-      await AsyncStorage.multiRemove([
-        '@agenda_pro_token',
-        'cliente_token',
-        'cliente_id',
-        'cliente_nombre',
-        'cliente_email',
-        'cliente_telefono',
-      ]);
-      // Navegar al Login — el AppNavigator detectará sesión nula
-      navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+      // onLogout limpia AsyncStorage Y actualiza el estado de AuthContext de inmediato
+      await onLogout();
     };
 
     if (Platform.OS === 'web') {

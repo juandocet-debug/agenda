@@ -26,6 +26,7 @@ import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useAuth } from '../../core/aplicacion/auth/AuthContext';
 
 // Arquitectura Hexagonal
 import { LoginUseCase } from '../../core/aplicacion/auth/LoginUseCase';
@@ -40,6 +41,7 @@ const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export const LoginScreen = ({ navigation, route }: any) => {
   const { totalItems } = useCarrito();
+  const { onLoginSuccess } = useAuth();
   // modoInicial puede venir como param desde ClienteHome -> Modal Empresa
   const modoInicial = route?.params?.modoInicial ?? 'welcome';
   // Estados: 'welcome' | 'login' | 'register'
@@ -186,17 +188,8 @@ export const LoginScreen = ({ navigation, route }: any) => {
     try {
       const rol = await loginUseCase.ejecutar({ email: normalizedEmail, password });
       setIsLoading(false);
-      if (rol === 'superadmin') {
-        navigation.replace('MainTabs');
-      } else if (rol === 'cliente') {
-        if (totalItems > 0) {
-          navigation.replace('Carrito');
-        } else {
-          navigation.replace('ClienteHome');
-        }
-      } else {
-        navigation.replace('EmpresaTabs');
-      }
+      // Actualizar AuthContext de forma INMEDIATA — sin depender de navigation ni onStateChange
+      onLoginSuccess(rol);
     } catch (error: any) {
       setIsLoading(false);
       setErrorMessage(error.message || 'Credenciales incorrectas');

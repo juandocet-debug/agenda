@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useRef } from 'react';
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { PanResponder, View, ActivityIndicator } from 'react-native';
@@ -20,10 +20,10 @@ import { MuroPublicacionesScreen } from '../screens/MuroPublicacionesScreen';
 import { HorariosConfigScreen } from '../screens/HorariosConfigScreen';
 import { RecuperarPasswordScreen } from '../screens/RecuperarPasswordScreen';
 import { ResetearPasswordScreen } from '../screens/ResetearPasswordScreen';
-import { obtenerTokenLocal } from '../../core/infraestructura/auth/TokenStorageAdapter';
 import { colors } from '../theme/colors';
 import { useInactividadLogout } from '../hooks/useInactividadLogout';
 import { CarritoProvider } from '../../core/aplicacion/carrito/CarritoContext';
+import { AuthProvider, useAuth } from '../../core/aplicacion/auth/AuthContext';
 
 const Stack = createNativeStackNavigator();
 
@@ -45,44 +45,14 @@ const linking = {
   },
 };
 
-export const AppNavigator = () => {
-  const [isLoading, setIsLoading]   = useState(true);
-  const [isLogueado, setIsLogueado] = useState(false);
-  const [userRol, setUserRol]       = useState<string | null>(null);
+// Componente interno que consume el AuthContext
+const AppStack = () => {
+  const { isLogueado, userRol, isLoading, onLogout } = useAuth();
   const navigationRef = useRef<NavigationContainerRef<any>>(null);
 
-  // Función de verificación de token reutilizable — la usamos en el mount
-  // y en cada cambio de estado de navegación para detectar logouts externos.
-  const verificarSesion = useCallback(async () => {
-    const token = await obtenerTokenLocal();
-    if (token && token.access) {
-      setIsLogueado(true);
-      setUserRol(token.rol || null);
-    } else {
-      // No hay token válido: aseguramos que el estado refleje sesión cerrada
-      setIsLogueado(false);
-      setUserRol(null);
-    }
-  }, []);
-
-  useEffect(() => {
-    const init = async () => {
-      await verificarSesion();
-      setIsLoading(false);
-    };
-    init();
-  }, [verificarSesion]);
-
-  // ── Auto-logout por inactividad (30 min) ──────────────────────────────────
-  const handleLogout = useCallback(() => {
-    setIsLogueado(false);
-    setUserRol(null);
-    // React Navigation removerá automáticamente las pantallas protegidas
-    // al cambiar el estado isLogueado a false, mostrando Login.
-  }, []);
-
+  // ── Auto-logout por inactividad (30 min) ─────────────────────────────────
   const { reiniciarTimer } = useInactividadLogout({
-    onLogout: handleLogout,
+    onLogout,
     activo: isLogueado,
   });
 
@@ -105,62 +75,57 @@ export const AppNavigator = () => {
   }
 
   return (
-    <CarritoProvider>
-      <View style={{ flex: 1 }} {...panResponder.panHandlers}>
-        <NavigationContainer
-          linking={linking}
-          ref={navigationRef}
-          onStateChange={() => {
-            // Debounce de 300ms para evitar race condition:
-            // login guarda el token y hace navigate al mismo tiempo.
-            // Si verificarSesion corre ANTES de que guardarToken termine,
-            // lee null y fuerza de vuelta al Login.
-            clearTimeout((AppNavigator as any)._navTimer);
-            (AppNavigator as any)._navTimer = setTimeout(() => {
-              verificarSesion();
-            }, 100);
-          }}
-        >
-          <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
-            
-            {/* 1. RUTA INICIAL DINÁMICA: Depende del estado de sesión */}
-            {!isLogueado ? (
-              <Stack.Group>
-                <Stack.Screen name="Login" component={LoginScreen} />
-                <Stack.Screen name="RecuperarPassword" component={RecuperarPasswordScreen} options={{ animation: 'slide_from_bottom' }} />
-                <Stack.Screen name="ResetearPassword" component={ResetearPasswordScreen} options={{ animation: 'slide_from_bottom' }} />
-              </Stack.Group>
-            ) : (
-              <Stack.Group>
-                {userRol === 'superadmin' ? (
-                  <Stack.Screen name="MainTabs" component={MainNavigator} />
-                ) : userRol === 'cliente' ? (
-                  <Stack.Screen name="ClienteHome" component={ClienteNavigator} options={{ animation: 'slide_from_bottom' }} />
-                ) : (
-                  <Stack.Screen name="EmpresaTabs" component={EmpresaNavigator} />
-                )}
-                <Stack.Screen name="EmpresaDetail" component={EmpresaDetailScreen} options={{ animation: 'slide_from_right' }} />
-                <Stack.Screen name="EditarEmpresa" component={EditarEmpresaScreen} options={{ animation: 'slide_from_right' }} />
-                <Stack.Screen name="HorariosConfig" component={HorariosConfigScreen} options={{ animation: 'slide_from_right' }} />
-                <Stack.Screen name="CrearCita" component={ReservarScreen} />
-              </Stack.Group>
-            )}
+    <View style={{ flex: 1 }} {...panResponder.panHandlers}>
+      <NavigationContainer linking={linking} ref={navigationRef}>
+        <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
 
-            {/* 2. RUTAS PÚBLICAS Y COMPARTIDAS (Siempre accesibles después de la ruta inicial) */}
+          {/* 1. RUTA INICIAL DINÁMICA: Depende del estado de sesión */}
+          {!isLogueado ? (
             <Stack.Group>
-              <Stack.Screen name="ExplorarEmpresas" component={ExplorarEmpresasScreen} options={{ animation: 'slide_from_right' }} />
-              <Stack.Screen name="AgendarPublico" component={AgendarPublicoScreen} options={{ animation: 'slide_from_bottom' }} />
-              <Stack.Screen name="ReservarPublico" component={AgendarPublicoScreen} options={{ animation: 'slide_from_bottom' }} />
-              <Stack.Screen name="Carrito" component={CarritoScreen} options={{ animation: 'slide_from_right' }} />
-              <Stack.Screen name="MuroPublicaciones" component={MuroPublicacionesScreen} options={{ animation: 'slide_from_right' }} />
-              <Stack.Screen name="RegistroCliente" component={RegistroClienteScreen} options={{ animation: 'slide_from_bottom' }} />
-              <Stack.Screen name="ConfirmacionReserva" component={ConfirmacionReservaScreen} />
-              <Stack.Screen name="PagoExitoso" component={PagoExitosoScreen} />
+              <Stack.Screen name="Login" component={LoginScreen} />
+              <Stack.Screen name="RecuperarPassword" component={RecuperarPasswordScreen} options={{ animation: 'slide_from_bottom' }} />
+              <Stack.Screen name="ResetearPassword" component={ResetearPasswordScreen} options={{ animation: 'slide_from_bottom' }} />
             </Stack.Group>
+          ) : (
+            <Stack.Group>
+              {userRol === 'superadmin' ? (
+                <Stack.Screen name="MainTabs" component={MainNavigator} />
+              ) : userRol === 'cliente' ? (
+                <Stack.Screen name="ClienteHome" component={ClienteNavigator} options={{ animation: 'slide_from_bottom' }} />
+              ) : (
+                <Stack.Screen name="EmpresaTabs" component={EmpresaNavigator} />
+              )}
+              <Stack.Screen name="EmpresaDetail" component={EmpresaDetailScreen} options={{ animation: 'slide_from_right' }} />
+              <Stack.Screen name="EditarEmpresa" component={EditarEmpresaScreen} options={{ animation: 'slide_from_right' }} />
+              <Stack.Screen name="HorariosConfig" component={HorariosConfigScreen} options={{ animation: 'slide_from_right' }} />
+              <Stack.Screen name="CrearCita" component={ReservarScreen} />
+            </Stack.Group>
+          )}
 
-          </Stack.Navigator>
-        </NavigationContainer>
-      </View>
-    </CarritoProvider>
+          {/* 2. RUTAS PÚBLICAS Y COMPARTIDAS */}
+          <Stack.Group>
+            <Stack.Screen name="ExplorarEmpresas" component={ExplorarEmpresasScreen} options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="AgendarPublico" component={AgendarPublicoScreen} options={{ animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="ReservarPublico" component={AgendarPublicoScreen} options={{ animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="Carrito" component={CarritoScreen} options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="MuroPublicaciones" component={MuroPublicacionesScreen} options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="RegistroCliente" component={RegistroClienteScreen} options={{ animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="ConfirmacionReserva" component={ConfirmacionReservaScreen} />
+            <Stack.Screen name="PagoExitoso" component={PagoExitosoScreen} />
+          </Stack.Group>
+
+        </Stack.Navigator>
+      </NavigationContainer>
+    </View>
+  );
+};
+
+export const AppNavigator = () => {
+  return (
+    <AuthProvider>
+      <CarritoProvider>
+        <AppStack />
+      </CarritoProvider>
+    </AuthProvider>
   );
 };

@@ -30,6 +30,7 @@ import { DjangoClienteCitaRepository } from '../../core/infraestructura/citas/Dj
 // Leer el token firmado (fuente de verdad de seguridad: nunca confiamos en
 // variables locales mutables para el rol; siempre lo leemos del JWT guardado)
 import { obtenerTokenLocal } from '../../core/infraestructura/auth/TokenStorageAdapter';
+import { useAuth } from '../../core/aplicacion/auth/AuthContext';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const CARD_W = SCREEN_W * 0.58;
@@ -133,25 +134,15 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
     }, [])
   );
 
-  const executeLogout = async () => {
-    // 1. Eliminar todos los datos de sesion en bloque (operacion atomica)
-    await AsyncStorage.multiRemove([
-      'cliente_token', 'cliente_nombre', 'cliente_email',
-      'cliente_id', 'cliente_telefono', '@agenda_pro_token',
-    ]);
-    // 2. Navegar a una pantalla pública para disparar el onStateChange del
-    //    AppNavigator. Este detectará que el token fue eliminado, pondrá
-    //    isLogueado=false y React Navigation mostrará el Login automáticamente.
-    navigation.reset({ index: 0, routes: [{ name: 'ExplorarEmpresas' }] });
-  };
+  const { onLogout } = useAuth();
 
   const cerrarSesion = () => {
     if (Platform.OS === 'web') {
-      if (window.confirm('¿Salir de tu cuenta?')) executeLogout();
+      if (window.confirm('¿Salir de tu cuenta?')) onLogout();
     } else {
       Alert.alert('Cerrar sesión', '¿Salir de tu cuenta?', [
         { text: 'Cancelar', style: 'cancel' },
-        { text: 'Cerrar sesión', style: 'destructive', onPress: executeLogout },
+        { text: 'Cerrar sesión', style: 'destructive', onPress: onLogout },
       ]);
     }
   };
