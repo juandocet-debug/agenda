@@ -65,7 +65,7 @@ const CAROUSEL_CARDS = [
     id: '1',
     title: 'Mis Citas',
     subtitle: 'Revisa y gestiona\ntus reservas activas',
-    image: require('../../../assets/cardsCliente/upDos.png'),
+    image: require('../../../assets/cardsCliente/UpDos.png'),
     action: 'scrollDown',
   },
   {
