@@ -156,7 +156,8 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
 
   const handleCardAction = (action: string) => {
     if (action === 'scrollDown') {
-      scrollRef.current?.scrollToEnd({ animated: true });
+      // Scroll hasta la sección de citas (debajo del carrusel y quick actions)
+      scrollRef.current?.scrollTo({ y: 520, animated: true });
     } else {
       navigation.navigate(action);
     }
@@ -318,12 +319,6 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
           <View style={st.balanceRow}>
             <Text style={st.balanceAmount}>{cargando ? '...' : citas.length}</Text>
             <Text style={st.balanceAmountSuffix}> reservas</Text>
-            <TouchableOpacity
-              style={st.eyeBtn}
-              onPress={() => setShowBalance(!showBalance)}
-            >
-              <Feather name={showBalance ? 'eye' : 'eye-off'} size={20} color="#6B7280" />
-            </TouchableOpacity>
           </View>
           <Text style={st.balanceLabel}>
             {proximas} próximas · {pagadas} pagadas
