@@ -64,24 +64,21 @@ const CAROUSEL_CARDS = [
     id: '1',
     title: 'Mis Citas',
     subtitle: 'Revisa y gestiona\ntus reservas activas',
-    image: require('../../../assets/card_citas.png'),
-    gradient: [colors.primary, '#3A4AD4'] as [string, string],
+    image: require('../../../assets/cardsCliente/misCitas.png'),
     action: 'scrollDown',
   },
   {
     id: '2',
     title: 'Explorar',
     subtitle: 'Descubre negocios\ncerca de ti',
-    image: require('../../../assets/card_explorar.png'),
-    gradient: ['#F43F5E', '#BE185D'] as [string, string],
+    image: require('../../../assets/cardsCliente/explorar.png'),
     action: 'ExplorarEmpresas',
   },
   {
     id: '3',
     title: 'Mi Carrito',
     subtitle: 'Completa tu\nreserva fácilmente',
-    image: require('../../../assets/card_carrito.png'),
-    gradient: ['#059669', '#047857'] as [string, string],
+    image: require('../../../assets/cardsCliente/Flowy Bienvenido de nuevo Agenda tus experiencias en segundos. (2).png'),
     action: 'Carrito',
   },
 ];
@@ -367,14 +364,10 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
               activeOpacity={0.92}
               onPress={() => handleCardAction(item.action)}
             >
-              <LinearGradient
-                colors={item.gradient}
-                style={st.cardGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
+              {/* Imagen ocupa todo el top de la card, sin gradiente encima */}
+              <View style={st.cardImageContainer}>
                 <Image source={item.image} style={st.cardImage} resizeMode="cover" />
-              </LinearGradient>
+              </View>
               <View style={st.cardBottom}>
                 <Text style={st.cardTitle}>{item.title}</Text>
                 <Text style={st.cardSubtitle}>{item.subtitle}</Text>
@@ -577,13 +570,17 @@ const st = StyleSheet.create({
   carouselList: { paddingHorizontal: 20, gap: 12, paddingBottom: 4 },
   card: {
     borderRadius: 18, overflow: 'hidden',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#FFFFFF',
     ...shadows.medium,
   },
-  cardGradient: { height: 140, position: 'relative' },
+  cardImageContainer: {
+    width: '100%',
+    height: 150,
+    backgroundColor: '#EEF2FF',
+  },
   cardImage: {
-    position: 'absolute', bottom: 0, right: 0,
-    width: '60%', height: '110%',
+    width: '100%',
+    height: '100%',
   },
   cardBottom: {
     backgroundColor: '#FFFFFF',
