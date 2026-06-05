@@ -442,14 +442,15 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
               activeOpacity={0.92}
               onPress={() => handleCardAction(item.action)}
             >
-              <Image source={item.image} style={st.cardImage} resizeMode="cover" />
-              <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.75)']}
-                style={st.cardGradient}
-              >
+              <Image 
+                source={item.image} 
+                style={st.cardImage} 
+                resizeMode="cover" 
+              />
+              <View style={st.cardBottom}>
                 <Text style={st.cardTitle}>{item.title}</Text>
                 <Text style={st.cardSubtitle}>{item.subtitle}</Text>
-              </LinearGradient>
+              </View>
             </TouchableOpacity>
           )}
         />
@@ -661,29 +662,25 @@ const st = StyleSheet.create({
   // ── CARRUSEL
   carouselList: { paddingHorizontal: 20, gap: 12, paddingBottom: 4 },
   card: {
+    backgroundColor: '#FFFFFF',
     borderRadius: 18,
-    height: 180,
-    position: 'relative' as const,
-    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   cardImage: {
     width: '100%',
-    height: '100%',
-    borderRadius: 18,
+    height: 120,
+    borderTopLeftRadius: 17,
+    borderTopRightRadius: 17,
   },
-  cardGradient: {
-    position: 'absolute' as const,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: 14,
-    paddingBottom: 14,
-    paddingTop: 40,
-    borderBottomLeftRadius: 18,
-    borderBottomRightRadius: 18,
+  cardBottom: {
+    padding: 14,
+    borderBottomLeftRadius: 17,
+    borderBottomRightRadius: 17,
+    backgroundColor: '#FFFFFF',
   },
-  cardTitle: { fontSize: 14, fontWeight: '700', color: '#FFFFFF', marginBottom: 3 },
-  cardSubtitle: { fontSize: 11, color: 'rgba(255,255,255,0.85)', lineHeight: 15 },
+  cardTitle: { fontSize: 14, fontWeight: '700', color: '#111827', marginBottom: 3 },
+  cardSubtitle: { fontSize: 11, color: '#6B7280', lineHeight: 15 },
 
   // ── SCROLL HINT
   scrollHint: {
