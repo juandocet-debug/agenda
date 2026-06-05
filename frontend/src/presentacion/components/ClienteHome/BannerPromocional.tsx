@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet, Dimensions } from 'react-native';
-import { colors } from '../../../theme/colors';
+import { colors } from '../../theme/colors';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 

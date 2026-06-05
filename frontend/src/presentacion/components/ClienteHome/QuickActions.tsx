@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors, shadows } from '../../../theme/colors';
+import { colors, shadows } from '../../theme/colors';
 
 interface QuickAction {
   icon: string;

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { colors } from '../../theme/colors';
+import { colors } from '../theme/colors';
 import { UpgradeToEmpresaCasoUso } from '../../core/aplicacion/auth/UpgradeToEmpresaCasoUso';
 import { DjangoAuthAdapter } from '../../core/infraestructura/auth/DjangoAuthAdapter';
 import { useAuth } from '../../core/aplicacion/auth/AuthContext';
