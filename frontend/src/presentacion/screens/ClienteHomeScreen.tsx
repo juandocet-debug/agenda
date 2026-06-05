@@ -154,6 +154,61 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
     return est === 'CONFIRMADA' || est === 'PAGADA';
   }).length;
 
+  // Ref y estados para el Auto-Scroll del Banner (Netflix Style)
+  const bannerScrollRef = useRef<ScrollView>(null);
+  const [activeBannerIndex, setActiveBannerIndex] = useState(0);
+
+  const bannersData = [
+    {
+      title: '¡Encuentra los mejores\nservicios cerca de ti!',
+      gradient: ['#4F46E5', '#7C3AED'] as [string, string],
+      btn: 'EXPLORAR',
+      btnIcon: 'search',
+      action: () => navigation.navigate('ExplorarEmpresas'),
+    },
+    {
+      title: 'Reserva tu cita\nen segundos ⚡',
+      gradient: ['#0EA5E9', '#6366F1'] as [string, string],
+      btn: 'VER MIS CITAS',
+      btnIcon: 'calendar',
+      action: () => scrollRef.current?.scrollTo({ y: 520, animated: true }),
+    },
+    {
+      title: 'Ofertas y descuentos\nexclusivos para ti 🎁',
+      gradient: ['#EC4899', '#8B5CF6'] as [string, string],
+      btn: 'VER OFERTAS',
+      btnIcon: 'tag',
+      action: () => navigation.navigate('ExplorarEmpresas'),
+    },
+  ];
+
+  // Auto-scroll del banner cada 4 segundos
+  React.useEffect(() => {
+    if (tabActivo !== 'mio') return;
+    const interval = setInterval(() => {
+      let nextIndex = activeBannerIndex + 1;
+      if (nextIndex >= bannersData.length) {
+        nextIndex = 0;
+      }
+      setActiveBannerIndex(nextIndex);
+      bannerScrollRef.current?.scrollTo({
+        x: nextIndex * (SCREEN_W - 40),
+        animated: true,
+      });
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [activeBannerIndex, tabActivo]);
+
+  const handleBannerScroll = (event: any) => {
+    const slideSize = event.nativeEvent.layoutMeasurement.width;
+    const offset = event.nativeEvent.contentOffset.x;
+    const index = Math.round(offset / slideSize);
+    if (index >= 0 && index < bannersData.length && index !== activeBannerIndex) {
+      setActiveBannerIndex(index);
+    }
+  };
+
   const handleCardAction = (action: string) => {
     if (action === 'scrollDown') {
       // Scroll hasta la sección de citas (debajo del carrusel y quick actions)
@@ -314,10 +369,11 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
         ) : (
           /* ── TAB MI FLOWY: contenido original ── */
           <>
-        {/* ── SECCIÓN: DESTACADOS (BANNER PROMOCIONAL) ── */}
-        <View style={{ marginTop: 20, marginBottom: 14 }}>
+        {/* ── SECCIÓN: DESTACADOS (BANNER PROMOCIONAL CON AUTO-SCROLL TIPO NETFLIX) ── */}
+        <View style={{ marginTop: 24, marginBottom: 16 }}>
           <Text style={[st.sectionTitle, { marginHorizontal: 20, marginBottom: 12 }]}>Para ti 🔥</Text>
           <ScrollView
+            ref={bannerScrollRef}
             horizontal
             showsHorizontalScrollIndicator={false}
             pagingEnabled
@@ -325,30 +381,10 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
             snapToAlignment="center"
             decelerationRate="fast"
             contentContainerStyle={{ paddingHorizontal: 20, gap: 16 }}
+            onScroll={handleBannerScroll}
+            scrollEventThrottle={16}
           >
-            {[
-              {
-                title: '¡Encuentra los mejores\nservicios cerca de ti!',
-                gradient: ['#4F46E5', '#7C3AED'] as [string, string],
-                btn: 'EXPLORAR',
-                btnIcon: 'search',
-                action: () => navigation.navigate('ExplorarEmpresas'),
-              },
-              {
-                title: 'Reserva tu cita\nen segundos ⚡',
-                gradient: ['#0EA5E9', '#6366F1'] as [string, string],
-                btn: 'VER MIS CITAS',
-                btnIcon: 'calendar',
-                action: () => scrollRef.current?.scrollTo({ y: 520, animated: true }),
-              },
-              {
-                title: 'Ofertas y descuentos\nexclusivos para ti 🎁',
-                gradient: ['#EC4899', '#8B5CF6'] as [string, string],
-                btn: 'VER OFERTAS',
-                btnIcon: 'tag',
-                action: () => navigation.navigate('ExplorarEmpresas'),
-              },
-            ].map((b, i) => (
+            {bannersData.map((b, i) => (
               <LinearGradient
                 key={i}
                 colors={b.gradient}
@@ -364,9 +400,22 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
               </LinearGradient>
             ))}
           </ScrollView>
+          
+          {/* Indicador de diapositiva del Banner */}
+          <View style={st.bannerDotsRow}>
+            {bannersData.map((_, i) => (
+              <View 
+                key={i} 
+                style={[
+                  st.bannerDot, 
+                  activeBannerIndex === i && st.bannerDotActive
+                ]} 
+              />
+            ))}
+          </View>
         </View>
 
-        {/* ── ACCIONES RÁPIDAS (burbujas con más espacio) ── */}
+        {/* ── ACCIONES RÁPIDAS (burbujas con mayor espacio vertical y separación) ── */}
         <View style={st.quickSection}>
           <View style={st.quickRow}>
             {quickActions.map((qa) => (
@@ -388,7 +437,7 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
         </View>
 
         {/* ── SECCIÓN: TUS ACCESOS ── */}
-        <View style={{ marginTop: 24, marginBottom: 6 }}>
+        <View style={{ marginTop: 32, marginBottom: 8 }}>
           <Text style={[st.sectionTitle, { marginHorizontal: 20, marginBottom: 12 }]}>Tus accesos rápidos</Text>
         </View>
 
@@ -655,6 +704,23 @@ const st = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
     letterSpacing: 0.5,
+  },
+  bannerDotsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+    gap: 6,
+  },
+  bannerDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#E5E7EB',
+  },
+  bannerDotActive: {
+    backgroundColor: colors.primary,
+    width: 14,
   },
 
   // ── CARRUSEL
