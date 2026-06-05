@@ -435,9 +435,7 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
           showsHorizontalScrollIndicator={false}
           style={{ overflow: 'visible' }}
           contentContainerStyle={st.carouselList}
-          snapToInterval={CARD_W + 12}
-          decelerationRate="fast"
-          ListFooterComponent={<View style={{ width: 20 }} />}
+          ListFooterComponent={<View style={{ width: 40 }} />}
           renderItem={({ item }) => (
             <TouchableOpacity
               style={[st.card, { width: CARD_W }]}
