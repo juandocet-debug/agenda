@@ -33,7 +33,8 @@ import { obtenerTokenLocal } from '../../core/infraestructura/auth/TokenStorageA
 import { useAuth } from '../../core/aplicacion/auth/AuthContext';
 
 const { width: SCREEN_W } = Dimensions.get('window');
-const CARD_W = SCREEN_W * 0.48;
+// Tarjetas más delgadas (35% del ancho de pantalla para mostrar ~2.5 tarjetas a la vez)
+const CARD_W = SCREEN_W * 0.35;
 
 // Inyección de dependencia: la pantalla trabaja con el contrato, no la implementación
 const repositorioCitas = new DjangoClienteCitaRepository();
@@ -722,7 +723,7 @@ const st = StyleSheet.create({
   },
   cardImageContainer: {
     width: '100%',
-    height: 105,
+    height: 120,
   },
   cardImage: {
     width: '100%',
@@ -732,8 +733,8 @@ const st = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     padding: 14,
   },
-  cardTitle: { fontSize: 15, fontWeight: '700', color: '#111827', marginBottom: 3 },
-  cardSubtitle: { fontSize: 12, color: '#6B7280', lineHeight: 17 },
+  cardTitle: { fontSize: 14, fontWeight: '700', color: '#111827', marginBottom: 3 },
+  cardSubtitle: { fontSize: 11, color: '#6B7280', lineHeight: 15 },
 
   // ── SCROLL HINT
   scrollHint: {
