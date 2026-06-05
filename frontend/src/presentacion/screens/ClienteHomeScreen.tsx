@@ -33,8 +33,8 @@ import { obtenerTokenLocal } from '../../core/infraestructura/auth/TokenStorageA
 import { useAuth } from '../../core/aplicacion/auth/AuthContext';
 
 const { width: SCREEN_W } = Dimensions.get('window');
-// Tarjetas más delgadas (35% del ancho de pantalla para mostrar ~2.5 tarjetas a la vez)
-const CARD_W = SCREEN_W * 0.35;
+// Tarjetas más delgadas (28% del ancho de pantalla)
+const CARD_W = SCREEN_W * 0.28;
 
 // Inyección de dependencia: la pantalla trabaja con el contrato, no la implementación
 const repositorioCitas = new DjangoClienteCitaRepository();
@@ -413,7 +413,7 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                   >
-                    <Feather name={qa.icon as any} size={24} color="#FFF" />
+                    <Feather name={qa.icon as any} size={22} color="#FFF" />
                   </LinearGradient>
                 </TouchableOpacity>
                 <Text style={st.quickLabel}>{qa.label}</Text>
@@ -423,7 +423,7 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
         </View>
 
         {/* ── SECCIÓN: TUS ACCESOS ── */}
-        <View style={{ marginTop: 32, marginBottom: 8 }}>
+        <View style={{ marginTop: 54, marginBottom: 8 }}>
           <Text style={[st.sectionTitle, { marginHorizontal: 20, marginBottom: 12 }]}>Tus accesos rápidos</Text>
         </View>
 
@@ -605,12 +605,12 @@ const st = StyleSheet.create({
     paddingHorizontal: 8,
   },
   quickItem: { alignItems: 'center', gap: 6 },
-  quickCircle: { borderRadius: 32, overflow: 'hidden', ...shadows.medium },
+  quickCircle: { borderRadius: 27, overflow: 'hidden', ...shadows.medium },
   quickGradient: {
-    width: 64, height: 64,
+    width: 54, height: 54,
     justifyContent: 'center', alignItems: 'center',
   },
-  quickLabel: { fontSize: 13, color: '#374151', fontWeight: '600', textAlign: 'center' },
+  quickLabel: { fontSize: 12, color: '#374151', fontWeight: '600', textAlign: 'center' },
 
   // ── BANNER PROMO NETFLIX
   promoBanner: {
@@ -667,13 +667,15 @@ const st = StyleSheet.create({
   carouselList: { paddingHorizontal: 20, gap: 12, paddingBottom: 4 },
   card: {
     borderRadius: 18,
-    overflow: 'hidden',
     backgroundColor: '#FFFFFF',
     ...shadows.medium,
   },
   cardImageContainer: {
     width: '100%',
     height: 120,
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    overflow: 'hidden',
   },
   cardImage: {
     width: '100%',
@@ -682,6 +684,8 @@ const st = StyleSheet.create({
   cardBottom: {
     backgroundColor: '#FFFFFF',
     padding: 14,
+    borderBottomLeftRadius: 18,
+    borderBottomRightRadius: 18,
   },
   cardTitle: { fontSize: 14, fontWeight: '700', color: '#111827', marginBottom: 3 },
   cardSubtitle: { fontSize: 11, color: '#6B7280', lineHeight: 15 },
