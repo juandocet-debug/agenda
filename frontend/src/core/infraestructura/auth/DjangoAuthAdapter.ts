@@ -108,5 +108,43 @@ export class DjangoAuthAdapter implements AuthRepository {
     }
     return data.rol;
   }
-}
 
+  async upgradeToEmpresa(nombreEmpresa: string, nit: string, rut: File | any): Promise<TokenJWT> {
+    // Para interactuar con form-data necesitamos el token actual
+    const { obtenerTokenLocal } = await import('./TokenStorageAdapter');
+    const token = await obtenerTokenLocal();
+
+    if (!token || !token.access) {
+      throw new Error("No hay sesión activa");
+    }
+
+    const formData = new FormData();
+    formData.append('nombre', nombreEmpresa);
+    formData.append('nit', nit);
+    if (rut) {
+      formData.append('rut_archivo', rut);
+    }
+
+    const response = await fetch(`${BASE_URL}/auth/upgrade-empresa/`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token.access}`,
+        // No se debe poner Content-Type: multipart/form-data porque fetch
+        // genera su propio boundary
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Error al actualizar a empresa');
+    }
+
+    return {
+      access: data.tokens.access,
+      refresh: data.tokens.refresh,
+      rol: 'empresa',
+    };
+  }
+}

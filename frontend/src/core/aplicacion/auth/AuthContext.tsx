@@ -10,6 +10,8 @@ interface AuthContextType {
   onLoginSuccess: (rol: string) => void;
   /** Llamar después del logout para limpiar el estado de forma inmediata */
   onLogout: () => void;
+  /** Llamar después de registrar la empresa para actualizar el rol */
+  onUpgradeSuccess: (rol: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -18,6 +20,7 @@ const AuthContext = createContext<AuthContextType>({
   isLoading: true,
   onLoginSuccess: () => {},
   onLogout: () => {},
+  onUpgradeSuccess: () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -65,8 +68,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUserRol(null);
   }, []);
 
+  const onUpgradeSuccess = useCallback((rol: string) => {
+    setUserRol(rol);
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ isLogueado, userRol, isLoading, onLoginSuccess, onLogout }}>
+    <AuthContext.Provider value={{ isLogueado, userRol, isLoading, onLoginSuccess, onLogout, onUpgradeSuccess }}>
       {children}
     </AuthContext.Provider>
   );

@@ -28,4 +28,6 @@ export interface AuthRepository {
   solicitarRecuperacion(email: string): Promise<void>;
   /** Valida el token y establece la nueva contraseña. Devuelve el rol del usuario. */
   restablecerPassword(token: string, nuevaPassword: string): Promise<string>;
+  /** Actualiza a empresa */
+  upgradeToEmpresa(nombreEmpresa: string, nit: string, rut: File | any): Promise<TokenJWT>;
 }

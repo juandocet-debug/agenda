@@ -11,6 +11,7 @@ import { MuroPublicacionesScreen } from '../screens/MuroPublicacionesScreen';
 import { CarritoScreen } from '../screens/CarritoScreen';
 import { AgendarPublicoScreen } from '../screens/AgendarPublicoScreen';
 import { ConfirmacionReservaScreen } from '../screens/ConfirmacionReservaScreen';
+import { RegistroEmpresaDesdeClienteScreen } from '../screens/RegistroEmpresaDesdeClienteScreen';
 
 // Pantalla vacía para el botón + central
 const AddActionScreen = () => null;
@@ -92,6 +93,7 @@ export const ClienteNavigator = () => {
       <Stack.Screen name="AgendarPublico" component={AgendarPublicoScreen} options={{ animation: 'slide_from_bottom' }} />
       <Stack.Screen name="Carrito" component={CarritoScreen} options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="ConfirmacionReserva" component={ConfirmacionReservaScreen} options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="RegistroEmpresaDesdeCliente" component={RegistroEmpresaDesdeClienteScreen} options={{ animation: 'slide_from_right' }} />
     </Stack.Navigator>
   );
 };

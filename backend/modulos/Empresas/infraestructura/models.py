@@ -37,6 +37,11 @@ class EmpresaModel(models.Model):
     correo_contacto = models.EmailField(blank=True, null=True)
     moneda = models.CharField(max_length=3, default='COP')
     mensaje_advertencia = models.TextField(blank=True, null=True)
+    
+    # Nuevos campos de facturación y legalidad
+    nit = models.CharField(max_length=50, blank=True, null=True)
+    rut_archivo = models.FileField(upload_to='empresas/ruts/', blank=True, null=True)
+    
     categoria = models.ForeignKey(
         CategoriaModel, on_delete=models.SET_NULL,
         null=True, blank=True, related_name='empresas', db_column='categoria_id'

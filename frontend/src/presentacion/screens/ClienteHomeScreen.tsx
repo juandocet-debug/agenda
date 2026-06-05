@@ -12,10 +12,9 @@ import React, { useState, useCallback, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, SafeAreaView,
   TouchableOpacity, Platform, Alert, Dimensions,
-  ActivityIndicator, Modal, FlatList, Image, StatusBar,
+  Modal, Image, StatusBar,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, shadows } from '../theme/colors';
@@ -26,86 +25,36 @@ import { CitaCliente } from '../../core/domain/citas/IClienteCitaRepository';
 
 // ── Infraestructura (inyección de dependencias) ───────────────────────────────
 import { DjangoClienteCitaRepository } from '../../core/infraestructura/citas/DjangoClienteCitaRepository';
-
-// Leer el token firmado (fuente de verdad de seguridad: nunca confiamos en
-// variables locales mutables para el rol; siempre lo leemos del JWT guardado)
 import { obtenerTokenLocal } from '../../core/infraestructura/auth/TokenStorageAdapter';
 import { useAuth } from '../../core/aplicacion/auth/AuthContext';
 
-const { width: SCREEN_W } = Dimensions.get('window');
-// Tarjetas (35% del ancho de pantalla)
-const CARD_W = SCREEN_W * 0.35;
+// ── Componentes Extraídos ─────────────────────────────────────────────────────
+import { CarouselCards } from '../components/ClienteHome/CarouselCards';
+import { QuickActions } from '../components/ClienteHome/QuickActions';
+import { BannerPromocional } from '../components/ClienteHome/BannerPromocional';
+import { PublicidadEmpresa } from '../components/ClienteHome/PublicidadEmpresa';
 
-// Inyección de dependencia: la pantalla trabaja con el contrato, no la implementación
+const { width: SCREEN_W } = Dimensions.get('window');
+
 const repositorioCitas = new DjangoClienteCitaRepository();
 const obtenerCitasCasoUso = new ObtenerCitasClienteCasoUso(repositorioCitas);
 
-// ── Badge de estado ───────────────────────────────────────────────────────────
-const EstadoBadge = ({ estado }: { estado: string }) => {
-  const cfg: Record<string, { color: string; bg: string; label: string }> = {
-    programada: { color: '#D97706', bg: '#FFFBEB', label: 'Programada' },
-    pendiente:  { color: '#D97706', bg: '#FFFBEB', label: 'Pendiente'  },
-    confirmada: { color: '#059669', bg: '#ECFDF5', label: 'Confirmada' },
-    pagada:     { color: '#2563EB', bg: '#EFF6FF', label: 'Pagada'     },
-    cancelada:  { color: '#DC2626', bg: '#FEF2F2', label: 'Cancelada'  },
-    completada: { color: '#6D28D9', bg: '#F5F3FF', label: 'Completada' },
-  };
-  const key = (estado || '').toLowerCase();
-  const c = cfg[key] ?? { color: '#64748B', bg: '#F8FAFC', label: estado };
-  return (
-    <View style={[st.badge, { backgroundColor: c.bg }]}>
-      <Text style={[st.badgeTxt, { color: c.color }]}>{c.label}</Text>
-    </View>
-  );
-};
-
-// ── Tarjetas del carrusel ─────────────────────────────────────────────────────
-const CAROUSEL_CARDS = [
-  {
-    id: '1',
-    title: 'Mis Citas',
-    subtitle: 'Revisa y gestiona\ntus reservas activas',
-    image: require('../../../assets/cardsCliente/UpDos.png'),
-    action: 'scrollDown',
-  },
-  {
-    id: '2',
-    title: 'Explorar',
-    subtitle: 'Descubre negocios\ncerca de ti',
-    image: require('../../../assets/cardsCliente/UpTres.png'),
-    action: 'ExplorarEmpresas',
-  },
-  {
-    id: '3',
-    title: 'Mi Carrito',
-    subtitle: 'Completa tu\nreserva fácilmente',
-    image: require('../../../assets/cardsCliente/UpSeis.png'),
-    action: 'Carrito',
-  },
-];
-
-// ── Pantalla principal ────────────────────────────────────────────────────────
 export const ClienteHomeScreen = ({ navigation }: any) => {
   const [nombre, setNombre]           = useState('');
   const [clienteId, setClienteId]     = useState('');
   const [citas, setCitas]             = useState<CitaCliente[]>([]);
   const [cargando, setCargando]       = useState(false);
   const [tabActivo, setTabActivo]     = useState<'mio' | 'negocio'>('mio');
-  const [showBalance, setShowBalance] = useState(true);
   const [modalProfile, setModalProfile] = useState(false);
-  // Modal de promocion de empresa (se muestra si el usuario no tiene rol empresa)
-  const [modalEmpresa, setModalEmpresa] = useState(false);
-  // Rol leido del JWT almacenado (fuente de verdad firmada por el backend)
   const [rolUsuario, setRolUsuario]   = useState<string>('cliente');
   const scrollRef = useRef<ScrollView>(null);
+
+  const { onLogout } = useAuth();
 
   useFocusEffect(
     useCallback(() => {
       const cargar = async () => {
         try {
-          // SEGURIDAD: leemos el rol desde el JWT firmado guardado, no de
-          // una variable suelta. Si el token fue manipulado localmente, el
-          // backend lo rechazara igual al hacer llamadas autenticadas.
           const tokenData = await obtenerTokenLocal();
           if (tokenData?.rol) setRolUsuario(tokenData.rol);
 
@@ -132,8 +81,6 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
     }, [])
   );
 
-  const { onLogout } = useAuth();
-
   const cerrarSesion = () => {
     if (Platform.OS === 'web') {
       if (window.confirm('¿Salir de tu cuenta?')) onLogout();
@@ -145,82 +92,27 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
     }
   };
 
-  const proximas = citas.filter(c => {
-    const hoy = new Date().toISOString().split('T')[0];
-    return c.fecha >= hoy && (c.estado || '').toUpperCase() !== 'CANCELADA';
-  }).length;
-
-  const pagadas = citas.filter(c => {
-    const est = (c.estado || '').toUpperCase();
-    return est === 'CONFIRMADA' || est === 'PAGADA';
-  }).length;
-
-  // Ref y estados para el Auto-Scroll del Banner (Netflix Style)
-  const bannerScrollRef = useRef<ScrollView>(null);
-  const [activeBannerIndex, setActiveBannerIndex] = useState(0);
-
   const bannersData = [
-    {
-      image: require('../../../assets/Relleno/promo1.png'),
-      action: () => navigation.navigate('ExplorarEmpresas'),
-    },
-    {
-      image: require('../../../assets/Relleno/promo2.png'),
-      action: () => scrollRef.current?.scrollTo({ y: 520, animated: true }),
-    },
-    {
-      image: require('../../../assets/Relleno/promo3.png'),
-      action: () => navigation.navigate('ExplorarEmpresas'),
-    },
+    { image: require('../../../assets/Relleno/promo1.png'), action: () => navigation.navigate('ExplorarEmpresas') },
+    { image: require('../../../assets/Relleno/promo2.png'), action: () => scrollRef.current?.scrollTo({ y: 520, animated: true }) },
+    { image: require('../../../assets/Relleno/promo3.png'), action: () => navigation.navigate('ExplorarEmpresas') },
   ];
 
-  // Auto-scroll del banner cada 4 segundos
-  React.useEffect(() => {
-    if (tabActivo !== 'mio') return;
-    const interval = setInterval(() => {
-      let nextIndex = activeBannerIndex + 1;
-      if (nextIndex >= bannersData.length) {
-        nextIndex = 0;
-      }
-      setActiveBannerIndex(nextIndex);
-      bannerScrollRef.current?.scrollTo({
-        x: nextIndex * (SCREEN_W - 40),
-        animated: true,
-      });
-    }, 4000);
-
-    return () => clearInterval(interval);
-  }, [activeBannerIndex, tabActivo]);
-
-  const handleBannerScroll = (event: any) => {
-    const slideSize = event.nativeEvent.layoutMeasurement.width;
-    const offset = event.nativeEvent.contentOffset.x;
-    const index = Math.round(offset / slideSize);
-    if (index >= 0 && index < bannersData.length && index !== activeBannerIndex) {
-      setActiveBannerIndex(index);
-    }
-  };
-
-  const handleCardAction = (action: string) => {
-    if (action === 'scrollDown') {
-      // Scroll hasta la sección de citas (debajo del carrusel y quick actions)
-      scrollRef.current?.scrollTo({ y: 520, animated: true });
-    } else {
-      navigation.navigate(action);
-    }
-  };
-
-  // ── QUICK ACTIONS (botones circulares estilo DaviPlata) ───────────────────
-  const quickActions = [
+  const quickActionsData = [
     { icon: 'calendar', label: 'Mis Citas',   onPress: () => scrollRef.current?.scrollToEnd({ animated: true }) },
     { icon: 'compass',  label: 'Explorar',    onPress: () => navigation.navigate('ExplorarEmpresas') },
     { icon: 'shopping-cart', label: 'Carrito', onPress: () => navigation.navigate('Carrito') },
     { icon: 'more-horizontal', label: 'Más',  onPress: () => setModalProfile(true) },
   ];
 
-  // Logica del tab "Mi Negocio":
-  // Si el rol es 'empresa'/'superadmin' => navega a su panel.
-  // Si es 'cliente' => muestra el banner de promocion inline (no un modal).
+  const handleCardAction = (action: string) => {
+    if (action === 'scrollDown') {
+      scrollRef.current?.scrollTo({ y: 520, animated: true });
+    } else {
+      navigation.navigate(action);
+    }
+  };
+
   const handleNegocioTab = () => {
     if (rolUsuario === 'empresa' || rolUsuario === 'superadmin') {
       navigation.navigate('EmpresaTabs');
@@ -229,19 +121,20 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
     }
   };
 
-  // (bottom tabs son manejados por ClienteNavigator — no se duplican aquí)
+  const handleRegisterPress = () => {
+    navigation.navigate('RegistroEmpresaDesdeCliente');
+  };
 
   return (
     <SafeAreaView style={st.root}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      {/* ── HEADER fijo estilo DaviPlata ── */}
+      {/* ── HEADER ── */}
       <View style={st.topBar}>
         <TouchableOpacity style={st.avatarCircle} onPress={() => setModalProfile(true)}>
           <Feather name="user" size={20} color={colors.primary} />
         </TouchableOpacity>
 
-        {/* Logo centrado */}
         <View style={st.logoContainer}>
           <Image
             source={require('../../../assets/logoFlowy.svg')}
@@ -290,185 +183,24 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
         contentContainerStyle={st.scroll}
       >
         {tabActivo === 'negocio' ? (
-          /* ── TAB MI NEGOCIO: diseño nativo (sin imagen, siempre responsivo) ── */
-          <LinearGradient
-            colors={['#3B2DBF', '#4535D4', '#2E1FA3']}
-            start={{ x: 0.1, y: 0 }}
-            end={{ x: 0.9, y: 1 }}
-            style={st.negocioWrapper}
-          >
-            {/* Estrellas decorativas */}
-            <Text style={st.negocioStar1}>✨</Text>
-            <Text style={st.negocioStar2}>⭐</Text>
-
-            {/* ¡Impulsa tu negocio! */}
-            <Text style={st.negocioTagline}>¡Impulsa tu negocio!</Text>
-            <View style={st.negocioTaglineBar} />
-
-            {/* Título principal */}
-            <Text style={st.negocioTitle}>
-              ¡Haz crecer tu{`\n`}negocio con{' '}
-              <Text style={st.negocioTitleAccent}>Flowy!</Text>
-            </Text>
-
-            {/* Subtítulo */}
-            <Text style={st.negocioSubtitle}>
-              Gestiona tu agenda y recibe clientes de{' '}
-              <Text style={{ color: '#FFCE00', fontWeight: '700' }}>forma profesional.</Text>
-            </Text>
-
-            {/* Beneficios */}
-            {[
-              { icon: 'clock',       title: 'Recibe reservas 24/7 sin esfuerzo',        body: 'Tus clientes reservan mientras tú te enfocas en lo importante.' },
-              { icon: 'calendar',    title: 'Gestiona tu agenda desde cualquier lugar', body: 'Todo tu negocio en tu celular, cuando y donde lo necesites.' },
-              { icon: 'users',       title: 'Clientes llegan solos con tu perfil',      body: 'Tu negocio se ve profesional y genera confianza al instante.' },
-              { icon: 'trending-up', title: 'Estadísticas y control de tus ingresos',  body: 'Toma mejores decisiones con datos claros de tu negocio.' },
-            ].map((b, i) => (
-              <View key={i} style={st.negocioBenefit}>
-                <View style={st.negocioBenefitIcon}>
-                  <Feather name={b.icon as any} size={20} color="#FFCE00" />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={st.negocioBenefitTitle}>{b.title}</Text>
-                  <Text style={st.negocioBenefitBody}>{b.body}</Text>
-                </View>
-              </View>
-            ))}
-
-            {/* Botón dorado */}
-            <TouchableOpacity
-              style={st.negocioBtn}
-              activeOpacity={0.85}
-              onPress={() => navigation.navigate('Login', { modoInicial: 'register' })}
-            >
-              <Text style={st.negocioBtnTxt}>🚀  Registrar mi empresa gratis</Text>
-            </TouchableOpacity>
-
-            {/* Quizás después */}
-            <TouchableOpacity
-              style={st.negocioDismiss}
-              onPress={() => setTabActivo('mio')}
-            >
-              <Text style={st.negocioDismissTxt}>Quizás después</Text>
-            </TouchableOpacity>
-          </LinearGradient>
+          <PublicidadEmpresa 
+            onRegisterPress={handleRegisterPress} 
+            onDismiss={() => setTabActivo('mio')} 
+          />
         ) : (
-          /* ── TAB MI FLOWY: contenido original ── */
           <>
-        {/* ── SECCIÓN: DESTACADOS (BANNER PROMOCIONAL CON AUTO-SCROLL TIPO NETFLIX) ── */}
-        <View style={{ marginTop: 24, marginBottom: 16 }}>
-          <Text style={[st.sectionTitle, { marginHorizontal: 20, marginBottom: 12 }]}>Para ti 🔥</Text>
-          <ScrollView
-            ref={bannerScrollRef}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            pagingEnabled
-            snapToInterval={SCREEN_W - 40}
-            snapToAlignment="center"
-            decelerationRate="fast"
-            style={{ height: 190 }}
-            contentContainerStyle={{ paddingHorizontal: 20, gap: 16, alignItems: 'center' }}
-            onScroll={handleBannerScroll}
-            scrollEventThrottle={16}
-          >
-            {bannersData.map((b, i) => (
-              <TouchableOpacity 
-                key={i} 
-                style={{ width: SCREEN_W - 40, height: 170, borderRadius: 20, overflow: 'hidden' }} 
-                onPress={b.action} 
-                activeOpacity={0.9}
-              >
-                <Image 
-                  source={b.image} 
-                  style={{ width: '100%', height: '100%' }}
-                  resizeMode="cover"
-                />
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-          
-          {/* Indicador de diapositiva del Banner */}
-          <View style={st.bannerDotsRow}>
-            {bannersData.map((_, i) => (
-              <View 
-                key={i} 
-                style={[
-                  st.bannerDot, 
-                  activeBannerIndex === i && st.bannerDotActive
-                ]} 
-              />
-            ))}
-          </View>
-        </View>
-
-        {/* ── ACCIONES RÁPIDAS (burbujas con mayor espacio vertical y separación) ── */}
-        <View style={st.quickSection}>
-          <View style={st.quickRow}>
-            {quickActions.map((qa) => (
-              <View key={qa.label} style={st.quickItem}>
-                <TouchableOpacity style={st.quickCircle} onPress={qa.onPress} activeOpacity={0.8}>
-                  <LinearGradient
-                    colors={[colors.primary, colors.primaryLight]}
-                    style={st.quickGradient}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                  >
-                    <Feather name={qa.icon as any} size={22} color="#FFF" />
-                  </LinearGradient>
-                </TouchableOpacity>
-                <Text style={st.quickLabel}>{qa.label}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        {/* ── SECCIÓN: TUS ACCESOS ── */}
-        <View style={{ marginTop: 12, marginBottom: 8 }}>
-          <Text style={[st.sectionTitle, { marginHorizontal: 20, marginBottom: 12 }]}>Tus accesos rápidos</Text>
-        </View>
-
-        {/* ── CARRUSEL DE CARDS ── */}
-        <View
-          style={{
-            flexDirection: 'row',
-            paddingLeft: 20,
-            paddingRight: 20,
-            paddingBottom: 4,
-            paddingTop: 45,
-            gap: 12,
-            overflowX: 'auto' as any,
-            overflowY: 'hidden' as any,
-            WebkitOverflowScrolling: 'touch' as any,
-            scrollbarWidth: 'none' as any,
-            msOverflowStyle: 'none' as any,
-          }}
-        >
-          {CAROUSEL_CARDS.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              style={[st.card, { width: CARD_W, flexShrink: 0 }]}
-              activeOpacity={0.92}
-              onPress={() => handleCardAction(item.action)}
-            >
-              <View style={st.cardTopSolid} />
-              <Image source={item.image} style={st.cardOverlayImage} resizeMode="contain" />
-              <View style={st.cardBottom}>
-                <Text style={st.cardTitle}>{item.title}</Text>
-                <Text style={st.cardSubtitle}>{item.subtitle}</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-
-
-
+            <BannerPromocional bannersData={bannersData} isActive={tabActivo === 'mio'} />
+            <QuickActions actions={quickActionsData} />
+            
+            <View style={{ marginTop: 12, marginBottom: 8 }}>
+              <Text style={[st.sectionTitle, { marginHorizontal: 20, marginBottom: 12 }]}>Tus accesos rápidos</Text>
+            </View>
+            
+            <CarouselCards onAction={handleCardAction} />
             <View style={{ height: 100 }} />
           </>
         )}
       </ScrollView>
-
-      {/* bottom tabs están en ClienteNavigator */}
 
       {/* ── MODAL Perfil ── */}
       <Modal visible={modalProfile} transparent animationType="slide">
@@ -504,12 +236,9 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
   );
 };
 
-// ── Estilos ───────────────────────────────────────────────────────────────────
 const st = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#FFFFFF' },
   scroll: { paddingBottom: 20 },
-
-  // ── TOP BAR
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -526,390 +255,31 @@ const st = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   logoContainer: { 
-    position: 'absolute', 
-    left: 0, right: 0, 
-    alignItems: 'center', 
-    justifyContent: 'center',
-    zIndex: -1 
+    position: 'absolute', left: 0, right: 0, 
+    alignItems: 'center', justifyContent: 'center', zIndex: -1 
   },
-  headerLogo: {
-    // Tamaño responsivo: más pequeño para mobile y perfectamente centrado
-    height: SCREEN_W < 400 ? 22 : 32,
-    width: SCREEN_W < 400 ? 70 : 100,
-  },
+  headerLogo: { height: SCREEN_W < 400 ? 22 : 32, width: SCREEN_W < 400 ? 70 : 100 },
   topBarRight: { flexDirection: 'row', gap: 6 },
   iconBtn: {
     width: 38, height: 38, borderRadius: 19,
     backgroundColor: '#F9FAFB',
     justifyContent: 'center', alignItems: 'center',
   },
-
-  // ── TABS (Segment Control)
-  tabsWrapper: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 8,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center', // Center the segment control
-  },
-  segmentControl: {
-    flexDirection: 'row',
-    backgroundColor: '#F3F4F6',
-    borderRadius: 30,
-    padding: 3, // Small padding inside the pill
-  },
-  segmentTab: {
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    borderRadius: 26,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  segmentTabActive: {
-    backgroundColor: colors.primary,
-    ...shadows.soft,
-  },
-  segmentTabText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#6B7280',
-  },
-  segmentTabTextActive: {
-    color: '#FFFFFF',
-  },
-
-  // ── BALANCE
-  balanceSection: {
-    alignItems: 'center',
-    paddingTop: 28, paddingBottom: 24,
-    paddingHorizontal: 20,
-  },
-  balanceQuestion: { fontSize: 15, color: '#6B7280', marginBottom: 8 },
-  balanceRow: { flexDirection: 'row', alignItems: 'baseline', marginBottom: 6 },
-  balanceAmount: { fontSize: 48, fontWeight: '700', color: '#111827', letterSpacing: -1 },
-  balanceAmountSuffix: { fontSize: 18, fontWeight: '500', color: '#6B7280', marginLeft: 4 },
-  eyeBtn: { marginLeft: 10, padding: 4 },
-  balanceLabel: { fontSize: 13, color: '#9CA3AF' },
-
-  // ── QUICK ACTIONS
-  quickSection: {
-    paddingVertical: 18,
-    marginVertical: 4,
-    backgroundColor: '#FAFAFA',
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: '#F3F4F6',
-  },
-  quickRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingHorizontal: 8,
-  },
-  quickItem: { alignItems: 'center', gap: 6 },
-  quickCircle: { borderRadius: 27, overflow: 'hidden', ...shadows.medium },
-  quickGradient: {
-    width: 54, height: 54,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  quickLabel: { fontSize: 12, color: '#374151', fontWeight: '600', textAlign: 'center' },
-
-  // ── BANNER PROMO NETFLIX
-  promoBanner: {
-    width: SCREEN_W - 60,
-    height: 160,
-    borderRadius: 20,
-    padding: 20,
-    justifyContent: 'flex-end',
-  },
-  promoBannerTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    lineHeight: 24,
-    marginBottom: 12,
-  },
-  promoBannerBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(255,255,255,0.22)',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 30,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.4)',
-  },
-  promoBannerBtnTxt: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
-  },
-  bannerDotsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 10,
-    gap: 6,
-  },
-  bannerDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#E5E7EB',
-  },
-  bannerDotActive: {
-    backgroundColor: colors.primary,
-    width: 14,
-  },
-
-  // ── CARRUSEL
-  carouselList: { paddingHorizontal: 20, gap: 12, paddingBottom: 4, paddingTop: 45 },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    overflow: 'visible',
-  },
-  cardTopSolid: {
-    width: '100%',
-    height: 75,
-    backgroundColor: '#4338F5',
-    borderTopLeftRadius: 17,
-    borderTopRightRadius: 17,
-  },
-  cardOverlayImage: {
-    position: 'absolute',
-    top: -85,
-    left: 0,
-    right: 0,
-    width: '100%',
-    height: 160,
-    zIndex: 10,
-  },
-  cardBottom: {
-    padding: 14,
-    borderBottomLeftRadius: 17,
-    borderBottomRightRadius: 17,
-    backgroundColor: '#FFFFFF',
-  },
-  cardTitle: { fontSize: 14, fontWeight: '700', color: '#111827', marginBottom: 3 },
-  cardSubtitle: { fontSize: 11, color: '#6B7280', lineHeight: 15 },
-
-  // ── SCROLL HINT
-  scrollHint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 8,
-    marginBottom: 4,
-    gap: 5,
-  },
-  scrollDot: {
-    width: 6, height: 6, borderRadius: 3,
-    backgroundColor: '#D1D5DB',
-  },
-  scrollDotActive: {
-    backgroundColor: colors.primary,
-    width: 18,
-  },
-
-  // ── HISTORIAL
-  histSection: { paddingHorizontal: 20, paddingTop: 24 },
+  tabsWrapper: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8, backgroundColor: '#FFFFFF', alignItems: 'center' },
+  segmentControl: { flexDirection: 'row', backgroundColor: '#F3F4F6', borderRadius: 30, padding: 3 },
+  segmentTab: { paddingHorizontal: 24, paddingVertical: 10, borderRadius: 26, justifyContent: 'center', alignItems: 'center' },
+  segmentTabActive: { backgroundColor: colors.primary, ...shadows.soft },
+  segmentTabText: { fontSize: 14, fontWeight: '600', color: '#6B7280' },
+  segmentTabTextActive: { color: '#FFFFFF' },
   sectionTitle: { fontSize: 17, fontWeight: '700', color: '#111827', marginBottom: 14 },
-  citaCard: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#FFFFFF', borderRadius: 16,
-    padding: 14, marginBottom: 10,
-    borderWidth: 1, borderColor: '#F3F4F6',
-    ...shadows.soft,
-  },
-  citaIconBox: {
-    width: 42, height: 42, borderRadius: 12,
-    backgroundColor: '#EEF2FF',
-    justifyContent: 'center', alignItems: 'center',
-  },
-  citaServicio: { fontSize: 14, fontWeight: '600', color: '#111827' },
-  citaEmpresa: { fontSize: 12, color: '#6B7280', marginTop: 1 },
-  citaFecha: { fontSize: 12, color: '#9CA3AF', marginTop: 2 },
-
-  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
-  badgeTxt: { fontSize: 11, fontWeight: '600' },
-
-  // ── EMPTY STATE
-  emptyBox: {
-    alignItems: 'center',
-    marginHorizontal: 20, marginTop: 36,
-    padding: 32,
-    backgroundColor: '#FAFAFA',
-    borderRadius: 24,
-    borderWidth: 1, borderColor: '#F3F4F6',
-  },
-  emptyIcon: {
-    width: 72, height: 72, borderRadius: 36,
-    backgroundColor: '#EEF2FF',
-    justifyContent: 'center', alignItems: 'center',
-    marginBottom: 16,
-  },
-  emptyTxt: { fontSize: 17, fontWeight: '700', color: '#374151', marginBottom: 6 },
-  emptySubTxt: { fontSize: 13, color: '#9CA3AF', textAlign: 'center', lineHeight: 20, marginBottom: 20 },
-  emptyBtn: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 28, paddingVertical: 12,
-    borderRadius: 24,
-  },
-  emptyBtnTxt: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
-
-  // (bottom bar eliminado — lo gestiona ClienteNavigator)
-
-  // ── MODAL
-  modalOverlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 28, borderTopRightRadius: 28,
-    padding: 28, paddingTop: 12,
-    alignItems: 'center',
-  },
-  modalHandle: {
-    width: 40, height: 4, borderRadius: 2,
-    backgroundColor: '#E5E7EB', marginBottom: 24,
-  },
-  modalIconBg: {
-    width: 80, height: 80, borderRadius: 40,
-    backgroundColor: '#EEF2FF',
-    justifyContent: 'center', alignItems: 'center',
-    marginBottom: 18,
-  },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+  modalContent: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 28, paddingTop: 12, alignItems: 'center' },
+  modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#E5E7EB', marginBottom: 24 },
+  modalIconBg: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#EEF2FF', justifyContent: 'center', alignItems: 'center', marginBottom: 18 },
   modalTitle: { fontSize: 22, fontWeight: '700', color: '#111827', marginBottom: 10, textAlign: 'center' },
   modalText: { fontSize: 15, color: '#6B7280', textAlign: 'center', lineHeight: 24, marginBottom: 24 },
-  modalBtnSecondary: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingVertical: 14, paddingHorizontal: 24,
-    borderRadius: 16, borderWidth: 1, borderColor: '#FEE2E2',
-    backgroundColor: '#FFF5F5', width: '100%',
-    justifyContent: 'center', marginBottom: 12,
-  },
+  modalBtnSecondary: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 14, paddingHorizontal: 24, borderRadius: 16, borderWidth: 1, borderColor: '#FEE2E2', backgroundColor: '#FFF5F5', width: '100%', justifyContent: 'center', marginBottom: 12 },
   modalBtnSecTxt: { fontWeight: '600', fontSize: 15 },
-  modalBtn: {
-    backgroundColor: colors.primary,
-    width: '100%', paddingVertical: 15,
-    borderRadius: 16, alignItems: 'center',
-  },
+  modalBtn: { backgroundColor: colors.primary, width: '100%', paddingVertical: 15, borderRadius: 16, alignItems: 'center' },
   modalBtnTxt: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
-  // ── TAB MI NEGOCIO (diseño nativo, 100% responsivo)
-  negocioWrapper: {
-    paddingHorizontal: 20,
-    paddingTop: 28,
-    paddingBottom: 36,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  negocioStar1: {
-    position: 'absolute', top: 16, right: 20,
-    fontSize: 22, opacity: 0.7,
-  },
-  negocioStar2: {
-    position: 'absolute', top: 50, right: 40,
-    fontSize: 14, opacity: 0.5,
-  },
-  negocioTagline: {
-    color: '#FFCE00',
-    fontSize: 15,
-    fontStyle: 'italic',
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  negocioTaglineBar: {
-    width: 80,
-    height: 2,
-    backgroundColor: '#FFCE00',
-    alignSelf: 'center',
-    marginBottom: 14,
-    borderRadius: 2,
-  },
-  negocioTitle: {
-    fontSize: 28,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    lineHeight: 36,
-    marginBottom: 12,
-  },
-  negocioTitleAccent: {
-    color: '#FFCE00',
-    fontSize: 28,
-    fontWeight: '900',
-  },
-  negocioSubtitle: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.85)',
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 20,
-    paddingHorizontal: 8,
-  },
-  negocioBenefit: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 14,
-    padding: 12,
-    marginBottom: 10,
-    gap: 12,
-  },
-  negocioBenefitIcon: {
-    width: 44, height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  negocioBenefitTitle: {
-    color: '#FFCE00',
-    fontSize: 13,
-    fontWeight: '700',
-    marginBottom: 3,
-  },
-  negocioBenefitBody: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 11,
-    lineHeight: 16,
-  },
-  // Botón dorado pill
-  negocioBtn: {
-    backgroundColor: '#FFCE00',
-    width: '100%',
-    paddingVertical: 16,
-    borderRadius: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 20,
-    marginBottom: 10,
-    shadowColor: '#FFCE00',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  negocioBtnTxt: {
-    color: '#1A1A2E',
-    fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: 0.3,
-  },
-  negocioDismiss: {
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  negocioDismissTxt: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.7)',
-    fontWeight: '500',
-  },
 });
