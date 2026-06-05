@@ -65,7 +65,7 @@ const CAROUSEL_CARDS = [
     id: '1',
     title: 'Mis Citas',
     subtitle: 'Revisa y gestiona\ntus reservas activas',
-    image: require('../../../assets/cardsCliente/superiorUno.png'),
+    image: require('../../../assets/cardsCliente/upOne.png'),
     action: 'scrollDown',
   },
   {
@@ -445,6 +445,11 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
               <View 
                 style={st.cardTopSolid} 
               />
+              <Image 
+                source={item.image} 
+                style={st.cardOverlayImage} 
+                resizeMode="contain" 
+              />
               <View style={st.cardBottom}>
                 <Text style={st.cardTitle}>{item.title}</Text>
                 <Text style={st.cardSubtitle}>{item.subtitle}</Text>
@@ -671,6 +676,15 @@ const st = StyleSheet.create({
     backgroundColor: '#4338F5',
     borderTopLeftRadius: 17,
     borderTopRightRadius: 17,
+  },
+  cardOverlayImage: {
+    position: 'absolute',
+    top: -20, // Sobresale hacia arriba
+    left: 0,
+    right: 0,
+    width: '100%',
+    height: 140, // Más alto que el fondo para poder sobresalir
+    zIndex: 10,
   },
   cardBottom: {
     padding: 14,
