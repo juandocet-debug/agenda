@@ -33,7 +33,7 @@ import { obtenerTokenLocal } from '../../core/infraestructura/auth/TokenStorageA
 import { useAuth } from '../../core/aplicacion/auth/AuthContext';
 
 const { width: SCREEN_W } = Dimensions.get('window');
-const CARD_W = SCREEN_W * 0.58;
+const CARD_W = SCREEN_W * 0.48;
 
 // Inyección de dependencia: la pantalla trabaja con el contrato, no la implementación
 const repositorioCitas = new DjangoClienteCitaRepository();
@@ -375,6 +375,14 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
           )}
         />
 
+        {/* ── INDICADOR DE SCROLL HORIZONTAL ── */}
+        <View style={st.scrollHint}>
+          <View style={[st.scrollDot, st.scrollDotActive]} />
+          <View style={st.scrollDot} />
+          <View style={st.scrollDot} />
+          <Feather name="chevrons-right" size={14} color="#9CA3AF" style={{ marginLeft: 4 }} />
+        </View>
+
         {/* ── HISTORIAL DE CITAS ── */}
         {cargando ? (
           <ActivityIndicator color={colors.primary} style={{ marginTop: 24 }} />
@@ -575,7 +583,7 @@ const st = StyleSheet.create({
   },
   cardImageContainer: {
     width: '100%',
-    height: 130,
+    height: 105,
   },
   cardImage: {
     width: '100%',
@@ -587,6 +595,24 @@ const st = StyleSheet.create({
   },
   cardTitle: { fontSize: 15, fontWeight: '700', color: '#111827', marginBottom: 3 },
   cardSubtitle: { fontSize: 12, color: '#6B7280', lineHeight: 17 },
+
+  // ── SCROLL HINT
+  scrollHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+    marginBottom: 4,
+    gap: 5,
+  },
+  scrollDot: {
+    width: 6, height: 6, borderRadius: 3,
+    backgroundColor: '#D1D5DB',
+  },
+  scrollDotActive: {
+    backgroundColor: colors.primary,
+    width: 18,
+  },
 
   // ── HISTORIAL
   histSection: { paddingHorizontal: 20, paddingTop: 24 },
