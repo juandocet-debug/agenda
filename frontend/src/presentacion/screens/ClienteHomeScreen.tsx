@@ -314,16 +314,52 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
         ) : (
           /* ── TAB MI FLOWY: contenido original ── */
           <>
-        <View style={st.balanceSection}>
-          <Text style={st.balanceQuestion}>¿Cuántas citas tengo?</Text>
-          <View style={st.balanceRow}>
-            <Text style={st.balanceAmount}>{cargando ? '...' : citas.length}</Text>
-            <Text style={st.balanceAmountSuffix}> reservas</Text>
-          </View>
-          <Text style={st.balanceLabel}>
-            {proximas} próximas · {pagadas} pagadas
-          </Text>
-        </View>
+        {/* ── BANNER PROMOCIONAL ESTILO NETFLIX ── */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          pagingEnabled
+          style={{ marginBottom: 4 }}
+          contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
+        >
+          {[
+            {
+              title: '¡Encuentra los mejores\nservicios cerca de ti!',
+              gradient: ['#4F46E5', '#7C3AED'] as [string, string],
+              btn: 'EXPLORAR',
+              btnIcon: 'search',
+              action: () => navigation.navigate('ExplorarEmpresas'),
+            },
+            {
+              title: 'Reserva tu cita\nen segundos ⚡',
+              gradient: ['#0EA5E9', '#6366F1'] as [string, string],
+              btn: 'VER MIS CITAS',
+              btnIcon: 'calendar',
+              action: () => scrollRef.current?.scrollTo({ y: 520, animated: true }),
+            },
+            {
+              title: 'Ofertas y descuentos\nexclusivos para ti 🎁',
+              gradient: ['#EC4899', '#8B5CF6'] as [string, string],
+              btn: 'VER OFERTAS',
+              btnIcon: 'tag',
+              action: () => navigation.navigate('ExplorarEmpresas'),
+            },
+          ].map((b, i) => (
+            <LinearGradient
+              key={i}
+              colors={b.gradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={st.promoBanner}
+            >
+              <Text style={st.promoBannerTitle}>{b.title}</Text>
+              <TouchableOpacity style={st.promoBannerBtn} onPress={b.action} activeOpacity={0.85}>
+                <Feather name={b.btnIcon as any} size={14} color="#FFF" />
+                <Text style={st.promoBannerBtnTxt}>{b.btn}</Text>
+              </TouchableOpacity>
+            </LinearGradient>
+          ))}
+        </ScrollView>
 
         {/* ── ACCIONES RÁPIDAS (botones circulares) ── */}
         <View style={st.quickRow}>
@@ -567,6 +603,40 @@ const st = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   quickLabel: { fontSize: 12, color: '#374151', fontWeight: '500', textAlign: 'center' },
+
+  // ── BANNER PROMO NETFLIX
+  promoBanner: {
+    width: SCREEN_W - 60,
+    height: 160,
+    borderRadius: 20,
+    padding: 20,
+    justifyContent: 'flex-end',
+  },
+  promoBannerTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    lineHeight: 24,
+    marginBottom: 12,
+  },
+  promoBannerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.4)',
+  },
+  promoBannerBtnTxt: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
 
   // ── CARRUSEL
   carouselList: { paddingHorizontal: 20, gap: 12, paddingBottom: 4 },
