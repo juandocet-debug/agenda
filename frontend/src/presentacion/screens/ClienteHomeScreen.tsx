@@ -428,35 +428,29 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
         </View>
 
         {/* ── CARRUSEL DE CARDS ── */}
-        <FlatList
-          data={CAROUSEL_CARDS}
-          keyExtractor={(item) => item.id}
+        <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           style={{ overflow: 'visible' }}
           contentContainerStyle={st.carouselList}
-          ListFooterComponent={<View style={{ width: 40 }} />}
-          renderItem={({ item }) => (
+        >
+          {CAROUSEL_CARDS.map((item) => (
             <TouchableOpacity
+              key={item.id}
               style={[st.card, { width: CARD_W }]}
               activeOpacity={0.92}
               onPress={() => handleCardAction(item.action)}
             >
-              <View 
-                style={st.cardTopSolid} 
-              />
-              <Image 
-                source={item.image} 
-                style={st.cardOverlayImage} 
-                resizeMode="contain" 
-              />
+              <View style={st.cardTopSolid} />
+              <Image source={item.image} style={st.cardOverlayImage} resizeMode="contain" />
               <View style={st.cardBottom}>
                 <Text style={st.cardTitle}>{item.title}</Text>
                 <Text style={st.cardSubtitle}>{item.subtitle}</Text>
               </View>
             </TouchableOpacity>
-          )}
-        />
+          ))}
+          <View style={{ width: 20 }} />
+        </ScrollView>
 
 
 
