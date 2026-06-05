@@ -160,24 +160,15 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
 
   const bannersData = [
     {
-      title: '¡Encuentra los mejores\nservicios cerca de ti!',
-      gradient: ['#4F46E5', '#7C3AED'] as [string, string],
-      btn: 'EXPLORAR',
-      btnIcon: 'search',
+      image: require('../../../assets/Relleno/promo1.png'),
       action: () => navigation.navigate('ExplorarEmpresas'),
     },
     {
-      title: 'Reserva tu cita\nen segundos ⚡',
-      gradient: ['#0EA5E9', '#6366F1'] as [string, string],
-      btn: 'VER MIS CITAS',
-      btnIcon: 'calendar',
+      image: require('../../../assets/Relleno/promo2.png'),
       action: () => scrollRef.current?.scrollTo({ y: 520, animated: true }),
     },
     {
-      title: 'Ofertas y descuentos\nexclusivos para ti 🎁',
-      gradient: ['#EC4899', '#8B5CF6'] as [string, string],
-      btn: 'VER OFERTAS',
-      btnIcon: 'tag',
+      image: require('../../../assets/Relleno/promo3.png'),
       action: () => navigation.navigate('ExplorarEmpresas'),
     },
   ];
@@ -385,19 +376,17 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
             scrollEventThrottle={16}
           >
             {bannersData.map((b, i) => (
-              <LinearGradient
-                key={i}
-                colors={b.gradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[st.promoBanner, { width: SCREEN_W - 40 }]}
+              <TouchableOpacity 
+                key={i} 
+                style={[st.promoBanner, { width: SCREEN_W - 40, padding: 0, overflow: 'hidden' }]} 
+                onPress={b.action} 
+                activeOpacity={0.9}
               >
-                <Text style={st.promoBannerTitle}>{b.title}</Text>
-                <TouchableOpacity style={st.promoBannerBtn} onPress={b.action} activeOpacity={0.85}>
-                  <Feather name={b.btnIcon as any} size={14} color="#FFF" />
-                  <Text style={st.promoBannerBtnTxt}>{b.btn}</Text>
-                </TouchableOpacity>
-              </LinearGradient>
+                <Image 
+                  source={b.image} 
+                  style={{ width: '100%', height: '100%', resizeMode: 'cover' }} 
+                />
+              </TouchableOpacity>
             ))}
           </ScrollView>
           
