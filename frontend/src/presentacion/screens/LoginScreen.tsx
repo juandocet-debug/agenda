@@ -129,16 +129,12 @@ export const LoginScreen = ({ navigation, route }: any) => {
       await AsyncStorage.setItem('cliente_email', data.datos?.email || '');
       
       const rol = data.datos?.rol;
-      if (rol === 'superadmin') {
-        navigation.replace('MainTabs');
-      } else if (rol === 'cliente') {
-        if (totalItems > 0) {
-          navigation.replace('Carrito');
-        } else {
-          navigation.replace('ClienteHome');
-        }
-      } else {
-        navigation.replace('EmpresaTabs');
+      // Actualizar AuthContext directamente como en handleLogin normal
+      onLoginSuccess(rol);
+      
+      if (rol === 'cliente' && totalItems > 0) {
+        // Solo redirigir explícitamente si hay algo en el carrito
+        navigation.replace('Carrito');
       }
     } catch (e: any) {
       setErrorMessage(e.message || 'Error al iniciar con Google.');
