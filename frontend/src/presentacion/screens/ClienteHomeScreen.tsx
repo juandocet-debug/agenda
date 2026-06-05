@@ -229,13 +229,7 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
     }
   };
 
-  // ── BOTTOM TABS ───────────────────────────────────────────────────────────
-  const bottomTabs = [
-    { icon: 'list',          label: 'Movimientos', onPress: () => scrollRef.current?.scrollToEnd({ animated: true }) },
-    { icon: 'shopping-bag',  label: 'Tienda',      onPress: () => navigation.navigate('ExplorarEmpresas') },
-    { icon: 'grid',          label: 'Código QR',   onPress: () => setModalProfile(true) },
-    { icon: 'credit-card',   label: 'Pagar',       onPress: () => navigation.navigate('Carrito') },
-  ];
+  // (bottom tabs son manejados por ClienteNavigator — no se duplican aquí)
 
   return (
     <SafeAreaView style={st.root}>
@@ -509,15 +503,7 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
         )}
       </ScrollView>
 
-      {/* ── BOTTOM TAB BAR estilo DaviPlata ── */}
-      <View style={st.bottomBar}>
-        {bottomTabs.map((tab) => (
-          <TouchableOpacity key={tab.label} style={st.bottomTab} onPress={tab.onPress}>
-            <Feather name={tab.icon as any} size={22} color="#374151" />
-            <Text style={st.bottomTabLabel}>{tab.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      {/* bottom tabs están en ClienteNavigator */}
 
       {/* ── MODAL Perfil ── */}
       <Modal visible={modalProfile} transparent animationType="slide">
@@ -800,16 +786,7 @@ const st = StyleSheet.create({
   },
   emptyBtnTxt: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
 
-  // ── BOTTOM BAR
-  bottomBar: {
-    flexDirection: 'row',
-    borderTopWidth: 1, borderTopColor: '#F3F4F6',
-    backgroundColor: '#FFFFFF',
-    paddingTop: 10, paddingBottom: Platform.OS === 'ios' ? 24 : 10,
-    ...shadows.medium,
-  },
-  bottomTab: { flex: 1, alignItems: 'center', gap: 4 },
-  bottomTabLabel: { fontSize: 10, color: '#6B7280', fontWeight: '500' },
+  // (bottom bar eliminado — lo gestiona ClienteNavigator)
 
   // ── MODAL
   modalOverlay: {
