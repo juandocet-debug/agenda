@@ -79,7 +79,7 @@ const CAROUSEL_CARDS = [
     id: '3',
     title: 'Mi Carrito',
     subtitle: 'Completa tu\nreserva fácilmente',
-    image: require('../../../assets/cardsCliente/UpCinco.png'),
+    image: require('../../../assets/cardsCliente/UpSeis.png'),
     action: 'Carrito',
   },
 ];

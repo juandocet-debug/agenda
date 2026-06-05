@@ -1185,7 +1185,7 @@ __d(function(g,r,i,a,m,e,d){"use strict";Object.defineProperty(e,'__esModule',{v
 __d(function(g,r,i,a,m,e,d){"use strict";Object.defineProperty(e,'__esModule',{value:!0}),Object.defineProperty(e,"DjangoClienteCitaRepository",{enumerable:!0,get:function(){return t}});class t{async obtenerCitas(t,o){const n=await fetch(`https://agenda-production-ae37.up.railway.app/api/citas/mis-citas-cliente/?cliente_id=${encodeURIComponent(t)}`,{headers:{'Content-Type':'application/json',Authorization:`Bearer ${o}`}});if(!n.ok)throw new Error(`Error ${n.status} al obtener citas del cliente`);const s=await n.json();if(!s.ok)throw new Error(s.error||'No se pudieron cargar las citas');return s.datos}}},1065,[]);
 __d(function(g,r,i,a,m,e,d){m.exports={uri:"/assets/assets/cardsCliente/UpDos.be8450b636b12c1bf01e1a69d43d9775.png",width:433,height:600}},1066,[]);
 __d(function(g,r,i,a,m,e,d){m.exports={uri:"/assets/assets/cardsCliente/UpTres.900dcaafe7b9f600a79585d7da655414.png",width:433,height:600}},1067,[]);
-__d(function(f,s,t,c,e,i,n){e.exports={uri:"/assets/assets/cardsCliente/UpCinco.6bf0a3243b08cdc4f4fb6694f1fc85ff.png",width:433,height:600}},1068,[]);
+__d(function(e,s,t,d,i,a,b){i.exports={uri:"/assets/assets/cardsCliente/UpSeis.a80ee28b85b636b1f504ddfe68ed4ab1.png",width:433,height:600}},1068,[]);
 __d(function(e,s,c,t,f,o,a){f.exports={uri:"/assets/assets/Relleno/promo1.e0cf415cef4f25c06faa103e9e61c75c.png",width:1672,height:941}},1069,[]);
 __d(function(s,e,t,c,o,a,f){o.exports={uri:"/assets/assets/Relleno/promo2.a76200f7483cc8612043f1164f4c8a8c.png",width:1536,height:1024}},1070,[]);
 __d(function(e,s,t,o,a,i,n){a.exports={uri:"/assets/assets/Relleno/promo3.c34861e79b3b894d06949b3aa71638e8.png",width:1672,height:941}},1071,[]);
