@@ -260,26 +260,28 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
         contentContainerStyle={st.scroll}
       >
         {tabActivo === 'negocio' ? (
-          /* ── TAB MI NEGOCIO: Banner + boton dorado ── */
+          /* ── TAB MI NEGOCIO ── */
           <View style={st.negocioWrapper}>
-            {/* Banner imagen del diseno original */}
-            <Image
-              source={require('../../../assets/publicidad/banerEmpresa.png')}
-              style={st.negocioBanner}
-              resizeMode="cover"
-            />
+            {/* Card contenedor — imagen + botón adentro, como la imagen de referencia */}
+            <View style={st.negocioCard}>
+              <Image
+                source={require('../../../assets/publicidad/banerEmpresa.png')}
+                style={st.negocioBanner}
+                resizeMode="contain"
+              />
+              {/* Botón dorado DENTRO del card */}
+              <TouchableOpacity
+                style={st.negocioBtn}
+                activeOpacity={0.85}
+                onPress={() => {
+                  navigation.navigate('Login', { modoInicial: 'register' });
+                }}
+              >
+                <Text style={st.negocioBtnTxt}>🚀  Registrar mi empresa gratis</Text>
+              </TouchableOpacity>
+            </View>
 
-            {/* Boton dorado de registro */}
-            <TouchableOpacity
-              style={st.negocioBtn}
-              activeOpacity={0.85}
-              onPress={() => {
-                navigation.navigate('Login', { modoInicial: 'register' });
-              }}
-            >
-              <Text style={st.negocioBtnTxt}>🚀  Registrar mi empresa gratis</Text>
-            </TouchableOpacity>
-
+            {/* "Quizás después" debajo del card */}
             <TouchableOpacity
               style={st.negocioDismiss}
               onPress={() => setTabActivo('mio')}
@@ -468,9 +470,9 @@ const st = StyleSheet.create({
   },
   logoContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   headerLogo: {
-    // Mas grande para que el logo sea protagonista del header
-    height: 48,
-    width: 140,
+    // Tamaño responsivo: en móviles pequeños (< 400px) = 28px, en desktop = 40px
+    height: SCREEN_W < 400 ? 28 : 40,
+    width: SCREEN_W < 400 ? 90 : 130,
   },
   topBarRight: { flexDirection: 'row', gap: 6 },
   iconBtn: {
@@ -656,47 +658,52 @@ const st = StyleSheet.create({
     borderRadius: 16, alignItems: 'center',
   },
   modalBtnTxt: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
-  // ── TAB MI NEGOCIO (Banner inline + botón dorado)
+  // ── TAB MI NEGOCIO
   negocioWrapper: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 40,
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 32,
     alignItems: 'center',
+  },
+  // Card contenedor — el botón va DENTRO, misma forma redondeada
+  negocioCard: {
+    width: '100%',
+    borderRadius: 20,
+    overflow: 'hidden',          // Recorta la imagen a los bordes del card
+    backgroundColor: '#3B3DB8',  // Fondo azul por si la imagen tarda en cargar
+    paddingBottom: 20,
+    ...shadows.medium,
   },
   negocioBanner: {
     width: '100%',
-    // Aspect ratio del banner (aprox 16:9 o lo del archivo)
+    // Sin height fijo: la imagen se expande en su ratio natural
     height: undefined,
-    aspectRatio: 16 / 9,
-    borderRadius: 20,
-    marginBottom: 20,
+    aspectRatio: 600 / 350,      // Ratio real del archivo banerEmpresa.png
   },
-  // Botón dorado pill — replica exacta del diseño de referencia
+  // Botón dorado pill dentro del card
   negocioBtn: {
-    backgroundColor: '#F5B800',  // Amarillo dorado del diseño
-    width: '100%',
-    paddingVertical: 18,
-    borderRadius: 50,            // Cápsula perfecta
+    backgroundColor: '#F5B800',
+    marginHorizontal: 20,
+    paddingVertical: 16,
+    borderRadius: 50,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
-    // Sombra dorada sutil
+    marginTop: 8,
     shadowColor: '#F5B800',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
+    shadowOpacity: 0.45,
+    shadowRadius: 10,
     elevation: 6,
   },
   negocioBtnTxt: {
-    color: '#1A1A2E',            // Texto oscuro sobre fondo dorado
-    fontSize: 17,
+    color: '#1A1A2E',
+    fontSize: 16,
     fontWeight: '800',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
   negocioDismiss: {
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 14,
   },
   negocioDismissTxt: {
     fontSize: 14,
