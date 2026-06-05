@@ -79,7 +79,7 @@ const AppStack = () => {
       <NavigationContainer linking={linking} ref={navigationRef}>
         <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
 
-          {/* 1. RUTA INICIAL DINÁMICA: Depende del estado de sesión */}
+          {/* 1. RUTA INICIAL: Todos van a ClienteHome por defecto tras loguearse */}
           {!isLogueado ? (
             <Stack.Group>
               <Stack.Screen name="Login" component={LoginScreen} />
@@ -88,13 +88,13 @@ const AppStack = () => {
             </Stack.Group>
           ) : (
             <Stack.Group>
-              {userRol === 'superadmin' ? (
-                <Stack.Screen name="MainTabs" component={MainNavigator} />
-              ) : userRol === 'cliente' ? (
-                <Stack.Screen name="ClienteHome" component={ClienteNavigator} options={{ animation: 'slide_from_bottom' }} />
-              ) : (
-                <Stack.Screen name="EmpresaTabs" component={EmpresaNavigator} />
-              )}
+              {/* ClienteHome es la base para todos (Clientes, Empresas, Admins) */}
+              <Stack.Screen name="ClienteHome" component={ClienteNavigator} options={{ animation: 'slide_from_bottom' }} />
+              
+              {/* Paneles específicos a los que se accede desde ClienteHome -> Tab Mi Negocio */}
+              <Stack.Screen name="EmpresaTabs" component={EmpresaNavigator} options={{ animation: 'slide_from_right' }} />
+              <Stack.Screen name="MainTabs" component={MainNavigator} options={{ animation: 'slide_from_right' }} />
+              
               <Stack.Screen name="EmpresaDetail" component={EmpresaDetailScreen} options={{ animation: 'slide_from_right' }} />
               <Stack.Screen name="EditarEmpresa" component={EditarEmpresaScreen} options={{ animation: 'slide_from_right' }} />
               <Stack.Screen name="HorariosConfig" component={HorariosConfigScreen} options={{ animation: 'slide_from_right' }} />
