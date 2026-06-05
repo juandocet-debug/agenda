@@ -366,20 +366,22 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
             snapToInterval={SCREEN_W - 40}
             snapToAlignment="center"
             decelerationRate="fast"
-            contentContainerStyle={{ paddingHorizontal: 20, gap: 16 }}
+            style={{ height: 190 }}
+            contentContainerStyle={{ paddingHorizontal: 20, gap: 16, alignItems: 'center' }}
             onScroll={handleBannerScroll}
             scrollEventThrottle={16}
           >
             {bannersData.map((b, i) => (
               <TouchableOpacity 
                 key={i} 
-                style={[st.promoBanner, { width: SCREEN_W - 40, padding: 0, overflow: 'hidden' }]} 
+                style={{ width: SCREEN_W - 40, height: 170, borderRadius: 20, overflow: 'hidden' }} 
                 onPress={b.action} 
                 activeOpacity={0.9}
               >
                 <Image 
                   source={b.image} 
-                  style={{ width: '100%', height: '100%', resizeMode: 'cover' }} 
+                  style={{ width: '100%', height: '100%' }}
+                  resizeMode="cover"
                 />
               </TouchableOpacity>
             ))}
