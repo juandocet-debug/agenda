@@ -72,7 +72,7 @@ const CAROUSEL_CARDS = [
     id: '2',
     title: 'Explorar',
     subtitle: 'Descubre negocios\ncerca de ti',
-    image: require('../../../assets/cardsCliente/UpDos.png'),
+    image: require('../../../assets/cardsCliente/UpTres.png'),
     action: 'ExplorarEmpresas',
   },
   {
