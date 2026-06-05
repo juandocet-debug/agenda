@@ -461,44 +461,6 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
           <Feather name="chevrons-right" size={14} color="#9CA3AF" style={{ marginLeft: 4 }} />
         </View>
 
-        {/* ── HISTORIAL DE CITAS ── */}
-        {cargando ? (
-          <ActivityIndicator color={colors.primary} style={{ marginTop: 24 }} />
-        ) : citas.length > 0 ? (
-          <View style={st.histSection}>
-            <Text style={st.sectionTitle}>Últimas citas</Text>
-            {citas.slice(0, 6).map((cita) => (
-              <View key={cita.id} style={st.citaCard}>
-                <View style={st.citaIconBox}>
-                  <Feather name="calendar" size={18} color={colors.primary} />
-                </View>
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={st.citaServicio} numberOfLines={1}>{cita.servicio_nombre}</Text>
-                  <Text style={st.citaEmpresa}>{cita.empresa_nombre}</Text>
-                  <Text style={st.citaFecha}>
-                    {cita.fecha} · {cita.hora_inicio}
-                    {cita.monto > 0 ? `  ·  $${Number(cita.monto).toLocaleString('es-CO')}` : ''}
-                  </Text>
-                </View>
-                <EstadoBadge estado={cita.estado} />
-              </View>
-            ))}
-          </View>
-        ) : (
-          <View style={st.emptyBox}>
-            <View style={st.emptyIcon}>
-              <Feather name="calendar" size={32} color={colors.primary} />
-            </View>
-            <Text style={st.emptyTxt}>No tienes citas aún</Text>
-            <Text style={st.emptySubTxt}>Explora negocios y agenda tu primera cita</Text>
-            <TouchableOpacity
-              style={st.emptyBtn}
-              onPress={() => navigation.navigate('ExplorarEmpresas')}
-            >
-              <Text style={st.emptyBtnTxt}>Explorar negocios</Text>
-            </TouchableOpacity>
-          </View>
-        )}
 
             <View style={{ height: 100 }} />
           </>
