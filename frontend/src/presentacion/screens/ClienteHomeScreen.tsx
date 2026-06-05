@@ -314,70 +314,82 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
         ) : (
           /* ── TAB MI FLOWY: contenido original ── */
           <>
-        {/* ── BANNER PROMOCIONAL ESTILO NETFLIX ── */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          pagingEnabled
-          style={{ marginBottom: 4 }}
-          contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
-        >
-          {[
-            {
-              title: '¡Encuentra los mejores\nservicios cerca de ti!',
-              gradient: ['#4F46E5', '#7C3AED'] as [string, string],
-              btn: 'EXPLORAR',
-              btnIcon: 'search',
-              action: () => navigation.navigate('ExplorarEmpresas'),
-            },
-            {
-              title: 'Reserva tu cita\nen segundos ⚡',
-              gradient: ['#0EA5E9', '#6366F1'] as [string, string],
-              btn: 'VER MIS CITAS',
-              btnIcon: 'calendar',
-              action: () => scrollRef.current?.scrollTo({ y: 520, animated: true }),
-            },
-            {
-              title: 'Ofertas y descuentos\nexclusivos para ti 🎁',
-              gradient: ['#EC4899', '#8B5CF6'] as [string, string],
-              btn: 'VER OFERTAS',
-              btnIcon: 'tag',
-              action: () => navigation.navigate('ExplorarEmpresas'),
-            },
-          ].map((b, i) => (
-            <LinearGradient
-              key={i}
-              colors={b.gradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={st.promoBanner}
-            >
-              <Text style={st.promoBannerTitle}>{b.title}</Text>
-              <TouchableOpacity style={st.promoBannerBtn} onPress={b.action} activeOpacity={0.85}>
-                <Feather name={b.btnIcon as any} size={14} color="#FFF" />
-                <Text style={st.promoBannerBtnTxt}>{b.btn}</Text>
-              </TouchableOpacity>
-            </LinearGradient>
-          ))}
-        </ScrollView>
+        {/* ── SECCIÓN: DESTACADOS (BANNER PROMOCIONAL) ── */}
+        <View style={{ marginTop: 20, marginBottom: 14 }}>
+          <Text style={[st.sectionTitle, { marginHorizontal: 20, marginBottom: 12 }]}>Para ti 🔥</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            pagingEnabled
+            snapToInterval={SCREEN_W - 40}
+            snapToAlignment="center"
+            decelerationRate="fast"
+            contentContainerStyle={{ paddingHorizontal: 20, gap: 16 }}
+          >
+            {[
+              {
+                title: '¡Encuentra los mejores\nservicios cerca de ti!',
+                gradient: ['#4F46E5', '#7C3AED'] as [string, string],
+                btn: 'EXPLORAR',
+                btnIcon: 'search',
+                action: () => navigation.navigate('ExplorarEmpresas'),
+              },
+              {
+                title: 'Reserva tu cita\nen segundos ⚡',
+                gradient: ['#0EA5E9', '#6366F1'] as [string, string],
+                btn: 'VER MIS CITAS',
+                btnIcon: 'calendar',
+                action: () => scrollRef.current?.scrollTo({ y: 520, animated: true }),
+              },
+              {
+                title: 'Ofertas y descuentos\nexclusivos para ti 🎁',
+                gradient: ['#EC4899', '#8B5CF6'] as [string, string],
+                btn: 'VER OFERTAS',
+                btnIcon: 'tag',
+                action: () => navigation.navigate('ExplorarEmpresas'),
+              },
+            ].map((b, i) => (
+              <LinearGradient
+                key={i}
+                colors={b.gradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[st.promoBanner, { width: SCREEN_W - 40 }]}
+              >
+                <Text style={st.promoBannerTitle}>{b.title}</Text>
+                <TouchableOpacity style={st.promoBannerBtn} onPress={b.action} activeOpacity={0.85}>
+                  <Feather name={b.btnIcon as any} size={14} color="#FFF" />
+                  <Text style={st.promoBannerBtnTxt}>{b.btn}</Text>
+                </TouchableOpacity>
+              </LinearGradient>
+            ))}
+          </ScrollView>
+        </View>
 
-        {/* ── ACCIONES RÁPIDAS (botones circulares) ── */}
-        <View style={st.quickRow}>
-          {quickActions.map((qa) => (
-            <View key={qa.label} style={st.quickItem}>
-              <TouchableOpacity style={st.quickCircle} onPress={qa.onPress} activeOpacity={0.8}>
-                <LinearGradient
-                  colors={[colors.primary, colors.primaryLight]}
-                  style={st.quickGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <Feather name={qa.icon as any} size={22} color="#FFF" />
-                </LinearGradient>
-              </TouchableOpacity>
-              <Text style={st.quickLabel}>{qa.label}</Text>
-            </View>
-          ))}
+        {/* ── ACCIONES RÁPIDAS (burbujas con más espacio) ── */}
+        <View style={st.quickSection}>
+          <View style={st.quickRow}>
+            {quickActions.map((qa) => (
+              <View key={qa.label} style={st.quickItem}>
+                <TouchableOpacity style={st.quickCircle} onPress={qa.onPress} activeOpacity={0.8}>
+                  <LinearGradient
+                    colors={[colors.primary, colors.primaryLight]}
+                    style={st.quickGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    <Feather name={qa.icon as any} size={24} color="#FFF" />
+                  </LinearGradient>
+                </TouchableOpacity>
+                <Text style={st.quickLabel}>{qa.label}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* ── SECCIÓN: TUS ACCESOS ── */}
+        <View style={{ marginTop: 24, marginBottom: 6 }}>
+          <Text style={[st.sectionTitle, { marginHorizontal: 20, marginBottom: 12 }]}>Tus accesos rápidos</Text>
         </View>
 
         {/* ── CARRUSEL DE CARDS ── */}
@@ -590,19 +602,26 @@ const st = StyleSheet.create({
   balanceLabel: { fontSize: 13, color: '#9CA3AF' },
 
   // ── QUICK ACTIONS
+  quickSection: {
+    paddingVertical: 18,
+    marginVertical: 4,
+    backgroundColor: '#FAFAFA',
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#F3F4F6',
+  },
   quickRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingHorizontal: 16,
-    marginBottom: 28,
+    paddingHorizontal: 8,
   },
-  quickItem: { alignItems: 'center', gap: 8 },
-  quickCircle: { borderRadius: 30, overflow: 'hidden', ...shadows.medium },
+  quickItem: { alignItems: 'center', gap: 6 },
+  quickCircle: { borderRadius: 32, overflow: 'hidden', ...shadows.medium },
   quickGradient: {
-    width: 60, height: 60,
+    width: 64, height: 64,
     justifyContent: 'center', alignItems: 'center',
   },
-  quickLabel: { fontSize: 12, color: '#374151', fontWeight: '500', textAlign: 'center' },
+  quickLabel: { fontSize: 13, color: '#374151', fontWeight: '600', textAlign: 'center' },
 
   // ── BANNER PROMO NETFLIX
   promoBanner: {
