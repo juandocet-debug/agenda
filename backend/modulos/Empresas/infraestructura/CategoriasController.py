@@ -142,18 +142,28 @@ class CategoriasPublicasController(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        from rest_framework.permissions import AllowAny
+        from django.db.models import Subquery, Prefetch
         from modulos.Autenticacion.infraestructura.models import CredencialModel
+        from modulos.Empresas.infraestructura.models import EmpresaModel
 
-        # IDs de empresas con credencial activa
-        ids_activos = set(
-            CredencialModel.objects.filter(activo=True).values_list('usuario_id', flat=True)
+        # Optimización: Filtrar con Subquery en DB en lugar de traer todo a la RAM de Python
+        subquery = CredencialModel.objects.filter(activo=True).values('usuario_id')
+        
+        # Pre-cargar las empresas activas asociadas a la categoría
+        empresas_prefetch = Prefetch(
+            'empresas',
+            queryset=EmpresaModel.objects.filter(id__in=Subquery(subquery)).order_by('nombre')
         )
 
-        cats = CategoriaModel.objects.filter(activa=True).prefetch_related('empresas')
+        cats = CategoriaModel.objects.filter(activa=True).prefetch_related(empresas_prefetch)
+        
         resultado = []
         for c in cats:
-            empresas_activas = [
+            empresas_activas = c.empresas.all()  # Ya está filtrado por el Prefetch
+            if not empresas_activas:
+                continue
+                
+            lista_empresas = [
                 {
                     'id': str(e.id),
                     'nombre': e.nombre,
@@ -163,14 +173,14 @@ class CategoriasPublicasController(APIView):
                     'direccion': e.direccion or '',
                     'telefono': e.telefono or '',
                 }
-                for e in c.empresas.filter(id__in=ids_activos)
+                for e in empresas_activas
             ]
-            if empresas_activas:   # Solo mostramos categorías que tengan al menos 1 empresa
-                resultado.append({
-                    'id': c.id,
-                    'nombre': c.nombre,
-                    'icono': c.icono,
-                    'empresas': empresas_activas,
-                })
+            
+            resultado.append({
+                'id': c.id,
+                'nombre': c.nombre,
+                'icono': c.icono,
+                'empresas': lista_empresas,
+            })
 
         return Response({'ok': True, 'datos': resultado}, status=200)

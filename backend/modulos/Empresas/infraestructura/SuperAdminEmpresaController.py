@@ -11,22 +11,26 @@ class SuperAdminEmpresaController(APIView):
     permission_classes = [AllowAny] 
     
     def get(self, request):
+        from django.db.models import Subquery, OuterRef
         """Lista todas las empresas registradas para el panel del SuperAdmin."""
-        empresas_db = EmpresaModel.objects.all().order_by('-id')
+        
+        # Optimización: Evitar N+1 queries al consultar credenciales por cada empresa
+        estado_activo_sq = CredencialModel.objects.filter(usuario_id=OuterRef('id')).values('activo')[:1]
+        email_sq = CredencialModel.objects.filter(usuario_id=OuterRef('id')).values('email')[:1]
+        username_sq = CredencialModel.objects.filter(usuario_id=OuterRef('id')).values('username')[:1]
+        
+        empresas_db = EmpresaModel.objects.annotate(
+            credencial_activa=Subquery(estado_activo_sq),
+            credencial_email=Subquery(email_sq),
+            credencial_username=Subquery(username_sq)
+        ).order_by('-id')
+        
         resultado = []
         
         for empresa in empresas_db:
-            # Buscamos su estado activo en la tabla de credenciales usando el ID de la empresa
-            # ya que el usuario_id de la credencial es el mismo ID de la empresa (segun el caso de uso)
-            try:
-                credencial = CredencialModel.objects.get(usuario_id=empresa.id)
-                estado_activo = credencial.activo
-                admin_email = credencial.email
-                admin_nombre = credencial.username or 'Administrador'
-            except CredencialModel.DoesNotExist:
-                estado_activo = False
-                admin_email = 'Sin correo'
-                admin_nombre = 'Sin asignar'
+            estado_activo = getattr(empresa, 'credencial_activa', False) or False
+            admin_email = getattr(empresa, 'credencial_email', 'Sin correo') or 'Sin correo'
+            admin_nombre = getattr(empresa, 'credencial_username', 'Sin asignar') or 'Sin asignar'
                 
             # Mock de datos analíticos
             publicaciones = empresa.noticias.count()

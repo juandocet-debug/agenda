@@ -7,24 +7,16 @@ class ListaEmpresasPublicasController(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        from modulos.Autenticacion.infraestructura.models import CredencialModel
-        ids_activos = set(
-            CredencialModel.objects.filter(activo=True).values_list('usuario_id', flat=True)
-        )
-        empresas_db = EmpresaModel.objects.filter(id__in=ids_activos).order_by('nombre')
-        resultado = [
-            {
-                'id':        str(e.id),
-                'nombre':    e.nombre,
-                'logo_url':  e.logo_url or '',
-                'foto_portada_url': e.foto_portada_url or '',
-                'ciudad':    e.ciudad or '',
-                'direccion': e.direccion or '',
-                'telefono':  e.telefono or '',
-            }
-            for e in empresas_db
-        ]
-        return Response({'ok': True, 'datos': resultado}, status=200)
+        from modulos.Empresas.aplicacion.ObtenerEmpresasPublicasUseCase import ObtenerEmpresasPublicasUseCase
+        from .DjangoEmpresaRepository import DjangoEmpresaRepository
+        
+        repositorio = DjangoEmpresaRepository()
+        caso_uso = ObtenerEmpresasPublicasUseCase(repositorio)
+        
+        # El caso de uso devuelve directamente el diccionario paginado
+        datos_paginados = caso_uso.ejecutar(request)
+        
+        return Response({'ok': True, 'datos': datos_paginados}, status=200)
 
 
 class EmpresaVisualConfigController(APIView):
