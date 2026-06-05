@@ -260,35 +260,68 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
         contentContainerStyle={st.scroll}
       >
         {tabActivo === 'negocio' ? (
-          /* ── TAB MI NEGOCIO: imagen de fondo ocupa toda la sección ── */
-          <View style={st.negocioWrapper}>
-            {/* Imagen de fondo que ocupa TODO el contenedor */}
-            <Image
-              source={require('../../../assets/publicidad/banerEmpresa (3).png')}
-              style={st.negocioBgImage}
-              resizeMode="cover"
-            />
+          /* ── TAB MI NEGOCIO: diseño nativo (sin imagen, siempre responsivo) ── */
+          <LinearGradient
+            colors={['#3B2DBF', '#4535D4', '#2E1FA3']}
+            start={{ x: 0.1, y: 0 }}
+            end={{ x: 0.9, y: 1 }}
+            style={st.negocioWrapper}
+          >
+            {/* Estrellas decorativas */}
+            <Text style={st.negocioStar1}>✨</Text>
+            <Text style={st.negocioStar2}>⭐</Text>
 
-            {/* Botones flotando ENCIMA de la imagen, en la parte inferior */}
-            <View style={st.negocioBottomActions}>
-              <TouchableOpacity
-                style={st.negocioBtn}
-                activeOpacity={0.85}
-                onPress={() => {
-                  navigation.navigate('Login', { modoInicial: 'register' });
-                }}
-              >
-                <Text style={st.negocioBtnTxt}>🚀  Registrar mi empresa gratis</Text>
-              </TouchableOpacity>
+            {/* ¡Impulsa tu negocio! */}
+            <Text style={st.negocioTagline}>¡Impulsa tu negocio!</Text>
+            <View style={st.negocioTaglineBar} />
 
-              <TouchableOpacity
-                style={st.negocioDismiss}
-                onPress={() => setTabActivo('mio')}
-              >
-                <Text style={st.negocioDismissTxt}>Quizás después</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+            {/* Título principal */}
+            <Text style={st.negocioTitle}>
+              ¡Haz crecer tu{`\n`}negocio con{' '}
+              <Text style={st.negocioTitleAccent}>Flowy!</Text>
+            </Text>
+
+            {/* Subtítulo */}
+            <Text style={st.negocioSubtitle}>
+              Gestiona tu agenda y recibe clientes de{' '}
+              <Text style={{ color: '#FFCE00', fontWeight: '700' }}>forma profesional.</Text>
+            </Text>
+
+            {/* Beneficios */}
+            {[
+              { icon: '⏰', title: 'Recibe reservas 24/7 sin esfuerzo',        body: 'Tus clientes reservan mientras tú te enfocas en lo importante.' },
+              { icon: '📱', title: 'Gestiona tu agenda desde cualquier lugar', body: 'Todo tu negocio en tu celular, cuando y donde lo necesites.' },
+              { icon: '👥', title: 'Clientes llegan solos con tu perfil',      body: 'Tu negocio se ve profesional y genera confianza al instante.' },
+              { icon: '📈', title: 'Estadísticas y control de tus ingresos',  body: 'Toma mejores decisiones con datos claros de tu negocio.' },
+            ].map((b, i) => (
+              <View key={i} style={st.negocioBenefit}>
+                <View style={st.negocioBenefitIcon}>
+                  <Text style={{ fontSize: 18 }}>{b.icon}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={st.negocioBenefitTitle}>{b.title}</Text>
+                  <Text style={st.negocioBenefitBody}>{b.body}</Text>
+                </View>
+              </View>
+            ))}
+
+            {/* Botón dorado */}
+            <TouchableOpacity
+              style={st.negocioBtn}
+              activeOpacity={0.85}
+              onPress={() => navigation.navigate('Login', { modoInicial: 'register' })}
+            >
+              <Text style={st.negocioBtnTxt}>🚀  Registrar mi empresa gratis</Text>
+            </TouchableOpacity>
+
+            {/* Quizás después */}
+            <TouchableOpacity
+              style={st.negocioDismiss}
+              onPress={() => setTabActivo('mio')}
+            >
+              <Text style={st.negocioDismissTxt}>Quizás después</Text>
+            </TouchableOpacity>
+          </LinearGradient>
         ) : (
           /* ── TAB MI FLOWY: contenido original ── */
           <>
@@ -664,41 +697,97 @@ const st = StyleSheet.create({
     borderRadius: 16, alignItems: 'center',
   },
   modalBtnTxt: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
-  // ── TAB MI NEGOCIO
-  // El wrapper ocupa toda la altura visible de la pantalla (debajo del header + tabs)
+  // ── TAB MI NEGOCIO (diseño nativo, 100% responsivo)
   negocioWrapper: {
-    height: SCREEN_W / 0.58,   // Alto proporcional a la imagen (imagen es vertical ~9:16)
-    width: '100%',
+    paddingHorizontal: 20,
+    paddingTop: 28,
+    paddingBottom: 36,
     position: 'relative',
+    overflow: 'hidden',
   },
-  // La imagen cubre todo el wrapper como fondo
-  negocioBgImage: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    width: '100%',
-    height: '100%',
+  negocioStar1: {
+    position: 'absolute', top: 16, right: 20,
+    fontSize: 22, opacity: 0.7,
   },
-  // Acciones flotantes en la parte inferior de la imagen
-  negocioBottomActions: {
-    position: 'absolute',
-    bottom: 28,
-    left: 20,
-    right: 20,
+  negocioStar2: {
+    position: 'absolute', top: 50, right: 40,
+    fontSize: 14, opacity: 0.5,
+  },
+  negocioTagline: {
+    color: '#FFCE00',
+    fontSize: 15,
+    fontStyle: 'italic',
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  negocioTaglineBar: {
+    width: 80,
+    height: 2,
+    backgroundColor: '#FFCE00',
+    alignSelf: 'center',
+    marginBottom: 14,
+    borderRadius: 2,
+  },
+  negocioTitle: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    lineHeight: 36,
+    marginBottom: 12,
+  },
+  negocioTitleAccent: {
+    color: '#FFCE00',
+    fontSize: 28,
+    fontWeight: '900',
+  },
+  negocioSubtitle: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.85)',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 20,
+    paddingHorizontal: 8,
+  },
+  negocioBenefit: {
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 10,
+    gap: 12,
+  },
+  negocioBenefitIcon: {
+    width: 44, height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  negocioBenefitTitle: {
+    color: '#FFCE00',
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 3,
+  },
+  negocioBenefitBody: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 11,
+    lineHeight: 16,
   },
   // Botón dorado pill
   negocioBtn: {
-    backgroundColor: '#F5B800',
+    backgroundColor: '#FFCE00',
     width: '100%',
     paddingVertical: 16,
     borderRadius: 50,
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 20,
     marginBottom: 10,
-    shadowColor: '#F5B800',
+    shadowColor: '#FFCE00',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.5,
     shadowRadius: 10,
@@ -708,7 +797,7 @@ const st = StyleSheet.create({
     color: '#1A1A2E',
     fontSize: 16,
     fontWeight: '800',
-    letterSpacing: 0.2,
+    letterSpacing: 0.3,
   },
   negocioDismiss: {
     alignItems: 'center',
@@ -716,9 +805,7 @@ const st = StyleSheet.create({
   },
   negocioDismissTxt: {
     fontSize: 14,
-    color: '#FFFFFF',
-    fontWeight: '600',
-    textDecorationLine: 'underline',
-    opacity: 0.85,
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '500',
   },
 });
