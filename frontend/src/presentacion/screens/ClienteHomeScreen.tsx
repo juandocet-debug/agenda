@@ -265,7 +265,7 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
             {/* Card contenedor — imagen + botón adentro, como la imagen de referencia */}
             <View style={st.negocioCard}>
               <Image
-                source={require('../../../assets/publicidad/banerEmpresa.png')}
+                source={require('../../../assets/publicidad/banerEmpresa (3).png')}
                 style={st.negocioBanner}
                 resizeMode="contain"
               />
@@ -468,11 +468,17 @@ const st = StyleSheet.create({
     backgroundColor: '#EEF2FF',
     justifyContent: 'center', alignItems: 'center',
   },
-  logoContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  logoContainer: { 
+    position: 'absolute', 
+    left: 0, right: 0, 
+    alignItems: 'center', 
+    justifyContent: 'center',
+    zIndex: -1 
+  },
   headerLogo: {
-    // Tamaño responsivo: en móviles pequeños (< 400px) = 28px, en desktop = 40px
-    height: SCREEN_W < 400 ? 28 : 40,
-    width: SCREEN_W < 400 ? 90 : 130,
+    // Tamaño responsivo: más pequeño para mobile y perfectamente centrado
+    height: SCREEN_W < 400 ? 22 : 32,
+    width: SCREEN_W < 400 ? 70 : 100,
   },
   topBarRight: { flexDirection: 'row', gap: 6 },
   iconBtn: {
