@@ -5,6 +5,7 @@ import { PanResponder, View, ActivityIndicator } from 'react-native';
 import { LoginScreen } from '../screens/LoginScreen';
 import { MainNavigator } from './MainNavigator';
 import { EmpresaNavigator } from './EmpresaNavigator';
+import { ClienteNavigator } from './ClienteNavigator';
 import { EmpresaDetailScreen } from '../screens/EmpresaDetailScreen';
 import { EditarEmpresaScreen } from '../screens/EditarEmpresaScreen';
 import { ReservarScreen } from '../screens/ReservarScreen';
@@ -134,7 +135,7 @@ export const AppNavigator = () => {
                 {userRol === 'superadmin' ? (
                   <Stack.Screen name="MainTabs" component={MainNavigator} />
                 ) : userRol === 'cliente' ? (
-                  <Stack.Screen name="ClienteHome" component={ClienteHomeScreen} options={{ animation: 'slide_from_bottom' }} />
+                  <Stack.Screen name="ClienteHome" component={ClienteNavigator} options={{ animation: 'slide_from_bottom' }} />
                 ) : (
                   <Stack.Screen name="EmpresaTabs" component={EmpresaNavigator} />
                 )}
@@ -153,9 +154,6 @@ export const AppNavigator = () => {
               <Stack.Screen name="Carrito" component={CarritoScreen} options={{ animation: 'slide_from_right' }} />
               <Stack.Screen name="MuroPublicaciones" component={MuroPublicacionesScreen} options={{ animation: 'slide_from_right' }} />
               <Stack.Screen name="RegistroCliente" component={RegistroClienteScreen} options={{ animation: 'slide_from_bottom' }} />
-              {(!isLogueado || userRol !== 'cliente') && (
-                <Stack.Screen name="ClienteHome" component={ClienteHomeScreen} options={{ animation: 'slide_from_bottom' }} />
-              )}
               <Stack.Screen name="ConfirmacionReserva" component={ConfirmacionReservaScreen} />
               <Stack.Screen name="PagoExitoso" component={PagoExitosoScreen} />
             </Stack.Group>
