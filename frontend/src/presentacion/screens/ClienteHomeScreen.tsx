@@ -72,7 +72,7 @@ const CAROUSEL_CARDS = [
     id: '2',
     title: 'Explorar',
     subtitle: 'Descubre negocios\ncerca de ti',
-    image: require('../../../assets/cardsCliente/superiorDos.png'),
+    image: require('../../../assets/cardsCliente/upDos.png'),
     action: 'ExplorarEmpresas',
   },
   {
@@ -433,6 +433,7 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
           keyExtractor={(item) => item.id}
           horizontal
           showsHorizontalScrollIndicator={false}
+          style={{ overflow: 'visible' }}
           contentContainerStyle={st.carouselList}
           snapToInterval={CARD_W + 12}
           decelerationRate="fast"
@@ -663,12 +664,13 @@ const st = StyleSheet.create({
   },
 
   // ── CARRUSEL
-  carouselList: { paddingHorizontal: 20, gap: 12, paddingBottom: 4 },
+  carouselList: { paddingHorizontal: 20, gap: 12, paddingBottom: 4, paddingTop: 25 },
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    overflow: 'visible',
   },
   cardTopSolid: {
     width: '100%',
