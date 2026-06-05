@@ -71,14 +71,14 @@ const CAROUSEL_CARDS = [
     id: '2',
     title: 'Explorar',
     subtitle: 'Descubre negocios\ncerca de ti',
-    image: require('../../../assets/cardsCliente/explorar.png'),
+    image: require('../../../assets/cardsCliente/superiorDos.png'),
     action: 'ExplorarEmpresas',
   },
   {
     id: '3',
     title: 'Mi Carrito',
     subtitle: 'Completa tu\nreserva fácilmente',
-    image: require('../../../assets/cardsCliente/Flowy Bienvenido de nuevo Agenda tus experiencias en segundos. (2).png'),
+    image: require('../../../assets/cardsCliente/superiorTres.png'),
     action: 'Carrito',
   },
 ];
@@ -575,7 +575,7 @@ const st = StyleSheet.create({
   },
   cardImageContainer: {
     width: '100%',
-    height: 160,
+    height: 130,
   },
   cardImage: {
     width: '100%',
