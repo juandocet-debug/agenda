@@ -79,7 +79,7 @@ const CAROUSEL_CARDS = [
     id: '3',
     title: 'Mi Carrito',
     subtitle: 'Completa tu\nreserva fácilmente',
-    image: require('../../../assets/cardsCliente/UpCuatro.png'),
+    image: require('../../../assets/cardsCliente/UpCinco.png'),
     action: 'Carrito',
   },
 ];
@@ -437,6 +437,7 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
           contentContainerStyle={st.carouselList}
           snapToInterval={CARD_W + 12}
           decelerationRate="fast"
+          ListFooterComponent={<View style={{ width: 20 }} />}
           renderItem={({ item }) => (
             <TouchableOpacity
               style={[st.card, { width: CARD_W }]}
@@ -664,7 +665,7 @@ const st = StyleSheet.create({
   },
 
   // ── CARRUSEL
-  carouselList: { paddingLeft: 20, paddingRight: 32, gap: 12, paddingBottom: 4, paddingTop: 45 },
+  carouselList: { paddingHorizontal: 20, gap: 12, paddingBottom: 4, paddingTop: 45 },
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
@@ -681,10 +682,11 @@ const st = StyleSheet.create({
   },
   cardOverlayImage: {
     position: 'absolute',
-    top: -100, // Sube más porque es más grande
-    left: '-10%', // Se desborda un poco a los lados para cubrir el ancho
-    width: '120%',
-    height: 175, // bottom = -100 + 175 = 75 (termina en la caja azul)
+    top: -85,
+    left: 0,
+    right: 0,
+    width: '100%',
+    height: 160,
     zIndex: 10,
   },
   cardBottom: {
