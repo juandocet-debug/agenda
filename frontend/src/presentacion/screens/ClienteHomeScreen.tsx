@@ -183,17 +183,13 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
   ];
 
   // Logica del tab "Mi Negocio":
-  // Si el rol en el JWT es 'empresa' o 'superadmin', ya tiene negocio => navegar.
-  // Si es 'cliente', no tiene empresa => mostrar modal de promocion.
-  // NUNCA confiamos en estado local mutable para esta decision; usamos el
-  // rolUsuario que se cargo del JWT firmado en useFocusEffect.
+  // Si el rol es 'empresa'/'superadmin' => navega a su panel.
+  // Si es 'cliente' => muestra el banner de promocion inline (no un modal).
   const handleNegocioTab = () => {
-    setTabActivo('negocio');
     if (rolUsuario === 'empresa' || rolUsuario === 'superadmin') {
       navigation.navigate('EmpresaTabs');
     } else {
-      // Es cliente puro: mostrar modal de promocion
-      setModalEmpresa(true);
+      setTabActivo('negocio');
     }
   };
 
@@ -263,7 +259,37 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={st.scroll}
       >
-        {/* ── SECCIÓN BALANCE / CITAS ── */}
+        {tabActivo === 'negocio' ? (
+          /* ── TAB MI NEGOCIO: Banner + boton dorado ── */
+          <View style={st.negocioWrapper}>
+            {/* Banner imagen del diseno original */}
+            <Image
+              source={require('../../../assets/publicidad/banerEmpresa.png')}
+              style={st.negocioBanner}
+              resizeMode="cover"
+            />
+
+            {/* Boton dorado de registro */}
+            <TouchableOpacity
+              style={st.negocioBtn}
+              activeOpacity={0.85}
+              onPress={() => {
+                navigation.navigate('Login', { modoInicial: 'register' });
+              }}
+            >
+              <Text style={st.negocioBtnTxt}>🚀  Registrar mi empresa gratis</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={st.negocioDismiss}
+              onPress={() => setTabActivo('mio')}
+            >
+              <Text style={st.negocioDismissTxt}>Quizás después</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          /* ── TAB MI FLOWY: contenido original ── */
+          <>
         <View style={st.balanceSection}>
           <Text style={st.balanceQuestion}>¿Cuántas citas tengo?</Text>
           <View style={st.balanceRow}>
@@ -370,7 +396,9 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
           </View>
         )}
 
-        <View style={{ height: 100 }} />
+            <View style={{ height: 100 }} />
+          </>
+        )}
       </ScrollView>
 
       {/* ── BOTTOM TAB BAR estilo DaviPlata ── */}
@@ -410,63 +438,6 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
             >
               <Text style={st.modalBtnTxt}>Cerrar</Text>
             </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* ── MODAL “Mi Negocio”: promocion para registrar empresa ── */}
-      <Modal visible={modalEmpresa} transparent animationType="slide" onRequestClose={() => setModalEmpresa(false)}>
-        <View style={st.modalOverlay}>
-          <View style={[st.modalContent, { paddingHorizontal: 0, paddingBottom: 0, overflow: 'hidden' }]}>
-            {/* Header con gradiente */}
-            <LinearGradient
-              colors={[colors.primary, '#3A4AD4']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={st.empModalHeader}
-            >
-              <Feather name="briefcase" size={36} color="#FFF" style={{ marginBottom: 12 }} />
-              <Text style={st.empModalTitle}>¡Haz crecer tu negocio{`\n`}con Flowy!</Text>
-              <Text style={st.empModalSub}>Gestiona tu agenda y recibe clientes de forma profesional</Text>
-            </LinearGradient>
-
-            {/* Beneficios */}
-            <View style={st.empModalBody}>
-              {[
-                { icon: 'clock',        text: 'Recibe reservas 24/7 sin esfuerzo' },
-                { icon: 'smartphone',   text: 'Gestiona tu agenda desde cualquier lugar' },
-                { icon: 'users',        text: 'Clientes llegan solos con tu perfil digital' },
-                { icon: 'trending-up',  text: 'Estadisticas y control de tus ingresos' },
-              ].map(b => (
-                <View key={b.icon} style={st.empBenefitRow}>
-                  <View style={st.empBenefitIcon}>
-                    <Feather name={b.icon as any} size={16} color={colors.primary} />
-                  </View>
-                  <Text style={st.empBenefitText}>{b.text}</Text>
-                </View>
-              ))}
-
-              {/* Acciones */}
-              <TouchableOpacity
-                style={[st.modalBtn, { marginTop: 20 }]}
-                activeOpacity={0.85}
-                onPress={() => {
-                  setModalEmpresa(false);
-                  // Navegar al login en modo registro de empresa
-                  // (flujo seguro existente: Login -> handleRegister)
-                  navigation.navigate('Login', { modoInicial: 'register' });
-                }}
-              >
-                <Text style={st.modalBtnTxt}>🚀 Registrar mi empresa gratis</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={st.empModalDismiss}
-                onPress={() => { setModalEmpresa(false); setTabActivo('mio'); }}
-              >
-                <Text style={st.empModalDismissTxt}>Quizás después</Text>
-              </TouchableOpacity>
-            </View>
           </View>
         </View>
       </Modal>
@@ -685,41 +656,51 @@ const st = StyleSheet.create({
     borderRadius: 16, alignItems: 'center',
   },
   modalBtnTxt: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
-  // ── MODAL EMPRESA (Promocion)
-  empModalHeader: {
-    paddingTop: 36, paddingBottom: 28,
-    paddingHorizontal: 28,
+  // ── TAB MI NEGOCIO (Banner inline + botón dorado)
+  negocioWrapper: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 40,
     alignItems: 'center',
+  },
+  negocioBanner: {
     width: '100%',
+    // Aspect ratio del banner (aprox 16:9 o lo del archivo)
+    height: undefined,
+    aspectRatio: 16 / 9,
+    borderRadius: 20,
+    marginBottom: 20,
   },
-  empModalTitle: {
-    fontSize: 24, fontWeight: '800', color: '#FFF',
-    textAlign: 'center', lineHeight: 32, marginBottom: 8,
+  // Botón dorado pill — replica exacta del diseño de referencia
+  negocioBtn: {
+    backgroundColor: '#F5B800',  // Amarillo dorado del diseño
+    width: '100%',
+    paddingVertical: 18,
+    borderRadius: 50,            // Cápsula perfecta
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+    // Sombra dorada sutil
+    shadowColor: '#F5B800',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  empModalSub: {
-    fontSize: 14, color: 'rgba(255,255,255,0.8)',
-    textAlign: 'center', lineHeight: 20,
+  negocioBtnTxt: {
+    color: '#1A1A2E',            // Texto oscuro sobre fondo dorado
+    fontSize: 17,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
-  empModalBody: {
-    paddingHorizontal: 24, paddingTop: 24,
-    paddingBottom: 32, width: '100%',
+  negocioDismiss: {
+    alignItems: 'center',
+    paddingVertical: 12,
   },
-  empBenefitRow: {
-    flexDirection: 'row', alignItems: 'center',
-    marginBottom: 16, gap: 14,
-  },
-  empBenefitIcon: {
-    width: 36, height: 36, borderRadius: 10,
-    backgroundColor: '#EEF2FF',
-    justifyContent: 'center', alignItems: 'center',
-  },
-  empBenefitText: {
-    flex: 1, fontSize: 14, color: '#374151', fontWeight: '500',
-  },
-  empModalDismiss: {
-    alignItems: 'center', paddingVertical: 16,
-  },
-  empModalDismissTxt: {
-    fontSize: 14, color: '#9CA3AF', fontWeight: '500',
+  negocioDismissTxt: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    fontWeight: '500',
   },
 });
