@@ -676,15 +676,15 @@ const st = StyleSheet.create({
     width: '100%',
     borderRadius: 20,
     overflow: 'hidden',          // Recorta la imagen a los bordes del card
-    backgroundColor: '#3B3DB8',  // Fondo azul por si la imagen tarda en cargar
+    backgroundColor: 'transparent',
     paddingBottom: 20,
     ...shadows.medium,
   },
   negocioBanner: {
     width: '100%',
-    // Sin height fijo: la imagen se expande en su ratio natural
+    // Dejamos que la imagen vertical ocupe un ratio adecuado para celular (ej. 3:4 o 4:5)
     height: undefined,
-    aspectRatio: 600 / 350,      // Ratio real del archivo banerEmpresa.png
+    aspectRatio: 3 / 4,
   },
   // Botón dorado pill dentro del card
   negocioBtn: {
