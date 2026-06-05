@@ -260,35 +260,34 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
         contentContainerStyle={st.scroll}
       >
         {tabActivo === 'negocio' ? (
-          /* ── TAB MI NEGOCIO ── */
+          /* ── TAB MI NEGOCIO: imagen de fondo ocupa toda la sección ── */
           <View style={st.negocioWrapper}>
-            {/* Card contenedor — la imagen es la base y el botón va flotando encima */}
-            <View style={st.negocioCard}>
-              <Image
-                source={require('../../../assets/publicidad/banerEmpresa (3).png')}
-                style={st.negocioBanner}
-                resizeMode="contain"
-              />
-              
-              {/* Overlay que posiciona el botón dorado en la parte inferior de la imagen */}
-              <View style={st.negocioOverlay}>
-                <TouchableOpacity
-                  style={st.negocioBtn}
-                  activeOpacity={0.85}
-                  onPress={() => {
-                    navigation.navigate('Login', { modoInicial: 'register' });
-                  }}
-                >
-                  <Text style={st.negocioBtnTxt}>🚀  Registrar mi empresa gratis</Text>
-                </TouchableOpacity>
-              </View>
+            {/* Imagen de fondo que ocupa TODO el contenedor */}
+            <Image
+              source={require('../../../assets/publicidad/banerEmpresa (3).png')}
+              style={st.negocioBgImage}
+              resizeMode="cover"
+            />
+
+            {/* Botones flotando ENCIMA de la imagen, en la parte inferior */}
+            <View style={st.negocioBottomActions}>
+              <TouchableOpacity
+                style={st.negocioBtn}
+                activeOpacity={0.85}
+                onPress={() => {
+                  navigation.navigate('Login', { modoInicial: 'register' });
+                }}
+              >
+                <Text style={st.negocioBtnTxt}>🚀  Registrar mi empresa gratis</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={st.negocioDismiss}
+                onPress={() => setTabActivo('mio')}
+              >
+                <Text style={st.negocioDismissTxt}>Quizás después</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              style={st.negocioDismiss}
-              onPress={() => setTabActivo('mio')}
-            >
-              <Text style={st.negocioDismissTxt}>Quizás después</Text>
-            </TouchableOpacity>
           </View>
         ) : (
           /* ── TAB MI FLOWY: contenido original ── */
@@ -666,29 +665,26 @@ const st = StyleSheet.create({
   },
   modalBtnTxt: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
   // ── TAB MI NEGOCIO
+  // El wrapper ocupa toda la altura visible de la pantalla (debajo del header + tabs)
   negocioWrapper: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 32,
-    alignItems: 'center',
-  },
-  // Contenedor principal
-  negocioCard: {
+    height: SCREEN_W / 0.58,   // Alto proporcional a la imagen (imagen es vertical ~9:16)
     width: '100%',
     position: 'relative',
-    alignItems: 'center',
-    marginBottom: 8,
   },
-  negocioBanner: {
-    width: '100%',
-    height: undefined,
-    // Ratio de imagen de historia vertical aprox
-    aspectRatio: 0.58,
-  },
-  // Capa flotante para el botón dorado
-  negocioOverlay: {
+  // La imagen cubre todo el wrapper como fondo
+  negocioBgImage: {
     position: 'absolute',
-    bottom: '4%',    // Flota el botón al final de la imagen
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+  },
+  // Acciones flotantes en la parte inferior de la imagen
+  negocioBottomActions: {
+    position: 'absolute',
+    bottom: 28,
     left: 20,
     right: 20,
     alignItems: 'center',
@@ -701,11 +697,12 @@ const st = StyleSheet.create({
     borderRadius: 50,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 10,
     shadowColor: '#F5B800',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.45,
+    shadowOpacity: 0.5,
     shadowRadius: 10,
-    elevation: 6,
+    elevation: 8,
   },
   negocioBtnTxt: {
     color: '#1A1A2E',
@@ -715,12 +712,13 @@ const st = StyleSheet.create({
   },
   negocioDismiss: {
     alignItems: 'center',
-    paddingVertical: 14,
+    paddingVertical: 8,
   },
   negocioDismissTxt: {
     fontSize: 14,
-    color: '#8A94A6',
+    color: '#FFFFFF',
     fontWeight: '600',
     textDecorationLine: 'underline',
+    opacity: 0.85,
   },
 });
