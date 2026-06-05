@@ -130,8 +130,6 @@ export const LoginScreen = ({ navigation }: any) => {
       } else if (rol === 'cliente') {
         if (totalItems > 0) {
           navigation.replace('Carrito');
-        } else if (navigation.canGoBack()) {
-          navigation.goBack();
         } else {
           navigation.replace('ClienteHome');
         }
@@ -191,8 +189,6 @@ export const LoginScreen = ({ navigation }: any) => {
       } else if (rol === 'cliente') {
         if (totalItems > 0) {
           navigation.replace('Carrito');
-        } else if (navigation.canGoBack()) {
-          navigation.goBack();
         } else {
           navigation.replace('ClienteHome');
         }

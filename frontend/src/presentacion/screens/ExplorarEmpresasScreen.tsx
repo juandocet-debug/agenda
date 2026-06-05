@@ -308,9 +308,23 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
   const [categoriaFiltro, setCategoriaFiltro]     = useState<Categoria | null>(null);
   const searchRef = useRef<TextInput>(null);
 
+  const [estaLogueado, setEstaLogueado] = useState(false);
+  const [rolUsuario, setRolUsuario] = useState<string | null>(null);
+
+  const cargarAuth = async () => {
+    try {
+      const token = await AsyncStorage.getItem('cliente_token');
+      const rol = await AsyncStorage.getItem('user_rol') || null; // O ajusta si no guardan el rol en storage
+      if (token) {
+        setEstaLogueado(true);
+      }
+    } catch (e) {}
+  };
+
   const cargar = async (silencioso = false) => {
     if (!silencioso) setCargando(true);
     try {
+      await cargarAuth();
       const [bannersRes, catsRes] = await Promise.all([
         obtenerBannersCasoUso.ejecutar().catch(() => []),
         fetch(`${API}/api/empresas/publicas/categorias/`)
@@ -359,6 +373,16 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
     setTimeout(() => searchRef.current?.focus(), 150);
   };
 
+  const handleNavegarAuth = async () => {
+    if (estaLogueado) {
+      // Si ya está logueado, vamos al home del cliente. (Podrías obtener el rol de AsyncStorage si hace falta ir a EmpresaTabs)
+      // Como estamos en Explorar (app pública), la acción segura es redirigir a ClienteHome
+      navigation.navigate('ClienteHome');
+    } else {
+      navigation.navigate('Login');
+    }
+  };
+
   const categoriasMostradas = categoriaFiltro
     ? categorias.filter(c => c.id === categoriaFiltro.id)
     : categorias;
@@ -372,8 +396,8 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
           <TouchableOpacity style={s.headerBtn} onPress={() => setMostrarDrawer(true)}>
             <Feather name="menu" size={26} color="#1E293B" />
           </TouchableOpacity>
-          <TouchableOpacity style={s.loginBtn} onPress={() => navigation.navigate('Login')}>
-            <Text style={s.loginBtnTxt}>Iniciar sesión</Text>
+          <TouchableOpacity style={s.loginBtn} onPress={handleNavegarAuth}>
+            <Text style={s.loginBtnTxt}>{estaLogueado ? 'Mi Inicio' : 'Iniciar sesión'}</Text>
           </TouchableOpacity>
         </View>
         {/* Fila 2: logo centrado con todo el ancho */}

@@ -11,7 +11,8 @@
 import React, { useState, useCallback, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, SafeAreaView,
-  TouchableOpacity, Platform, Alert, Dimensions, ActivityIndicator, Modal
+  TouchableOpacity, Platform, Alert, Dimensions,
+  ActivityIndicator, Modal, FlatList, Image, StatusBar,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -26,32 +27,15 @@ import { CitaCliente } from '../../core/domain/citas/IClienteCitaRepository';
 // ── Infraestructura (inyección de dependencias) ───────────────────────────────
 import { DjangoClienteCitaRepository } from '../../core/infraestructura/citas/DjangoClienteCitaRepository';
 
+const { width: SCREEN_W } = Dimensions.get('window');
+const CARD_W = SCREEN_W * 0.58;
+
 // Inyección de dependencia: la pantalla trabaja con el contrato, no la implementación
 const repositorioCitas = new DjangoClienteCitaRepository();
 const obtenerCitasCasoUso = new ObtenerCitasClienteCasoUso(repositorioCitas);
 
-// ── Sub-componentes (idénticos a EmpresaHomeScreen para consistencia visual) ──
-const QuickAction = ({ icon, label, onPress }: any) => (
-  <TouchableOpacity style={st.qaCard} onPress={onPress} activeOpacity={0.82}>
-    <View style={st.qaIcon}>
-      <Feather name={icon} size={22} color={colors.primary} />
-    </View>
-    <Text style={st.qaLabel}>{label}</Text>
-  </TouchableOpacity>
-);
-
-const StatCard = ({ icon, value, label }: any) => (
-  <View style={st.statCard}>
-    <View style={st.statIcon}>
-      <Feather name={icon} size={20} color={colors.primary} />
-    </View>
-    <Text style={st.statValue}>{value}</Text>
-    <Text style={st.statLabel}>{label}</Text>
-  </View>
-);
-
+// ── Badge de estado ───────────────────────────────────────────────────────────
 const EstadoBadge = ({ estado }: { estado: string }) => {
-  // El backend devuelve estados en MAYÚSCULAS — normalizamos para el lookup
   const cfg: Record<string, { color: string; bg: string; label: string }> = {
     programada: { color: '#D97706', bg: '#FFFBEB', label: 'Programada' },
     pendiente:  { color: '#D97706', bg: '#FFFBEB', label: 'Pendiente'  },
@@ -69,37 +53,63 @@ const EstadoBadge = ({ estado }: { estado: string }) => {
   );
 };
 
+// ── Tarjetas del carrusel ─────────────────────────────────────────────────────
+const CAROUSEL_CARDS = [
+  {
+    id: '1',
+    title: 'Mis Citas',
+    subtitle: 'Revisa y gestiona\ntus reservas activas',
+    image: require('../../../assets/card_citas.png'),
+    gradient: [colors.primary, '#3A4AD4'] as [string, string],
+    action: 'scrollDown',
+  },
+  {
+    id: '2',
+    title: 'Explorar',
+    subtitle: 'Descubre negocios\ncerca de ti',
+    image: require('../../../assets/card_explorar.png'),
+    gradient: ['#F43F5E', '#BE185D'] as [string, string],
+    action: 'ExplorarEmpresas',
+  },
+  {
+    id: '3',
+    title: 'Mi Carrito',
+    subtitle: 'Completa tu\nreserva fácilmente',
+    image: require('../../../assets/card_carrito.png'),
+    gradient: ['#059669', '#047857'] as [string, string],
+    action: 'Carrito',
+  },
+];
+
 // ── Pantalla principal ────────────────────────────────────────────────────────
 export const ClienteHomeScreen = ({ navigation }: any) => {
-  const [nombre, setNombre] = useState('');
-  const [clienteId, setClienteId] = useState('');
-  const [citas, setCitas] = useState<CitaCliente[]>([]);
-  const [cargando, setCargando] = useState(false);
-  const [modalProximamente, setModalProximamente] = useState(false);
+  const [nombre, setNombre]           = useState('');
+  const [clienteId, setClienteId]     = useState('');
+  const [citas, setCitas]             = useState<CitaCliente[]>([]);
+  const [cargando, setCargando]       = useState(false);
+  const [tabActivo, setTabActivo]     = useState<'mio' | 'negocio'>('mio');
+  const [showBalance, setShowBalance] = useState(true);
+  const [modalProfile, setModalProfile] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
 
   useFocusEffect(
     useCallback(() => {
       const cargar = async () => {
         try {
-          // Solo leemos credenciales de AsyncStorage — responsabilidad válida en presentación
           const [n, id, token] = await Promise.all([
             AsyncStorage.getItem('cliente_nombre'),
             AsyncStorage.getItem('cliente_id'),
             AsyncStorage.getItem('cliente_token'),
           ]);
-
           setNombre(n || 'Mi cuenta');
           setClienteId(id || '');
 
           if (id && token) {
             setCargando(true);
-            // Delegamos al caso de uso — la pantalla no sabe nada del HTTP
             const resultado = await obtenerCitasCasoUso.ejecutar(id, token);
             setCitas(resultado);
           }
-        } catch (e: any) {
-          // Error silencioso — el historial queda vacío, la UI lo maneja
+        } catch {
           setCitas([]);
         } finally {
           setCargando(false);
@@ -114,17 +124,12 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
       'cliente_token', 'cliente_nombre', 'cliente_email',
       'cliente_id', 'cliente_telefono',
     ]);
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'ExplorarEmpresas' }],
-    });
+    navigation.reset({ index: 0, routes: [{ name: 'ExplorarEmpresas' }] });
   };
 
   const cerrarSesion = () => {
     if (Platform.OS === 'web') {
-      if (window.confirm('¿Salir de tu cuenta?')) {
-        executeLogout();
-      }
+      if (window.confirm('¿Salir de tu cuenta?')) executeLogout();
     } else {
       Alert.alert('Cerrar sesión', '¿Salir de tu cuenta?', [
         { text: 'Cancelar', style: 'cancel' },
@@ -135,148 +140,236 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
 
   const proximas = citas.filter(c => {
     const hoy = new Date().toISOString().split('T')[0];
-    const est = (c.estado || '').toUpperCase();
-    return c.fecha >= hoy && est !== 'CANCELADA';
+    return c.fecha >= hoy && (c.estado || '').toUpperCase() !== 'CANCELADA';
   }).length;
 
-  // CONFIRMADA y PAGADA son equivalentes a "pagada" (el webhook pone CONFIRMADA)
   const pagadas = citas.filter(c => {
     const est = (c.estado || '').toUpperCase();
     return est === 'CONFIRMADA' || est === 'PAGADA';
   }).length;
 
+  const handleCardAction = (action: string) => {
+    if (action === 'scrollDown') {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    } else {
+      navigation.navigate(action);
+    }
+  };
+
+  // ── QUICK ACTIONS (botones circulares estilo DaviPlata) ───────────────────
+  const quickActions = [
+    { icon: 'calendar', label: 'Mis Citas',   onPress: () => scrollRef.current?.scrollToEnd({ animated: true }) },
+    { icon: 'compass',  label: 'Explorar',    onPress: () => navigation.navigate('ExplorarEmpresas') },
+    { icon: 'shopping-cart', label: 'Carrito', onPress: () => navigation.navigate('Carrito') },
+    { icon: 'more-horizontal', label: 'Más',  onPress: () => setModalProfile(true) },
+  ];
+
+  // ── BOTTOM TABS ───────────────────────────────────────────────────────────
+  const bottomTabs = [
+    { icon: 'list',          label: 'Movimientos', onPress: () => scrollRef.current?.scrollToEnd({ animated: true }) },
+    { icon: 'shopping-bag',  label: 'Tienda',      onPress: () => navigation.navigate('ExplorarEmpresas') },
+    { icon: 'grid',          label: 'Código QR',   onPress: () => setModalProfile(true) },
+    { icon: 'credit-card',   label: 'Pagar',       onPress: () => navigation.navigate('Carrito') },
+  ];
+
   return (
     <SafeAreaView style={st.root}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+
+      {/* ── HEADER fijo estilo DaviPlata ── */}
+      <View style={st.topBar}>
+        <TouchableOpacity style={st.avatarCircle} onPress={() => setModalProfile(true)}>
+          <Feather name="user" size={20} color={colors.primary} />
+        </TouchableOpacity>
+
+        {/* Logo centrado */}
+        <View style={st.logoContainer}>
+          <View style={st.logoBadge}>
+            <Text style={st.logoText}>flowy</Text>
+          </View>
+        </View>
+
+        <View style={st.topBarRight}>
+          <TouchableOpacity style={st.iconBtn} onPress={() => setModalProfile(true)}>
+            <Feather name="bell" size={20} color="#374151" />
+          </TouchableOpacity>
+          <TouchableOpacity style={st.iconBtn} onPress={cerrarSesion}>
+            <Feather name="message-circle" size={20} color="#374151" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* ── TABS ── */}
+      <View style={st.tabsRow}>
+        <TouchableOpacity
+          style={[st.tab, tabActivo === 'mio' && st.tabActive]}
+          onPress={() => setTabActivo('mio')}
+        >
+          <Text style={[st.tabText, tabActivo === 'mio' && st.tabTextActive]}>
+            Mi Flowy
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[st.tab, tabActivo === 'negocio' && st.tabActive]}
+          onPress={() => setTabActivo('negocio')}
+        >
+          <Text style={[st.tabText, tabActivo === 'negocio' && st.tabTextActive]}>
+            Mi Negocio
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       <ScrollView
         ref={scrollRef}
-        contentContainerStyle={st.scroll}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={st.scroll}
       >
-
-        {/* ── HEADER — mismo gradiente que EmpresaHomeScreen ── */}
-        <LinearGradient
-          colors={[colors.primary, '#1a3a6b']}
-          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          style={st.header}
-        >
-          <View style={st.decoBig} />
-          <View style={st.decoSmall} />
-          <View style={st.headerRow}>
-            <TouchableOpacity 
-              style={st.avatarFallback} 
-              onPress={() => setModalProximamente(true)}
+        {/* ── SECCIÓN BALANCE / CITAS ── */}
+        <View style={st.balanceSection}>
+          <Text style={st.balanceQuestion}>¿Cuántas citas tengo?</Text>
+          <View style={st.balanceRow}>
+            <Text style={st.balanceAmount}>{cargando ? '...' : citas.length}</Text>
+            <Text style={st.balanceAmountSuffix}> reservas</Text>
+            <TouchableOpacity
+              style={st.eyeBtn}
+              onPress={() => setShowBalance(!showBalance)}
             >
-              <Feather name="user" size={22} color={colors.primary} />
+              <Feather name={showBalance ? 'eye' : 'eye-off'} size={20} color="#6B7280" />
             </TouchableOpacity>
-            <View style={{ flex: 1, marginLeft: 14 }}>
-              <Text style={st.greeting}>¡Hola! 👋</Text>
-              <Text style={st.companyName} numberOfLines={1}>{nombre}</Text>
+          </View>
+          <Text style={st.balanceLabel}>
+            {proximas} próximas · {pagadas} pagadas
+          </Text>
+        </View>
+
+        {/* ── ACCIONES RÁPIDAS (botones circulares) ── */}
+        <View style={st.quickRow}>
+          {quickActions.map((qa) => (
+            <View key={qa.label} style={st.quickItem}>
+              <TouchableOpacity style={st.quickCircle} onPress={qa.onPress} activeOpacity={0.8}>
+                <LinearGradient
+                  colors={[colors.primary, colors.primaryLight]}
+                  style={st.quickGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Feather name={qa.icon as any} size={22} color="#FFF" />
+                </LinearGradient>
+              </TouchableOpacity>
+              <Text style={st.quickLabel}>{qa.label}</Text>
             </View>
-            <TouchableOpacity style={st.bellBtn} onPress={cerrarSesion}>
-              <Feather name="log-out" size={18} color="#FFF" />
+          ))}
+        </View>
+
+        {/* ── CARRUSEL DE CARDS ── */}
+        <FlatList
+          data={CAROUSEL_CARDS}
+          keyExtractor={(item) => item.id}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={st.carouselList}
+          snapToInterval={CARD_W + 12}
+          decelerationRate="fast"
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={[st.card, { width: CARD_W }]}
+              activeOpacity={0.92}
+              onPress={() => handleCardAction(item.action)}
+            >
+              <LinearGradient
+                colors={item.gradient}
+                style={st.cardGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Image source={item.image} style={st.cardImage} resizeMode="cover" />
+              </LinearGradient>
+              <View style={st.cardBottom}>
+                <Text style={st.cardTitle}>{item.title}</Text>
+                <Text style={st.cardSubtitle}>{item.subtitle}</Text>
+              </View>
             </TouchableOpacity>
-          </View>
-        </LinearGradient>
+          )}
+        />
 
-        {/* ── BANNER HERO ── */}
-        <View style={st.heroCard}>
-          <View style={{ flex: 1 }}>
-            <Text style={st.heroTag}>Mi cuenta</Text>
-            <Text style={st.heroTitle}>{'Gestiona tus\nreservas fácil'}</Text>
-            <TouchableOpacity style={st.heroBtn} onPress={() => navigation.navigate('Carrito')}>
-              <Text style={st.heroBtnText}>Ver carrito</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={st.heroIcon}>
-            <Feather name="calendar" size={52} color={colors.primary} />
-          </View>
-        </View>
-
-        {/* ── ACCIONES RÁPIDAS ── */}
-        <Text style={st.sectionTitle}>Acciones rápidas</Text>
-        <View style={st.qaRow}>
-          <QuickAction
-            icon="calendar"
-            label="Mis Citas"
-            onPress={() => scrollRef.current?.scrollToEnd({ animated: true })}
-          />
-          <QuickAction
-            icon="shopping-cart"
-            label="Carrito"
-            onPress={() => navigation.navigate('Carrito')}
-          />
-          <QuickAction
-            icon="compass"
-            label="Explorar"
-            onPress={() => navigation.navigate('ExplorarEmpresas')}
-          />
-          <QuickAction
-            icon="log-out"
-            label="Salir"
-            onPress={cerrarSesion}
-          />
-        </View>
-
-        {/* ── ESTADÍSTICAS ── */}
-        <Text style={st.sectionTitle}>Resumen</Text>
-        <View style={st.statsRow}>
-          <StatCard icon="calendar"     value={citas.length} label="Total citas"  />
-          <StatCard icon="clock"        value={proximas}     label="Próximas"     />
-          <StatCard icon="check-circle" value={pagadas}      label="Pagadas"      />
-        </View>
-
-        {/* ── HISTORIAL ── */}
-        {citas.length > 0 && (
-          <>
+        {/* ── HISTORIAL DE CITAS ── */}
+        {cargando ? (
+          <ActivityIndicator color={colors.primary} style={{ marginTop: 24 }} />
+        ) : citas.length > 0 ? (
+          <View style={st.histSection}>
             <Text style={st.sectionTitle}>Últimas citas</Text>
-            {citas.slice(0, 5).map((cita) => (
+            {citas.slice(0, 6).map((cita) => (
               <View key={cita.id} style={st.citaCard}>
-                <View style={st.citaRow}>
-                  <View style={st.citaIconBox}>
-                    <Feather name="calendar" size={18} color={colors.primary} />
-                  </View>
-                  <View style={{ flex: 1, marginLeft: 12 }}>
-                    <Text style={st.citaServicio} numberOfLines={1}>{cita.servicio_nombre}</Text>
-                    <Text style={st.citaEmpresa}>{cita.empresa_nombre}</Text>
-                    <Text style={st.citaFecha}>
-                      {cita.fecha} · {cita.hora_inicio}
-                      {cita.monto > 0 ? `  ·  $${Number(cita.monto).toLocaleString('es-CO')}` : ''}
-                    </Text>
-                  </View>
-                  <EstadoBadge estado={cita.estado} />
+                <View style={st.citaIconBox}>
+                  <Feather name="calendar" size={18} color={colors.primary} />
                 </View>
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={st.citaServicio} numberOfLines={1}>{cita.servicio_nombre}</Text>
+                  <Text style={st.citaEmpresa}>{cita.empresa_nombre}</Text>
+                  <Text style={st.citaFecha}>
+                    {cita.fecha} · {cita.hora_inicio}
+                    {cita.monto > 0 ? `  ·  $${Number(cita.monto).toLocaleString('es-CO')}` : ''}
+                  </Text>
+                </View>
+                <EstadoBadge estado={cita.estado} />
               </View>
             ))}
-          </>
-        )}
-
-        {citas.length === 0 && !cargando && (
+          </View>
+        ) : (
           <View style={st.emptyBox}>
-            <Feather name="calendar" size={40} color="#CBD5E1" />
-            <Text style={st.emptyTxt}>Aún no tienes citas</Text>
-            <Text style={st.emptySubTxt}>Agrega servicios al carrito para reservar</Text>
+            <View style={st.emptyIcon}>
+              <Feather name="calendar" size={32} color={colors.primary} />
+            </View>
+            <Text style={st.emptyTxt}>No tienes citas aún</Text>
+            <Text style={st.emptySubTxt}>Explora negocios y agenda tu primera cita</Text>
+            <TouchableOpacity
+              style={st.emptyBtn}
+              onPress={() => navigation.navigate('ExplorarEmpresas')}
+            >
+              <Text style={st.emptyBtnTxt}>Explorar negocios</Text>
+            </TouchableOpacity>
           </View>
         )}
 
-        <View style={{ height: 60 }} />
+        <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* Modal Próximamente */}
-      <Modal visible={modalProximamente} transparent animationType="fade">
+      {/* ── BOTTOM TAB BAR estilo DaviPlata ── */}
+      <View style={st.bottomBar}>
+        {bottomTabs.map((tab) => (
+          <TouchableOpacity key={tab.label} style={st.bottomTab} onPress={tab.onPress}>
+            <Feather name={tab.icon as any} size={22} color="#374151" />
+            <Text style={st.bottomTabLabel}>{tab.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* ── MODAL Perfil / Próximamente ── */}
+      <Modal visible={modalProfile} transparent animationType="slide">
         <View style={st.modalOverlay}>
           <View style={st.modalContent}>
+            <View style={st.modalHandle} />
             <View style={st.modalIconBg}>
-              <Feather name="camera" size={32} color={colors.primary} />
+              <Feather name="user" size={32} color={colors.primary} />
             </View>
-            <Text style={st.modalTitle}>¡Próximamente!</Text>
+            <Text style={st.modalTitle}>¡Hola, {nombre}! 👋</Text>
             <Text style={st.modalText}>
-              Muy pronto podrás personalizar tu perfil, subir tu foto y administrar todos tus datos personales desde aquí.
+              Muy pronto podrás personalizar tu perfil, subir tu foto y administrar todos tus datos desde aquí.
             </Text>
-            <TouchableOpacity 
-              style={st.modalBtn}
-              onPress={() => setModalProximamente(false)}
+
+            <TouchableOpacity
+              style={st.modalBtnSecondary}
+              onPress={() => { setModalProfile(false); cerrarSesion(); }}
             >
-              <Text style={st.modalBtnTxt}>Entendido</Text>
+              <Feather name="log-out" size={16} color="#EF4444" />
+              <Text style={[st.modalBtnSecTxt, { color: '#EF4444' }]}>Cerrar sesión</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={st.modalBtn}
+              onPress={() => setModalProfile(false)}
+            >
+              <Text style={st.modalBtnTxt}>Cerrar</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -285,124 +378,206 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
   );
 };
 
-// ── Estilos — consistentes al 100% con EmpresaHomeScreen ─────────────────────
+// ── Estilos ───────────────────────────────────────────────────────────────────
 const st = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F8FAFC' },
-  scroll: { paddingBottom: 40 },
+  root: { flex: 1, backgroundColor: '#FFFFFF' },
+  scroll: { paddingBottom: 20 },
 
-  header: {
-    paddingTop: Platform.OS === 'web' ? 24 : 16,
-    paddingBottom: 32, paddingHorizontal: 20,
-    borderBottomLeftRadius: 28, borderBottomRightRadius: 28,
-    overflow: 'hidden', marginBottom: 20,
-  },
-  decoBig: {
-    position: 'absolute', width: 200, height: 200, borderRadius: 100,
-    backgroundColor: 'rgba(255,255,255,0.08)', top: -60, right: -40,
-  },
-  decoSmall: {
-    position: 'absolute', width: 120, height: 120, borderRadius: 60,
-    backgroundColor: 'rgba(255,255,255,0.06)', bottom: 10, left: -30,
-  },
-  headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  avatarFallback: {
-    width: 50, height: 50, borderRadius: 25,
-    backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center',
-    borderWidth: 2, borderColor: 'rgba(255,255,255,0.6)',
-  },
-  greeting: { fontSize: 12, color: 'rgba(255,255,255,0.75)', fontWeight: '500' },
-  companyName: { fontSize: 18, color: '#FFF', fontWeight: '500', marginTop: 1 },
-  bellBtn: {
-    width: 42, height: 42, borderRadius: 21,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    justifyContent: 'center', alignItems: 'center',
-  },
-
-  heroCard: {
-    marginHorizontal: 20, marginBottom: 24,
-    backgroundColor: '#EFF6FF', borderRadius: 20, padding: 20,
-    flexDirection: 'row', alignItems: 'center',
-    borderWidth: 1, borderColor: '#DBEAFE',
-  },
-  heroTag: {
-    fontSize: 11, fontWeight: '500', color: colors.primary,
-    backgroundColor: '#DBEAFE', paddingHorizontal: 10, paddingVertical: 3,
-    borderRadius: 20, alignSelf: 'flex-start', marginBottom: 8, overflow: 'hidden',
-  },
-  heroTitle: { fontSize: 20, fontWeight: '500', color: '#1E3A5F', lineHeight: 26, marginBottom: 14 },
-  heroBtn: {
-    backgroundColor: colors.primary, paddingHorizontal: 20, paddingVertical: 9,
-    borderRadius: 12, alignSelf: 'flex-start',
-  },
-  heroBtnText: { color: '#FFF', fontWeight: '500', fontSize: 13 },
-  heroIcon: { width: 80, alignItems: 'center' },
-
-  sectionTitle: {
-    fontSize: 16, fontWeight: '500', color: '#1E293B',
-    marginHorizontal: 20, marginBottom: 12,
-  },
-  qaRow: {
-    flexDirection: 'row', flexWrap: 'wrap',
-    gap: 12, paddingHorizontal: 20, marginBottom: 24,
+  // ── TOP BAR
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
   },
-  qaCard: {
-    width: '48%', borderRadius: 16, padding: 16,
-    alignItems: 'center', gap: 10, backgroundColor: '#FFF',
-    borderWidth: 1, borderColor: '#E2E8F0', ...shadows.soft,
-  },
-  qaIcon: {
-    width: 46, height: 46, borderRadius: 12,
+  avatarCircle: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: '#EEF2FF',
     justifyContent: 'center', alignItems: 'center',
-    backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#F1F5F9',
   },
-  qaLabel: { fontSize: 13, fontWeight: '500', color: colors.primary },
-
-  statsRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 20, marginBottom: 28 },
-  statCard: {
-    flex: 1, backgroundColor: '#FFF', borderRadius: 16,
-    padding: 14, alignItems: 'center', gap: 6,
-    borderWidth: 1, borderColor: '#E2E8F0', ...shadows.soft,
+  logoContainer: { flex: 1, alignItems: 'center' },
+  logoBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 14, paddingVertical: 6,
+    borderRadius: 20,
   },
-  statIcon: {
-    width: 38, height: 38, borderRadius: 10,
+  logoText: {
+    fontSize: 16, fontWeight: '800', color: '#FFFFFF',
+    letterSpacing: 1,
+  },
+  topBarRight: { flexDirection: 'row', gap: 6 },
+  iconBtn: {
+    width: 38, height: 38, borderRadius: 19,
+    backgroundColor: '#F9FAFB',
     justifyContent: 'center', alignItems: 'center',
-    backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#F1F5F9',
   },
-  statValue: { fontSize: 22, fontWeight: '500', color: colors.primary },
-  statLabel: { fontSize: 11, color: '#64748B', fontWeight: '500', textAlign: 'center' },
 
+  // ── TABS
+  tabsRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 6,
+    backgroundColor: '#FFFFFF',
+  },
+  tab: {
+    paddingHorizontal: 20, paddingVertical: 9,
+    borderRadius: 24, marginRight: 8,
+    backgroundColor: '#F3F4F6',
+  },
+  tabActive: {
+    backgroundColor: colors.primary,
+    ...shadows.soft,
+  },
+  tabText: { fontSize: 14, fontWeight: '600', color: '#6B7280' },
+  tabTextActive: { color: '#FFFFFF' },
+
+  // ── BALANCE
+  balanceSection: {
+    alignItems: 'center',
+    paddingTop: 28, paddingBottom: 24,
+    paddingHorizontal: 20,
+  },
+  balanceQuestion: { fontSize: 15, color: '#6B7280', marginBottom: 8 },
+  balanceRow: { flexDirection: 'row', alignItems: 'baseline', marginBottom: 6 },
+  balanceAmount: { fontSize: 48, fontWeight: '700', color: '#111827', letterSpacing: -1 },
+  balanceAmountSuffix: { fontSize: 18, fontWeight: '500', color: '#6B7280', marginLeft: 4 },
+  eyeBtn: { marginLeft: 10, padding: 4 },
+  balanceLabel: { fontSize: 13, color: '#9CA3AF' },
+
+  // ── QUICK ACTIONS
+  quickRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: 16,
+    marginBottom: 28,
+  },
+  quickItem: { alignItems: 'center', gap: 8 },
+  quickCircle: { borderRadius: 30, overflow: 'hidden', ...shadows.medium },
+  quickGradient: {
+    width: 60, height: 60,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  quickLabel: { fontSize: 12, color: '#374151', fontWeight: '500', textAlign: 'center' },
+
+  // ── CARRUSEL
+  carouselList: { paddingHorizontal: 20, gap: 12, paddingBottom: 4 },
+  card: {
+    borderRadius: 18, overflow: 'hidden',
+    backgroundColor: '#F3F4F6',
+    ...shadows.medium,
+  },
+  cardGradient: { height: 140, position: 'relative' },
+  cardImage: {
+    position: 'absolute', bottom: 0, right: 0,
+    width: '60%', height: '110%',
+  },
+  cardBottom: {
+    backgroundColor: '#FFFFFF',
+    padding: 14,
+    borderBottomLeftRadius: 18,
+    borderBottomRightRadius: 18,
+  },
+  cardTitle: { fontSize: 15, fontWeight: '700', color: '#111827', marginBottom: 3 },
+  cardSubtitle: { fontSize: 12, color: '#6B7280', lineHeight: 17 },
+
+  // ── HISTORIAL
+  histSection: { paddingHorizontal: 20, paddingTop: 24 },
+  sectionTitle: { fontSize: 17, fontWeight: '700', color: '#111827', marginBottom: 14 },
   citaCard: {
-    marginHorizontal: 20, marginBottom: 10,
-    backgroundColor: '#FFF', borderRadius: 16, padding: 14,
-    borderWidth: 1, borderColor: '#E2E8F0', ...shadows.soft,
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#FFFFFF', borderRadius: 16,
+    padding: 14, marginBottom: 10,
+    borderWidth: 1, borderColor: '#F3F4F6',
+    ...shadows.soft,
   },
-  citaRow: { flexDirection: 'row', alignItems: 'center' },
   citaIconBox: {
-    width: 40, height: 40, borderRadius: 12, backgroundColor: '#EFF6FF',
+    width: 42, height: 42, borderRadius: 12,
+    backgroundColor: '#EEF2FF',
     justifyContent: 'center', alignItems: 'center',
   },
-  citaServicio: { fontSize: 14, fontWeight: '500', color: '#1E293B' },
-  citaEmpresa: { fontSize: 12, color: '#64748B', marginTop: 1 },
-  citaFecha: { fontSize: 12, color: '#94A3B8', marginTop: 2 },
+  citaServicio: { fontSize: 14, fontWeight: '600', color: '#111827' },
+  citaEmpresa: { fontSize: 12, color: '#6B7280', marginTop: 1 },
+  citaFecha: { fontSize: 12, color: '#9CA3AF', marginTop: 2 },
 
   badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
-  badgeTxt: { fontSize: 11, fontWeight: '500' },
+  badgeTxt: { fontSize: 11, fontWeight: '600' },
 
+  // ── EMPTY STATE
   emptyBox: {
-    marginHorizontal: 20, alignItems: 'center', padding: 32, gap: 8,
-    backgroundColor: '#FFF', borderRadius: 20,
-    borderWidth: 1, borderColor: '#E2E8F0',
+    alignItems: 'center',
+    marginHorizontal: 20, marginTop: 36,
+    padding: 32,
+    backgroundColor: '#FAFAFA',
+    borderRadius: 24,
+    borderWidth: 1, borderColor: '#F3F4F6',
   },
-  emptyTxt: { fontSize: 16, fontWeight: '500', color: '#94A3B8' },
-  emptySubTxt: { fontSize: 13, color: '#CBD5E1', textAlign: 'center' },
+  emptyIcon: {
+    width: 72, height: 72, borderRadius: 36,
+    backgroundColor: '#EEF2FF',
+    justifyContent: 'center', alignItems: 'center',
+    marginBottom: 16,
+  },
+  emptyTxt: { fontSize: 17, fontWeight: '700', color: '#374151', marginBottom: 6 },
+  emptySubTxt: { fontSize: 13, color: '#9CA3AF', textAlign: 'center', lineHeight: 20, marginBottom: 20 },
+  emptyBtn: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 28, paddingVertical: 12,
+    borderRadius: 24,
+  },
+  emptyBtnTxt: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
 
-  // Modal styles
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  modalContent: { width: '85%', maxWidth: 400, backgroundColor: '#fff', borderRadius: 24, padding: 30, alignItems: 'center', elevation: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12 },
-  modalIconBg: { width: 72, height: 72, borderRadius: 36, backgroundColor: '#EEF2FF', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
-  modalTitle: { fontSize: 22, fontWeight: '700', color: '#1E293B', marginBottom: 12, textAlign: 'center' },
-  modalText: { fontSize: 15, color: '#64748B', textAlign: 'center', lineHeight: 24, marginBottom: 28 },
-  modalBtn: { backgroundColor: colors.primary, width: '100%', paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
-  modalBtnTxt: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  // ── BOTTOM BAR
+  bottomBar: {
+    flexDirection: 'row',
+    borderTopWidth: 1, borderTopColor: '#F3F4F6',
+    backgroundColor: '#FFFFFF',
+    paddingTop: 10, paddingBottom: Platform.OS === 'ios' ? 24 : 10,
+    ...shadows.medium,
+  },
+  bottomTab: { flex: 1, alignItems: 'center', gap: 4 },
+  bottomTabLabel: { fontSize: 10, color: '#6B7280', fontWeight: '500' },
+
+  // ── MODAL
+  modalOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 28, borderTopRightRadius: 28,
+    padding: 28, paddingTop: 12,
+    alignItems: 'center',
+  },
+  modalHandle: {
+    width: 40, height: 4, borderRadius: 2,
+    backgroundColor: '#E5E7EB', marginBottom: 24,
+  },
+  modalIconBg: {
+    width: 80, height: 80, borderRadius: 40,
+    backgroundColor: '#EEF2FF',
+    justifyContent: 'center', alignItems: 'center',
+    marginBottom: 18,
+  },
+  modalTitle: { fontSize: 22, fontWeight: '700', color: '#111827', marginBottom: 10, textAlign: 'center' },
+  modalText: { fontSize: 15, color: '#6B7280', textAlign: 'center', lineHeight: 24, marginBottom: 24 },
+  modalBtnSecondary: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingVertical: 14, paddingHorizontal: 24,
+    borderRadius: 16, borderWidth: 1, borderColor: '#FEE2E2',
+    backgroundColor: '#FFF5F5', width: '100%',
+    justifyContent: 'center', marginBottom: 12,
+  },
+  modalBtnSecTxt: { fontWeight: '600', fontSize: 15 },
+  modalBtn: {
+    backgroundColor: colors.primary,
+    width: '100%', paddingVertical: 15,
+    borderRadius: 16, alignItems: 'center',
+  },
+  modalBtnTxt: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
 });

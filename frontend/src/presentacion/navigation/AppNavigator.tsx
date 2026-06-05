@@ -105,20 +105,7 @@ export const AppNavigator = () => {
         >
           <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
             
-            {/* 1. RUTAS PÚBLICAS Y COMPARTIDAS (Siempre accesibles) */}
-            <Stack.Group>
-              <Stack.Screen name="ExplorarEmpresas" component={ExplorarEmpresasScreen} options={{ animation: 'slide_from_right' }} />
-              <Stack.Screen name="AgendarPublico" component={AgendarPublicoScreen} options={{ animation: 'slide_from_bottom' }} />
-              <Stack.Screen name="ReservarPublico" component={AgendarPublicoScreen} options={{ animation: 'slide_from_bottom' }} />
-              <Stack.Screen name="Carrito" component={CarritoScreen} options={{ animation: 'slide_from_right' }} />
-              <Stack.Screen name="MuroPublicaciones" component={MuroPublicacionesScreen} options={{ animation: 'slide_from_right' }} />
-              <Stack.Screen name="RegistroCliente" component={RegistroClienteScreen} options={{ animation: 'slide_from_bottom' }} />
-              <Stack.Screen name="ClienteHome" component={ClienteHomeScreen} options={{ animation: 'slide_from_bottom' }} />
-              <Stack.Screen name="ConfirmacionReserva" component={ConfirmacionReservaScreen} />
-              <Stack.Screen name="PagoExitoso" component={PagoExitosoScreen} />
-            </Stack.Group>
-
-            {/* 2. RUTAS DE AUTH (Solo si NO hay sesión) */}
+            {/* 1. RUTA INICIAL DINÁMICA: Depende del estado de sesión */}
             {!isLogueado ? (
               <Stack.Group>
                 <Stack.Screen name="Login" component={LoginScreen} />
@@ -126,10 +113,11 @@ export const AppNavigator = () => {
                 <Stack.Screen name="ResetearPassword" component={ResetearPasswordScreen} options={{ animation: 'slide_from_bottom' }} />
               </Stack.Group>
             ) : (
-            /* 3. RUTAS PROTEGIDAS (Solo si HAY sesión) */
               <Stack.Group>
                 {userRol === 'superadmin' ? (
                   <Stack.Screen name="MainTabs" component={MainNavigator} />
+                ) : userRol === 'cliente' ? (
+                  <Stack.Screen name="ClienteHome" component={ClienteHomeScreen} options={{ animation: 'slide_from_bottom' }} />
                 ) : (
                   <Stack.Screen name="EmpresaTabs" component={EmpresaNavigator} />
                 )}
@@ -139,6 +127,22 @@ export const AppNavigator = () => {
                 <Stack.Screen name="CrearCita" component={ReservarScreen} />
               </Stack.Group>
             )}
+
+            {/* 2. RUTAS PÚBLICAS Y COMPARTIDAS (Siempre accesibles después de la ruta inicial) */}
+            <Stack.Group>
+              <Stack.Screen name="ExplorarEmpresas" component={ExplorarEmpresasScreen} options={{ animation: 'slide_from_right' }} />
+              <Stack.Screen name="AgendarPublico" component={AgendarPublicoScreen} options={{ animation: 'slide_from_bottom' }} />
+              <Stack.Screen name="ReservarPublico" component={AgendarPublicoScreen} options={{ animation: 'slide_from_bottom' }} />
+              <Stack.Screen name="Carrito" component={CarritoScreen} options={{ animation: 'slide_from_right' }} />
+              <Stack.Screen name="MuroPublicaciones" component={MuroPublicacionesScreen} options={{ animation: 'slide_from_right' }} />
+              <Stack.Screen name="RegistroCliente" component={RegistroClienteScreen} options={{ animation: 'slide_from_bottom' }} />
+              {/* ClienteHome se incluye aquí por si un visitante anónimo intenta ir, pero la vista inicial la maneja el bloque de arriba */}
+              {(!isLogueado || userRol !== 'cliente') && (
+                <Stack.Screen name="ClienteHome" component={ClienteHomeScreen} options={{ animation: 'slide_from_bottom' }} />
+              )}
+              <Stack.Screen name="ConfirmacionReserva" component={ConfirmacionReservaScreen} />
+              <Stack.Screen name="PagoExitoso" component={PagoExitosoScreen} />
+            </Stack.Group>
 
           </Stack.Navigator>
         </NavigationContainer>
