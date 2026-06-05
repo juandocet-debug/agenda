@@ -118,7 +118,7 @@ export const AppNavigator = () => {
             clearTimeout((AppNavigator as any)._navTimer);
             (AppNavigator as any)._navTimer = setTimeout(() => {
               verificarSesion();
-            }, 300);
+            }, 100);
           }}
         >
           <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
