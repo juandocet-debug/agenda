@@ -262,26 +262,27 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
         {tabActivo === 'negocio' ? (
           /* ── TAB MI NEGOCIO ── */
           <View style={st.negocioWrapper}>
-            {/* Card contenedor — imagen + botón adentro, como la imagen de referencia */}
+            {/* Card contenedor — la imagen es la base y el botón va flotando encima */}
             <View style={st.negocioCard}>
               <Image
                 source={require('../../../assets/publicidad/banerEmpresa (3).png')}
                 style={st.negocioBanner}
                 resizeMode="contain"
               />
-              {/* Botón dorado DENTRO del card */}
-              <TouchableOpacity
-                style={st.negocioBtn}
-                activeOpacity={0.85}
-                onPress={() => {
-                  navigation.navigate('Login', { modoInicial: 'register' });
-                }}
-              >
-                <Text style={st.negocioBtnTxt}>🚀  Registrar mi empresa gratis</Text>
-              </TouchableOpacity>
+              
+              {/* Overlay que posiciona el botón dorado en la parte inferior de la imagen */}
+              <View style={st.negocioOverlay}>
+                <TouchableOpacity
+                  style={st.negocioBtn}
+                  activeOpacity={0.85}
+                  onPress={() => {
+                    navigation.navigate('Login', { modoInicial: 'register' });
+                  }}
+                >
+                  <Text style={st.negocioBtnTxt}>🚀  Registrar mi empresa gratis</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-
-            {/* "Quizás después" debajo del card */}
             <TouchableOpacity
               style={st.negocioDismiss}
               onPress={() => setTabActivo('mio')}
@@ -666,35 +667,40 @@ const st = StyleSheet.create({
   modalBtnTxt: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
   // ── TAB MI NEGOCIO
   negocioWrapper: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 32,
     alignItems: 'center',
   },
-  // Card contenedor — el botón va DENTRO, misma forma redondeada
+  // Contenedor principal
   negocioCard: {
     width: '100%',
-    borderRadius: 20,
-    overflow: 'hidden',          // Recorta la imagen a los bordes del card
-    backgroundColor: 'transparent',
-    paddingBottom: 20,
-    ...shadows.medium,
+    position: 'relative',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   negocioBanner: {
     width: '100%',
-    // Dejamos que la imagen vertical ocupe un ratio adecuado para celular (ej. 3:4 o 4:5)
     height: undefined,
-    aspectRatio: 3 / 4,
+    // Ratio de imagen de historia vertical aprox
+    aspectRatio: 0.58,
   },
-  // Botón dorado pill dentro del card
+  // Capa flotante para el botón dorado
+  negocioOverlay: {
+    position: 'absolute',
+    bottom: '4%',    // Flota el botón al final de la imagen
+    left: 20,
+    right: 20,
+    alignItems: 'center',
+  },
+  // Botón dorado pill
   negocioBtn: {
     backgroundColor: '#F5B800',
-    marginHorizontal: 20,
+    width: '100%',
     paddingVertical: 16,
     borderRadius: 50,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 8,
     shadowColor: '#F5B800',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.45,
@@ -713,7 +719,8 @@ const st = StyleSheet.create({
   },
   negocioDismissTxt: {
     fontSize: 14,
-    color: '#9CA3AF',
-    fontWeight: '500',
+    color: '#8A94A6',
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
 });
