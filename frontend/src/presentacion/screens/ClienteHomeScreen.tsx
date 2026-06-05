@@ -134,12 +134,15 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
   );
 
   const executeLogout = async () => {
-    // Eliminar todos los datos de sesion en bloque (operacion atomica)
+    // 1. Eliminar todos los datos de sesion en bloque (operacion atomica)
     await AsyncStorage.multiRemove([
       'cliente_token', 'cliente_nombre', 'cliente_email',
       'cliente_id', 'cliente_telefono', '@agenda_pro_token',
     ]);
-    navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+    // 2. Navegar a una pantalla pública para disparar el onStateChange del
+    //    AppNavigator. Este detectará que el token fue eliminado, pondrá
+    //    isLogueado=false y React Navigation mostrará el Login automáticamente.
+    navigation.reset({ index: 0, routes: [{ name: 'ExplorarEmpresas' }] });
   };
 
   const cerrarSesion = () => {

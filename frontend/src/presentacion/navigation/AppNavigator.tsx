@@ -50,24 +50,34 @@ export const AppNavigator = () => {
   const [userRol, setUserRol]       = useState<string | null>(null);
   const navigationRef = useRef<NavigationContainerRef<any>>(null);
 
+  // Función de verificación de token reutilizable — la usamos en el mount
+  // y en cada cambio de estado de navegación para detectar logouts externos.
+  const verificarSesion = useCallback(async () => {
+    const token = await obtenerTokenLocal();
+    if (token && token.access) {
+      setIsLogueado(true);
+      setUserRol(token.rol || null);
+    } else {
+      // No hay token válido: aseguramos que el estado refleje sesión cerrada
+      setIsLogueado(false);
+      setUserRol(null);
+    }
+  }, []);
+
   useEffect(() => {
-    const checkToken = async () => {
-      const token = await obtenerTokenLocal();
-      if (token && token.access) {
-        setIsLogueado(true);
-        setUserRol(token.rol || null);
-      }
+    const init = async () => {
+      await verificarSesion();
       setIsLoading(false);
     };
-    checkToken();
-  }, []);
+    init();
+  }, [verificarSesion]);
 
   // ── Auto-logout por inactividad (30 min) ──────────────────────────────────
   const handleLogout = useCallback(() => {
     setIsLogueado(false);
     setUserRol(null);
     // React Navigation removerá automáticamente las pantallas protegidas
-    // al cambiar el estado isLogueado a false, redirigiendo a Login o la ruta base.
+    // al cambiar el estado isLogueado a false, mostrando Login.
   }, []);
 
   const { reiniciarTimer } = useInactividadLogout({
@@ -85,9 +95,6 @@ export const AppNavigator = () => {
     })
   ).current;
 
-  // Ya no necesitamos onStateChange para rastrear manualmente la sesión
-  // ya que la sesión dicta las pantallas renderizadas, no al revés.
-
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
@@ -102,6 +109,13 @@ export const AppNavigator = () => {
         <NavigationContainer
           linking={linking}
           ref={navigationRef}
+          onStateChange={() => {
+            // Cada vez que cambia la navegación, re-verificamos el token.
+            // SEGURIDAD: si el token fue eliminado (logout manual o expiración),
+            // esto detecta el cambio y actualiza el estado del navigator,
+            // desmontando las pantallas protegidas y mostrando el Login.
+            verificarSesion();
+          }}
         >
           <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
             
@@ -136,7 +150,6 @@ export const AppNavigator = () => {
               <Stack.Screen name="Carrito" component={CarritoScreen} options={{ animation: 'slide_from_right' }} />
               <Stack.Screen name="MuroPublicaciones" component={MuroPublicacionesScreen} options={{ animation: 'slide_from_right' }} />
               <Stack.Screen name="RegistroCliente" component={RegistroClienteScreen} options={{ animation: 'slide_from_bottom' }} />
-              {/* ClienteHome se incluye aquí por si un visitante anónimo intenta ir, pero la vista inicial la maneja el bloque de arriba */}
               {(!isLogueado || userRol !== 'cliente') && (
                 <Stack.Screen name="ClienteHome" component={ClienteHomeScreen} options={{ animation: 'slide_from_bottom' }} />
               )}
