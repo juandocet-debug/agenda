@@ -428,16 +428,25 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
         </View>
 
         {/* ── CARRUSEL DE CARDS ── */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={{ overflow: 'visible' }}
-          contentContainerStyle={st.carouselList}
+        <View
+          style={{
+            flexDirection: 'row',
+            paddingLeft: 20,
+            paddingRight: 20,
+            paddingBottom: 4,
+            paddingTop: 45,
+            gap: 12,
+            overflowX: 'auto' as any,
+            overflowY: 'hidden' as any,
+            WebkitOverflowScrolling: 'touch' as any,
+            scrollbarWidth: 'none' as any,
+            msOverflowStyle: 'none' as any,
+          }}
         >
           {CAROUSEL_CARDS.map((item) => (
             <TouchableOpacity
               key={item.id}
-              style={[st.card, { width: CARD_W }]}
+              style={[st.card, { width: CARD_W, flexShrink: 0 }]}
               activeOpacity={0.92}
               onPress={() => handleCardAction(item.action)}
             >
@@ -449,8 +458,7 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
               </View>
             </TouchableOpacity>
           ))}
-          <View style={{ width: 20 }} />
-        </ScrollView>
+        </View>
 
 
 
