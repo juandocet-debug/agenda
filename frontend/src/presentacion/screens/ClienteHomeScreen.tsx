@@ -442,10 +442,8 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
               activeOpacity={0.92}
               onPress={() => handleCardAction(item.action)}
             >
-              <Image 
-                source={item.image} 
-                style={st.cardImage} 
-                resizeMode="cover" 
+              <View 
+                style={st.cardTopSolid} 
               />
               <View style={st.cardBottom}>
                 <Text style={st.cardTitle}>{item.title}</Text>
@@ -667,9 +665,10 @@ const st = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
-  cardImage: {
+  cardTopSolid: {
     width: '100%',
     height: 120,
+    backgroundColor: '#4338F5',
     borderTopLeftRadius: 17,
     borderTopRightRadius: 17,
   },
