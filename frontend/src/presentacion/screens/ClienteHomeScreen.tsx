@@ -184,9 +184,11 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
 
         {/* Logo centrado */}
         <View style={st.logoContainer}>
-          <View style={st.logoBadge}>
-            <Text style={st.logoText}>flowy</Text>
-          </View>
+          <Image
+            source={require('../../../assets/logoFlowy.svg')}
+            style={st.headerLogo}
+            resizeMode="contain"
+          />
         </View>
 
         <View style={st.topBarRight}>
@@ -199,24 +201,28 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
         </View>
       </View>
 
-      {/* ── TABS ── */}
-      <View style={st.tabsRow}>
-        <TouchableOpacity
-          style={[st.tab, tabActivo === 'mio' && st.tabActive]}
-          onPress={() => setTabActivo('mio')}
-        >
-          <Text style={[st.tabText, tabActivo === 'mio' && st.tabTextActive]}>
-            Mi Flowy
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[st.tab, tabActivo === 'negocio' && st.tabActive]}
-          onPress={() => setTabActivo('negocio')}
-        >
-          <Text style={[st.tabText, tabActivo === 'negocio' && st.tabTextActive]}>
-            Mi Negocio
-          </Text>
-        </TouchableOpacity>
+      {/* ── TABS (Segment Control) ── */}
+      <View style={st.tabsWrapper}>
+        <View style={st.segmentControl}>
+          <TouchableOpacity
+            style={[st.segmentTab, tabActivo === 'mio' && st.segmentTabActive]}
+            onPress={() => setTabActivo('mio')}
+            activeOpacity={0.8}
+          >
+            <Text style={[st.segmentTabText, tabActivo === 'mio' && st.segmentTabTextActive]}>
+              Mi Flowy
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[st.segmentTab, tabActivo === 'negocio' && st.segmentTabActive]}
+            onPress={() => setTabActivo('negocio')}
+            activeOpacity={0.8}
+          >
+            <Text style={[st.segmentTabText, tabActivo === 'negocio' && st.segmentTabTextActive]}>
+              Mi Negocio
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -399,16 +405,10 @@ const st = StyleSheet.create({
     backgroundColor: '#EEF2FF',
     justifyContent: 'center', alignItems: 'center',
   },
-  logoContainer: { flex: 1, alignItems: 'center' },
-  logoBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: colors.primary,
-    paddingHorizontal: 14, paddingVertical: 6,
-    borderRadius: 20,
-  },
-  logoText: {
-    fontSize: 16, fontWeight: '800', color: '#FFFFFF',
-    letterSpacing: 1,
+  logoContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  headerLogo: {
+    height: 32,
+    width: 100,
   },
   topBarRight: { flexDirection: 'row', gap: 6 },
   iconBtn: {
@@ -417,25 +417,39 @@ const st = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
 
-  // ── TABS
-  tabsRow: {
-    flexDirection: 'row',
+  // ── TABS (Segment Control)
+  tabsWrapper: {
     paddingHorizontal: 20,
-    paddingTop: 14,
-    paddingBottom: 6,
+    paddingTop: 12,
+    paddingBottom: 8,
     backgroundColor: '#FFFFFF',
+    alignItems: 'center', // Center the segment control
   },
-  tab: {
-    paddingHorizontal: 20, paddingVertical: 9,
-    borderRadius: 24, marginRight: 8,
+  segmentControl: {
+    flexDirection: 'row',
     backgroundColor: '#F3F4F6',
+    borderRadius: 30,
+    padding: 3, // Small padding inside the pill
   },
-  tabActive: {
+  segmentTab: {
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 26,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  segmentTabActive: {
     backgroundColor: colors.primary,
     ...shadows.soft,
   },
-  tabText: { fontSize: 14, fontWeight: '600', color: '#6B7280' },
-  tabTextActive: { color: '#FFFFFF' },
+  segmentTabText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  segmentTabTextActive: {
+    color: '#FFFFFF',
+  },
 
   // ── BALANCE
   balanceSection: {
