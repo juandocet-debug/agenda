@@ -453,13 +453,7 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
           )}
         />
 
-        {/* ── INDICADOR DE SCROLL HORIZONTAL ── */}
-        <View style={st.scrollHint}>
-          <View style={[st.scrollDot, st.scrollDotActive]} />
-          <View style={st.scrollDot} />
-          <View style={st.scrollDot} />
-          <Feather name="chevrons-right" size={14} color="#9CA3AF" style={{ marginLeft: 4 }} />
-        </View>
+
 
 
             <View style={{ height: 100 }} />
@@ -668,14 +662,13 @@ const st = StyleSheet.create({
   card: {
     borderRadius: 18,
     backgroundColor: '#FFFFFF',
-    ...shadows.medium,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    overflow: 'hidden',
   },
   cardImageContainer: {
     width: '100%',
     height: 120,
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
-    overflow: 'hidden',
   },
   cardImage: {
     width: '100%',
@@ -684,8 +677,6 @@ const st = StyleSheet.create({
   cardBottom: {
     backgroundColor: '#FFFFFF',
     padding: 14,
-    borderBottomLeftRadius: 18,
-    borderBottomRightRadius: 18,
   },
   cardTitle: { fontSize: 14, fontWeight: '700', color: '#111827', marginBottom: 3 },
   cardSubtitle: { fontSize: 11, color: '#6B7280', lineHeight: 15 },
