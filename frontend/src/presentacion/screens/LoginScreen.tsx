@@ -38,10 +38,12 @@ const loginUseCase = new LoginUseCase(authAdapter, guardarTokenLocal);
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-export const LoginScreen = ({ navigation }: any) => {
+export const LoginScreen = ({ navigation, route }: any) => {
   const { totalItems } = useCarrito();
+  // modoInicial puede venir como param desde ClienteHome -> Modal Empresa
+  const modoInicial = route?.params?.modoInicial ?? 'welcome';
   // Estados: 'welcome' | 'login' | 'register'
-  const [viewState, setViewState] = useState<'welcome' | 'login' | 'register'>('welcome');
+  const [viewState, setViewState] = useState<'welcome' | 'login' | 'register'>(modoInicial);
   
   const [email, setEmail] = useState(''); // Usado como Username en Login
   const [password, setPassword] = useState('');

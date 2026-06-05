@@ -27,6 +27,10 @@ import { CitaCliente } from '../../core/domain/citas/IClienteCitaRepository';
 // ── Infraestructura (inyección de dependencias) ───────────────────────────────
 import { DjangoClienteCitaRepository } from '../../core/infraestructura/citas/DjangoClienteCitaRepository';
 
+// Leer el token firmado (fuente de verdad de seguridad: nunca confiamos en
+// variables locales mutables para el rol; siempre lo leemos del JWT guardado)
+import { obtenerTokenLocal } from '../../core/infraestructura/auth/TokenStorageAdapter';
+
 const { width: SCREEN_W } = Dimensions.get('window');
 const CARD_W = SCREEN_W * 0.58;
 
@@ -90,12 +94,22 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
   const [tabActivo, setTabActivo]     = useState<'mio' | 'negocio'>('mio');
   const [showBalance, setShowBalance] = useState(true);
   const [modalProfile, setModalProfile] = useState(false);
+  // Modal de promocion de empresa (se muestra si el usuario no tiene rol empresa)
+  const [modalEmpresa, setModalEmpresa] = useState(false);
+  // Rol leido del JWT almacenado (fuente de verdad firmada por el backend)
+  const [rolUsuario, setRolUsuario]   = useState<string>('cliente');
   const scrollRef = useRef<ScrollView>(null);
 
   useFocusEffect(
     useCallback(() => {
       const cargar = async () => {
         try {
+          // SEGURIDAD: leemos el rol desde el JWT firmado guardado, no de
+          // una variable suelta. Si el token fue manipulado localmente, el
+          // backend lo rechazara igual al hacer llamadas autenticadas.
+          const tokenData = await obtenerTokenLocal();
+          if (tokenData?.rol) setRolUsuario(tokenData.rol);
+
           const [n, id, token] = await Promise.all([
             AsyncStorage.getItem('cliente_nombre'),
             AsyncStorage.getItem('cliente_id'),
@@ -120,11 +134,12 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
   );
 
   const executeLogout = async () => {
+    // Eliminar todos los datos de sesion en bloque (operacion atomica)
     await AsyncStorage.multiRemove([
       'cliente_token', 'cliente_nombre', 'cliente_email',
-      'cliente_id', 'cliente_telefono',
+      'cliente_id', 'cliente_telefono', '@agenda_pro_token',
     ]);
-    navigation.reset({ index: 0, routes: [{ name: 'ExplorarEmpresas' }] });
+    navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
   };
 
   const cerrarSesion = () => {
@@ -163,6 +178,21 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
     { icon: 'shopping-cart', label: 'Carrito', onPress: () => navigation.navigate('Carrito') },
     { icon: 'more-horizontal', label: 'Más',  onPress: () => setModalProfile(true) },
   ];
+
+  // Logica del tab "Mi Negocio":
+  // Si el rol en el JWT es 'empresa' o 'superadmin', ya tiene negocio => navegar.
+  // Si es 'cliente', no tiene empresa => mostrar modal de promocion.
+  // NUNCA confiamos en estado local mutable para esta decision; usamos el
+  // rolUsuario que se cargo del JWT firmado en useFocusEffect.
+  const handleNegocioTab = () => {
+    setTabActivo('negocio');
+    if (rolUsuario === 'empresa' || rolUsuario === 'superadmin') {
+      navigation.navigate('EmpresaTabs');
+    } else {
+      // Es cliente puro: mostrar modal de promocion
+      setModalEmpresa(true);
+    }
+  };
 
   // ── BOTTOM TABS ───────────────────────────────────────────────────────────
   const bottomTabs = [
@@ -215,7 +245,7 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
           </TouchableOpacity>
           <TouchableOpacity
             style={[st.segmentTab, tabActivo === 'negocio' && st.segmentTabActive]}
-            onPress={() => setTabActivo('negocio')}
+            onPress={handleNegocioTab}
             activeOpacity={0.8}
           >
             <Text style={[st.segmentTabText, tabActivo === 'negocio' && st.segmentTabTextActive]}>
@@ -350,7 +380,7 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
         ))}
       </View>
 
-      {/* ── MODAL Perfil / Próximamente ── */}
+      {/* ── MODAL Perfil ── */}
       <Modal visible={modalProfile} transparent animationType="slide">
         <View style={st.modalOverlay}>
           <View style={st.modalContent}>
@@ -377,6 +407,63 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
             >
               <Text style={st.modalBtnTxt}>Cerrar</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── MODAL “Mi Negocio”: promocion para registrar empresa ── */}
+      <Modal visible={modalEmpresa} transparent animationType="slide" onRequestClose={() => setModalEmpresa(false)}>
+        <View style={st.modalOverlay}>
+          <View style={[st.modalContent, { paddingHorizontal: 0, paddingBottom: 0, overflow: 'hidden' }]}>
+            {/* Header con gradiente */}
+            <LinearGradient
+              colors={[colors.primary, '#3A4AD4']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={st.empModalHeader}
+            >
+              <Feather name="briefcase" size={36} color="#FFF" style={{ marginBottom: 12 }} />
+              <Text style={st.empModalTitle}>¡Haz crecer tu negocio{`\n`}con Flowy!</Text>
+              <Text style={st.empModalSub}>Gestiona tu agenda y recibe clientes de forma profesional</Text>
+            </LinearGradient>
+
+            {/* Beneficios */}
+            <View style={st.empModalBody}>
+              {[
+                { icon: 'clock',        text: 'Recibe reservas 24/7 sin esfuerzo' },
+                { icon: 'smartphone',   text: 'Gestiona tu agenda desde cualquier lugar' },
+                { icon: 'users',        text: 'Clientes llegan solos con tu perfil digital' },
+                { icon: 'trending-up',  text: 'Estadisticas y control de tus ingresos' },
+              ].map(b => (
+                <View key={b.icon} style={st.empBenefitRow}>
+                  <View style={st.empBenefitIcon}>
+                    <Feather name={b.icon as any} size={16} color={colors.primary} />
+                  </View>
+                  <Text style={st.empBenefitText}>{b.text}</Text>
+                </View>
+              ))}
+
+              {/* Acciones */}
+              <TouchableOpacity
+                style={[st.modalBtn, { marginTop: 20 }]}
+                activeOpacity={0.85}
+                onPress={() => {
+                  setModalEmpresa(false);
+                  // Navegar al login en modo registro de empresa
+                  // (flujo seguro existente: Login -> handleRegister)
+                  navigation.navigate('Login', { modoInicial: 'register' });
+                }}
+              >
+                <Text style={st.modalBtnTxt}>🚀 Registrar mi empresa gratis</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={st.empModalDismiss}
+                onPress={() => { setModalEmpresa(false); setTabActivo('mio'); }}
+              >
+                <Text style={st.empModalDismissTxt}>Quizás después</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -407,8 +494,9 @@ const st = StyleSheet.create({
   },
   logoContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   headerLogo: {
-    height: 32,
-    width: 100,
+    // Mas grande para que el logo sea protagonista del header
+    height: 48,
+    width: 140,
   },
   topBarRight: { flexDirection: 'row', gap: 6 },
   iconBtn: {
@@ -594,4 +682,41 @@ const st = StyleSheet.create({
     borderRadius: 16, alignItems: 'center',
   },
   modalBtnTxt: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
+  // ── MODAL EMPRESA (Promocion)
+  empModalHeader: {
+    paddingTop: 36, paddingBottom: 28,
+    paddingHorizontal: 28,
+    alignItems: 'center',
+    width: '100%',
+  },
+  empModalTitle: {
+    fontSize: 24, fontWeight: '800', color: '#FFF',
+    textAlign: 'center', lineHeight: 32, marginBottom: 8,
+  },
+  empModalSub: {
+    fontSize: 14, color: 'rgba(255,255,255,0.8)',
+    textAlign: 'center', lineHeight: 20,
+  },
+  empModalBody: {
+    paddingHorizontal: 24, paddingTop: 24,
+    paddingBottom: 32, width: '100%',
+  },
+  empBenefitRow: {
+    flexDirection: 'row', alignItems: 'center',
+    marginBottom: 16, gap: 14,
+  },
+  empBenefitIcon: {
+    width: 36, height: 36, borderRadius: 10,
+    backgroundColor: '#EEF2FF',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  empBenefitText: {
+    flex: 1, fontSize: 14, color: '#374151', fontWeight: '500',
+  },
+  empModalDismiss: {
+    alignItems: 'center', paddingVertical: 16,
+  },
+  empModalDismissTxt: {
+    fontSize: 14, color: '#9CA3AF', fontWeight: '500',
+  },
 });
