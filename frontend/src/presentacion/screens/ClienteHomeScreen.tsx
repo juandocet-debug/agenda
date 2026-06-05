@@ -79,7 +79,7 @@ const CAROUSEL_CARDS = [
     id: '3',
     title: 'Mi Carrito',
     subtitle: 'Completa tu\nreserva fácilmente',
-    image: require('../../../assets/cardsCliente/superiorTres.png'),
+    image: require('../../../assets/cardsCliente/UpCuatro.png'),
     action: 'Carrito',
   },
 ];
@@ -423,7 +423,7 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
         </View>
 
         {/* ── SECCIÓN: TUS ACCESOS ── */}
-        <View style={{ marginTop: 54, marginBottom: 8 }}>
+        <View style={{ marginTop: 12, marginBottom: 8 }}>
           <Text style={[st.sectionTitle, { marginHorizontal: 20, marginBottom: 12 }]}>Tus accesos rápidos</Text>
         </View>
 
