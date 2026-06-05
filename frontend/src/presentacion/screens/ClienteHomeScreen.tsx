@@ -33,8 +33,8 @@ import { obtenerTokenLocal } from '../../core/infraestructura/auth/TokenStorageA
 import { useAuth } from '../../core/aplicacion/auth/AuthContext';
 
 const { width: SCREEN_W } = Dimensions.get('window');
-// Tarjetas más delgadas (28% del ancho de pantalla)
-const CARD_W = SCREEN_W * 0.28;
+// Tarjetas (35% del ancho de pantalla)
+const CARD_W = SCREEN_W * 0.35;
 
 // Inyección de dependencia: la pantalla trabaja con el contrato, no la implementación
 const repositorioCitas = new DjangoClienteCitaRepository();
@@ -442,13 +442,14 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
               activeOpacity={0.92}
               onPress={() => handleCardAction(item.action)}
             >
-              <View style={st.cardImageContainer}>
-                <Image source={item.image} style={st.cardImage} resizeMode="cover" />
-              </View>
-              <View style={st.cardBottom}>
+              <Image source={item.image} style={st.cardImage} resizeMode="cover" />
+              <LinearGradient
+                colors={['transparent', 'rgba(0,0,0,0.75)']}
+                style={st.cardGradient}
+              >
                 <Text style={st.cardTitle}>{item.title}</Text>
                 <Text style={st.cardSubtitle}>{item.subtitle}</Text>
-              </View>
+              </LinearGradient>
             </TouchableOpacity>
           )}
         />
@@ -661,25 +662,28 @@ const st = StyleSheet.create({
   carouselList: { paddingHorizontal: 20, gap: 12, paddingBottom: 4 },
   card: {
     borderRadius: 18,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    height: 180,
+    position: 'relative' as const,
     overflow: 'hidden',
-  },
-  cardImageContainer: {
-    width: '100%',
-    height: 120,
   },
   cardImage: {
     width: '100%',
     height: '100%',
+    borderRadius: 18,
   },
-  cardBottom: {
-    backgroundColor: '#FFFFFF',
-    padding: 14,
+  cardGradient: {
+    position: 'absolute' as const,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 14,
+    paddingBottom: 14,
+    paddingTop: 40,
+    borderBottomLeftRadius: 18,
+    borderBottomRightRadius: 18,
   },
-  cardTitle: { fontSize: 14, fontWeight: '700', color: '#111827', marginBottom: 3 },
-  cardSubtitle: { fontSize: 11, color: '#6B7280', lineHeight: 15 },
+  cardTitle: { fontSize: 14, fontWeight: '700', color: '#FFFFFF', marginBottom: 3 },
+  cardSubtitle: { fontSize: 11, color: 'rgba(255,255,255,0.85)', lineHeight: 15 },
 
   // ── SCROLL HINT
   scrollHint: {
