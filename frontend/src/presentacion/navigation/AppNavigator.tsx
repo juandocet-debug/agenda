@@ -110,11 +110,14 @@ export const AppNavigator = () => {
           linking={linking}
           ref={navigationRef}
           onStateChange={() => {
-            // Cada vez que cambia la navegación, re-verificamos el token.
-            // SEGURIDAD: si el token fue eliminado (logout manual o expiración),
-            // esto detecta el cambio y actualiza el estado del navigator,
-            // desmontando las pantallas protegidas y mostrando el Login.
-            verificarSesion();
+            // Debounce de 300ms para evitar race condition:
+            // login guarda el token y hace navigate al mismo tiempo.
+            // Si verificarSesion corre ANTES de que guardarToken termine,
+            // lee null y fuerza de vuelta al Login.
+            clearTimeout((AppNavigator as any)._navTimer);
+            (AppNavigator as any)._navTimer = setTimeout(() => {
+              verificarSesion();
+            }, 300);
           }}
         >
           <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
