@@ -64,7 +64,7 @@ const CAROUSEL_CARDS = [
     id: '1',
     title: 'Mis Citas',
     subtitle: 'Revisa y gestiona\ntus reservas activas',
-    image: require('../../../assets/cardsCliente/misCitas.png'),
+    image: require('../../../assets/cardsCliente/superiorUno.png'),
     action: 'scrollDown',
   },
   {
@@ -359,28 +359,19 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
           snapToInterval={CARD_W + 12}
           decelerationRate="fast"
           renderItem={({ item }) => (
-            // paddingTop crea espacio para que el personaje desborde hacia arriba
-            <View style={{ paddingTop: 28 }}>
-              <TouchableOpacity
-                style={[st.card, { width: CARD_W }]}
-                activeOpacity={0.92}
-                onPress={() => handleCardAction(item.action)}
-              >
-                {/* Fondo azul de la card */}
-                <View style={st.cardImageContainer} />
-                {/* Texto abajo */}
-                <View style={st.cardBottom}>
-                  <Text style={st.cardTitle}>{item.title}</Text>
-                  <Text style={st.cardSubtitle}>{item.subtitle}</Text>
-                </View>
-                {/* Imagen posicionada para desbordar por arriba */}
-                <Image
-                  source={item.image}
-                  style={st.cardImage}
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              style={[st.card, { width: CARD_W }]}
+              activeOpacity={0.92}
+              onPress={() => handleCardAction(item.action)}
+            >
+              <View style={st.cardImageContainer}>
+                <Image source={item.image} style={st.cardImage} resizeMode="cover" />
+              </View>
+              <View style={st.cardBottom}>
+                <Text style={st.cardTitle}>{item.title}</Text>
+                <Text style={st.cardSubtitle}>{item.subtitle}</Text>
+              </View>
+            </TouchableOpacity>
           )}
         />
 
@@ -578,30 +569,21 @@ const st = StyleSheet.create({
   carouselList: { paddingHorizontal: 20, gap: 12, paddingBottom: 4 },
   card: {
     borderRadius: 18,
+    overflow: 'hidden',
     backgroundColor: '#FFFFFF',
-    overflow: 'visible',   // permite que el personaje desborde hacia arriba
     ...shadows.medium,
   },
   cardImageContainer: {
-    height: 130,
-    backgroundColor: '#4B4EF5',  // azul del fondo de la ilustracion
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
-    overflow: 'hidden',
+    width: '100%',
+    height: 160,
   },
   cardImage: {
-    position: 'absolute',
-    bottom: 50,            // ancla la base del personaje al fondo azul
-    left: 0,
-    right: 0,
     width: '100%',
-    height: 200,           // alto total de la imagen, desborda ∼28px hacia arriba
+    height: '100%',
   },
   cardBottom: {
     backgroundColor: '#FFFFFF',
     padding: 14,
-    borderBottomLeftRadius: 18,
-    borderBottomRightRadius: 18,
   },
   cardTitle: { fontSize: 15, fontWeight: '700', color: '#111827', marginBottom: 3 },
   cardSubtitle: { fontSize: 12, color: '#6B7280', lineHeight: 17 },
