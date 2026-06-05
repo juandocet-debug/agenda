@@ -34,7 +34,7 @@ export class DjangoAuthAdapter implements AuthRepository {
       throw new Error(`El servidor respondió con status ${response.status} pero sin JSON válido`);
     }
     
-    console.log('=== LOGIN RESPONSE ===', response.status, JSON.stringify(responseData));
+
 
     if (!response.ok || !responseData.ok) {
       throw new Error(responseData.error || `Error ${response.status}: Credenciales invalidas`);

@@ -11,15 +11,10 @@ class LoginController(APIView):
     permission_classes = [AllowAny] # El login debe ser público
 
     def post(self, request):
-        print("=== DEBUG LOGIN ===")
-        print("request.data:", request.data)
         email = request.data.get('email')
         password = request.data.get('password')
-        print(f"email recibido: '{email}'")
-        print(f"password recibido: '{password}'")
 
         if not email or not password:
-            print("ERROR: Faltan campos")
             return Response({'ok': False, 'error': 'Email y password requeridos'}, status=400)
 
         repo = DjangoAutenticacionRepository()
