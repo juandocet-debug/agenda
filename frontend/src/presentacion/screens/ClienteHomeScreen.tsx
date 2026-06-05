@@ -664,7 +664,7 @@ const st = StyleSheet.create({
   },
 
   // ── CARRUSEL
-  carouselList: { paddingHorizontal: 20, gap: 12, paddingBottom: 4, paddingTop: 25 },
+  carouselList: { paddingHorizontal: 20, gap: 12, paddingBottom: 4, paddingTop: 90 },
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
@@ -674,18 +674,18 @@ const st = StyleSheet.create({
   },
   cardTopSolid: {
     width: '100%',
-    height: 120,
+    height: 75,
     backgroundColor: '#4338F5',
     borderTopLeftRadius: 17,
     borderTopRightRadius: 17,
   },
   cardOverlayImage: {
     position: 'absolute',
-    top: -40, // Sube para sobresalir de la card
+    top: -85,
     left: 0,
     right: 0,
     width: '100%',
-    height: 160, // 160 de alto y empieza en -40 => termina exacto en 120 (el borde inferior de la caja azul)
+    height: 160, // bottom = -85 + 160 = 75 (justo donde termina el azul)
     zIndex: 10,
   },
   cardBottom: {
