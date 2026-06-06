@@ -17,6 +17,7 @@ export const ConfigurarPagosScreen = ({ navigation }: any) => {
     wompi_integrity_key: '',
     wompi_events_secret: ''
   });
+  const [wompiConfigurado, setWompiConfigurado] = useState(false);
 
   useEffect(() => {
     cargarDatos();
@@ -31,11 +32,13 @@ export const ConfigurarPagosScreen = ({ navigation }: any) => {
       const data = await empresaRepository.obtenerEmpresaPrivada(token.usuario_id);
       
       if (data) {
-        setLlaves({
+        // Solo cargar la llave pública (no es secreta).
+        // integrity_key y events_secret NUNCA se envían desde el backend por seguridad.
+        setLlaves(prev => ({
+          ...prev,
           wompi_public_key: data.wompi_public_key || '',
-          wompi_integrity_key: data.wompi_integrity_key || '',
-          wompi_events_secret: data.wompi_events_secret || '',
-        });
+        }));
+        setWompiConfigurado(data.wompi_configurado || false);
       }
     } catch (error) {
       console.error('Error cargando llaves:', error);
@@ -122,7 +125,7 @@ export const ConfigurarPagosScreen = ({ navigation }: any) => {
             <Text style={s.label}>Secreto de Eventos (Events Secret)</Text>
             <TextInput
               style={s.input}
-              placeholder="Ej: prv_test_..."
+              placeholder={wompiConfigurado ? '••••••• (guardado — escribe para cambiar)' : 'Ej: prv_test_...'}
               value={llaves.wompi_events_secret}
               onChangeText={(text) => setLlaves({ ...llaves, wompi_events_secret: text })}
               secureTextEntry
@@ -136,7 +139,7 @@ export const ConfigurarPagosScreen = ({ navigation }: any) => {
             <Text style={s.label}>Llave de Integridad (Integrity Key)</Text>
             <TextInput
               style={s.input}
-              placeholder="Opcional pero recomendado"
+              placeholder={wompiConfigurado ? '••••••• (guardado — escribe para cambiar)' : 'Opcional pero recomendado'}
               value={llaves.wompi_integrity_key}
               onChangeText={(text) => setLlaves({ ...llaves, wompi_integrity_key: text })}
               secureTextEntry

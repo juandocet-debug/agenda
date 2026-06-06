@@ -5,11 +5,17 @@ import { TokenJWT } from '../../dominio/auth/AuthRepository';
 
 const TOKEN_KEY = '@agenda_pro_token';
 
-// iOS Keychain / Android EncryptedSharedPreferences en nativo.
-// AsyncStorage como fallback solo en web (entorno de desarrollo).
+// ── Almacenamiento seguro ────────────────────────────────────────────────
+// Nativo: iOS Keychain / Android EncryptedSharedPreferences (expo-secure-store).
+// Web: sessionStorage (se borra al cerrar pestaña — más seguro que localStorage).
+//      Los tokens sensibles NO persisten entre sesiones en web.
 const setSecure = async (key: string, value: string): Promise<void> => {
   if (Platform.OS === 'web') {
-    await AsyncStorage.setItem(key, value);
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem(key, value);
+    } else {
+      await AsyncStorage.setItem(key, value);
+    }
   } else {
     await SecureStore.setItemAsync(key, value);
   }
@@ -17,6 +23,9 @@ const setSecure = async (key: string, value: string): Promise<void> => {
 
 const getSecure = async (key: string): Promise<string | null> => {
   if (Platform.OS === 'web') {
+    if (typeof sessionStorage !== 'undefined') {
+      return sessionStorage.getItem(key);
+    }
     return AsyncStorage.getItem(key);
   }
   return SecureStore.getItemAsync(key);
@@ -24,7 +33,11 @@ const getSecure = async (key: string): Promise<string | null> => {
 
 const removeSecure = async (key: string): Promise<void> => {
   if (Platform.OS === 'web') {
-    await AsyncStorage.removeItem(key);
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem(key);
+    } else {
+      await AsyncStorage.removeItem(key);
+    }
   } else {
     await SecureStore.deleteItemAsync(key);
   }
