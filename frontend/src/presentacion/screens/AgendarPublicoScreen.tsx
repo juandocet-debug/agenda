@@ -130,7 +130,7 @@ export const AgendarPublicoScreen = ({ route, navigation }: any) => {
 
   // ── Google Auth ──────────────────────────────────────────────────────────────
   const [request, response, promptAsync] = Google.useAuthRequest({
-    webClientId: '776135233648-4cisjd6nonsphm2qklc95irnod7cqtf5.apps.googleusercontent.com', 
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID, 
   });
 
   useEffect(() => {

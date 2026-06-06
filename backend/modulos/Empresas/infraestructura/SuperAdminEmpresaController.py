@@ -7,8 +7,18 @@ from modulos.Autenticacion.infraestructura.models import CredencialModel
 # Idealmente la validacion del SuperAdmin (jwt) estaria en un custom permission.
 # Para esta prueba, confiaremos en la ruta, o asuminos que tiene un middleware.
 
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
+class IsSuperAdmin(IsAuthenticated):
+    def has_permission(self, request, view):
+        if not super().has_permission(request, view):
+            return False
+        return getattr(request.user, 'rol', None) == 'superadmin'
+
 class SuperAdminEmpresaController(APIView):
-    permission_classes = [AllowAny] 
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsSuperAdmin] 
     
     def get(self, request):
         from django.db.models import Subquery, OuterRef
@@ -63,7 +73,8 @@ class SuperAdminEmpresaController(APIView):
         return Response({'ok': True, 'datos': resultado}, status=200)
 
 class ActivarEmpresaController(APIView):
-    permission_classes = [AllowAny]
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsSuperAdmin]
     
     def patch(self, request, empresa_id):
         """Activa o desactiva (Suspende) una empresa"""
@@ -78,7 +89,8 @@ class ActivarEmpresaController(APIView):
             return Response({'ok': False, 'error': 'Empresa no encontrada'}, status=404)
 
 class EliminarEmpresaController(APIView):
-    permission_classes = [AllowAny]
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsSuperAdmin]
     
     def delete(self, request, empresa_id):
         """Elimina permanentemente una empresa y sus credenciales"""
@@ -99,7 +111,8 @@ class EliminarEmpresaController(APIView):
             return Response({'ok': False, 'error': 'Error interno al eliminar la empresa.'}, status=500)
 
 class ActualizarImagenesEmpresaController(APIView):
-    permission_classes = [AllowAny]
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsSuperAdmin]
     
     def patch(self, request, empresa_id):
         """Actualiza el logo o la foto de portada de una empresa"""
@@ -122,7 +135,8 @@ class ActualizarImagenesEmpresaController(APIView):
 
 
 class ActualizarDatosEmpresaController(APIView):
-    permission_classes = [AllowAny]
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsSuperAdmin]
 
     def patch(self, request, empresa_id):
         """Actualiza los datos de contacto/ubicación de una empresa."""
