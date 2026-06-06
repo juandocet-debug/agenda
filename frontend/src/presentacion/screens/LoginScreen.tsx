@@ -31,7 +31,7 @@ import { useAuth } from '../../core/aplicacion/auth/AuthContext';
 // Arquitectura Hexagonal
 import { LoginUseCase } from '../../core/aplicacion/auth/LoginUseCase';
 import { DjangoAuthAdapter } from '../../core/infraestructura/auth/DjangoAuthAdapter';
-import { guardarTokenLocal } from '../../core/infraestructura/auth/TokenStorageAdapter';
+import { guardarTokenLocal, guardarClienteToken, guardarClienteId } from '../../core/infraestructura/auth/TokenStorageAdapter';
 import { useCarrito } from '../../core/aplicacion/carrito/CarritoContext';
 
 const authAdapter = new DjangoAuthAdapter();
@@ -123,9 +123,9 @@ export const LoginScreen = ({ navigation, route }: any) => {
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || 'Error autenticando con Google.');
       
-      await AsyncStorage.setItem('cliente_token', data.access);
+      await guardarClienteToken(data.access);
+      await guardarClienteId(data.datos?.usuario_id ? String(data.datos.usuario_id) : '');
       await AsyncStorage.setItem('cliente_nombre', data.datos?.nombre || '');
-      await AsyncStorage.setItem('cliente_id', data.datos?.usuario_id ? String(data.datos.usuario_id) : '');
       await AsyncStorage.setItem('cliente_email', data.datos?.email || '');
       
       const rol = data.datos?.rol;

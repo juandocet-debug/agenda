@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { obtenerClienteToken } from '../../core/infraestructura/auth/TokenStorageAdapter';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, shadows } from '../theme/colors';
 import { API_BASE as API } from '../../core/config/api';
@@ -313,8 +314,8 @@ export const ExplorarEmpresasScreen = ({ navigation }: any) => {
 
   const cargarAuth = async () => {
     try {
-      const token = await AsyncStorage.getItem('cliente_token');
-      const rol = await AsyncStorage.getItem('user_rol') || null; // O ajusta si no guardan el rol en storage
+      const token = await obtenerClienteToken();
+      const rol = await AsyncStorage.getItem('user_rol') || null;
       if (token) {
         setEstaLogueado(true);
       }

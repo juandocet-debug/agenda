@@ -38,19 +38,14 @@ export const guardarTokenLocal = async (token: TokenJWT): Promise<void> => {
       if (token.usuario_id) await setSecure('cliente_id', String(token.usuario_id));
       if (token.nombre) await AsyncStorage.setItem('cliente_nombre', token.nombre);
     }
-  } catch (e) {
-    console.error('Error al guardar el token localmente', e);
-  }
+  } catch (e) { console.error('Error al guardar el token localmente', e); }
 };
 
 export const obtenerTokenLocal = async (): Promise<TokenJWT | null> => {
   try {
     const jsonValue = await getSecure(TOKEN_KEY);
     return jsonValue != null ? JSON.parse(jsonValue) : null;
-  } catch (e) {
-    console.error('Error al leer el token localmente', e);
-    return null;
-  }
+  } catch (e) { console.error('Error al leer el token localmente', e); return null; }
 };
 
 export const eliminarTokenLocal = async (): Promise<void> => {
@@ -59,7 +54,14 @@ export const eliminarTokenLocal = async (): Promise<void> => {
     await removeSecure('cliente_token');
     await removeSecure('cliente_id');
     await AsyncStorage.removeItem('cliente_nombre');
-  } catch (e) {
-    console.error('Error al eliminar el token localmente', e);
-  }
+  } catch (e) { console.error('Error al eliminar el token localmente', e); }
 };
+
+// Funciones individuales para que las pantallas no accedan a AsyncStorage directamente
+// con claves sensibles (cliente_token y cliente_id van a SecureStore en nativo).
+export const guardarClienteToken = (token: string): Promise<void> => setSecure('cliente_token', token);
+export const obtenerClienteToken = (): Promise<string | null> => getSecure('cliente_token');
+export const eliminarClienteToken = (): Promise<void> => removeSecure('cliente_token');
+export const guardarClienteId = (id: string): Promise<void> => setSecure('cliente_id', id);
+export const obtenerClienteId = (): Promise<string | null> => getSecure('cliente_id');
+export const eliminarClienteId = (): Promise<void> => removeSecure('cliente_id');

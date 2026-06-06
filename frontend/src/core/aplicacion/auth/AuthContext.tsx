@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { obtenerTokenLocal } from '../../infraestructura/auth/TokenStorageAdapter';
+import { obtenerTokenLocal, eliminarTokenLocal } from '../../infraestructura/auth/TokenStorageAdapter';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface AuthContextType {
@@ -56,14 +56,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   /** Se llama inmediatamente al logout — limpia estado sin demoras */
   const onLogout = useCallback(async () => {
-    await AsyncStorage.multiRemove([
-      '@agenda_pro_token',
-      'cliente_token',
-      'cliente_id',
-      'cliente_nombre',
-      'cliente_email',
-      'cliente_telefono',
-    ]);
+    // eliminarTokenLocal borra @agenda_pro_token, cliente_token y cliente_id de SecureStore
+    await eliminarTokenLocal();
+    // El resto son datos no sensibles que viven en AsyncStorage
+    await AsyncStorage.multiRemove(['cliente_nombre', 'cliente_email', 'cliente_telefono']);
     setIsLogueado(false);
     setUserRol(null);
   }, []);

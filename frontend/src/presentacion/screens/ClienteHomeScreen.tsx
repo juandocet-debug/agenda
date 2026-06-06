@@ -25,7 +25,7 @@ import { CitaCliente } from '../../core/domain/citas/IClienteCitaRepository';
 
 // ── Infraestructura (inyección de dependencias) ───────────────────────────────
 import { DjangoClienteCitaRepository } from '../../core/infraestructura/citas/DjangoClienteCitaRepository';
-import { obtenerTokenLocal } from '../../core/infraestructura/auth/TokenStorageAdapter';
+import { obtenerTokenLocal, obtenerClienteId, obtenerClienteToken } from '../../core/infraestructura/auth/TokenStorageAdapter';
 import { useAuth } from '../../core/aplicacion/auth/AuthContext';
 
 // ── Componentes Extraídos ─────────────────────────────────────────────────────
@@ -60,8 +60,8 @@ export const ClienteHomeScreen = ({ navigation }: any) => {
 
           const [n, id, token] = await Promise.all([
             AsyncStorage.getItem('cliente_nombre'),
-            AsyncStorage.getItem('cliente_id'),
-            AsyncStorage.getItem('cliente_token'),
+            obtenerClienteId(),
+            obtenerClienteToken(),
           ]);
           setNombre(n || 'Mi cuenta');
           setClienteId(id || '');

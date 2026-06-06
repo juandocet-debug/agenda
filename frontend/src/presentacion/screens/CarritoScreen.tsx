@@ -9,7 +9,7 @@ import { colors, shadows } from '../theme/colors';
 import { useCarrito } from '../../core/aplicacion/carrito/CarritoContext';
 import { calcularTotal, ItemCarrito } from '../../core/dominio/carrito/CarritoEntidad';
 import { formatearMoneda } from '../../core/utils/currencyFormatter';
-import { obtenerTokenLocal } from '../../core/infraestructura/auth/TokenStorageAdapter';
+import { obtenerTokenLocal, obtenerClienteToken, obtenerClienteId } from '../../core/infraestructura/auth/TokenStorageAdapter';
 import { API_BASE as API } from '../../core/config/api';
 
 const ItemCard = ({ item, onQuitar, onCambiarCantidad, onCambiarPlan }: {
@@ -113,10 +113,10 @@ export const CarritoScreen = ({ navigation }: any) => {
   // Verificar si hay sesión de CLIENTE guardada (no de empresa)
   const verificarCliente = async () => {
     try {
-      const tokenRaw = await AsyncStorage.getItem('cliente_token');
+      const tokenRaw = await obtenerClienteToken();
       const nombre = await AsyncStorage.getItem('cliente_nombre');
       const email = await AsyncStorage.getItem('cliente_email');
-      const usuario_id = await AsyncStorage.getItem('cliente_id');
+      const usuario_id = await obtenerClienteId();
       const telefono = await AsyncStorage.getItem('cliente_telefono');
       if (tokenRaw) {
         setClienteLogueado({ nombre: nombre || undefined, email: email || undefined, usuario_id: usuario_id || undefined, telefono: telefono || undefined });
@@ -160,7 +160,7 @@ export const CarritoScreen = ({ navigation }: any) => {
     if (!clienteLogueado) return;
     setConfirmando(true);
     try {
-      const tokenRaw = await AsyncStorage.getItem('cliente_token');
+      const tokenRaw = await obtenerClienteToken();
       const resultados = [];
       for (const item of estado.items) {
         const r = await fetch(`${API}/api/citas/reservar-guest/`, {

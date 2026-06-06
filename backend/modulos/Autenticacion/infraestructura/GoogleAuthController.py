@@ -1,3 +1,4 @@
+import os
 import uuid
 import requests
 from rest_framework.views import APIView
@@ -10,6 +11,8 @@ from .DjangoAutenticacionRepository import DjangoAutenticacionRepository
 from .models import CredencialModel
 from .RegistroClienteController import _generar_tokens
 
+_GOOGLE_CLIENT_ID = os.environ.get('EXPO_PUBLIC_GOOGLE_CLIENT_ID', '')
+
 class GoogleAuthController(APIView):
     """
     Recibe un token de Google, lo valida, y crea o inicia sesión para un cliente.
@@ -21,17 +24,24 @@ class GoogleAuthController(APIView):
         if not token:
             return Response({'ok': False, 'error': 'Token no proporcionado.'}, status=400)
 
-        # Validar el token con Google
+        # Validar el id_token con Google (timeout 5s para no bloquear workers)
         google_url = f"https://oauth2.googleapis.com/tokeninfo?id_token={token}"
-        res = requests.get(google_url)
-        
+        res = requests.get(google_url, timeout=5)
+
         if res.status_code != 200:
-            # Ocurre cuando se envía un access_token en lugar de un id_token
-            google_url_access = f"https://www.googleapis.com/oauth2/v3/userinfo"
-            headers = {'Authorization': f'Bearer {token}'}
-            res = requests.get(google_url_access, headers=headers)
-            
+            # Fallback: access_token en lugar de id_token
+            res = requests.get(
+                "https://www.googleapis.com/oauth2/v3/userinfo",
+                headers={'Authorization': f'Bearer {token}'},
+                timeout=5,
+            )
             if res.status_code != 200:
+                return Response({'ok': False, 'error': 'Token de Google inválido.'}, status=401)
+        else:
+            # Verificar que el token fue emitido para esta aplicación (previene cross-app token substitution)
+            data_check = res.json()
+            token_aud = data_check.get('aud', '')
+            if _GOOGLE_CLIENT_ID and token_aud != _GOOGLE_CLIENT_ID:
                 return Response({'ok': False, 'error': 'Token de Google inválido.'}, status=401)
 
         data = res.json()

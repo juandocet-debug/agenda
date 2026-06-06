@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { guardarClienteToken, obtenerClienteToken } from '../../core/infraestructura/auth/TokenStorageAdapter';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
   ActivityIndicator, Alert, SafeAreaView, Modal, TextInput,
@@ -147,7 +148,7 @@ export const AgendarPublicoScreen = ({ route, navigation }: any) => {
 
   useEffect(() => {
     // Cargar token de cliente guardado
-    AsyncStorage.getItem('cliente_token').then(t => {
+    obtenerClienteToken().then(t => {
       if (t) setClienteToken(t);
     });
     AsyncStorage.getItem('cliente_nombre').then(n => {
@@ -338,8 +339,7 @@ export const AgendarPublicoScreen = ({ route, navigation }: any) => {
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || 'Credenciales incorrectas.');
-      // Guardar token de cliente (clave separada de empresa)
-      await AsyncStorage.setItem('cliente_token', data.access);
+      await guardarClienteToken(data.access);
       await AsyncStorage.setItem('cliente_nombre', data.datos?.nombre || authEmail);
       setClienteToken(data.access);
       setClienteNombre(data.datos?.nombre || authEmail);
@@ -368,7 +368,7 @@ export const AgendarPublicoScreen = ({ route, navigation }: any) => {
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || 'Error al registrarse.');
-      await AsyncStorage.setItem('cliente_token', data.access);
+      await guardarClienteToken(data.access);
       await AsyncStorage.setItem('cliente_nombre', authNombre);
       setClienteToken(data.access);
       setClienteNombre(authNombre);
@@ -395,7 +395,7 @@ export const AgendarPublicoScreen = ({ route, navigation }: any) => {
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || 'Error autenticando con Google.');
       
-      await AsyncStorage.setItem('cliente_token', data.access);
+      await guardarClienteToken(data.access);
       await AsyncStorage.setItem('cliente_nombre', data.datos?.nombre);
       setClienteToken(data.access);
       setClienteNombre(data.datos?.nombre);
@@ -441,7 +441,7 @@ export const AgendarPublicoScreen = ({ route, navigation }: any) => {
 
     const irAlCarrito = async () => {
       try {
-        const token = await AsyncStorage.getItem('cliente_token');
+        const token = await obtenerClienteToken();
         if (token) {
           navigation.navigate('Carrito');
         } else {
@@ -467,7 +467,7 @@ export const AgendarPublicoScreen = ({ route, navigation }: any) => {
 
   const onLogoPress = async () => {
     try {
-      const token = await AsyncStorage.getItem('cliente_token');
+      const token = await obtenerClienteToken();
       if (token) {
         navigation.navigate('ClienteHome');
       } else {
@@ -511,7 +511,7 @@ export const AgendarPublicoScreen = ({ route, navigation }: any) => {
 
         <TouchableOpacity style={s.carritoBtn} onPress={async () => {
           try {
-            const token = await AsyncStorage.getItem('cliente_token');
+            const token = await obtenerClienteToken();
             if (token) {
               navigation.navigate('Carrito');
             } else {

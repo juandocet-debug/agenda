@@ -7,6 +7,7 @@ import { DjangoAuthAdapter } from '../../core/infraestructura/auth/DjangoAuthAda
 import { useAuth } from '../../core/aplicacion/auth/AuthContext';
 import * as DocumentPicker from 'expo-document-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { guardarTokenLocal, eliminarClienteToken, eliminarClienteId } from '../../core/infraestructura/auth/TokenStorageAdapter';
 
 const authRepo = new DjangoAuthAdapter();
 const upgradeCasoUso = new UpgradeToEmpresaCasoUso(authRepo);
@@ -48,16 +49,10 @@ export const RegistroEmpresaDesdeClienteScreen = ({ navigation }: any) => {
     try {
       const tokens = await upgradeCasoUso.ejecutar(nombre, nit, rutFile);
       
-      // Actualizar token local
-      await AsyncStorage.setItem('@agenda_pro_token', JSON.stringify({
-        access: tokens.access,
-        refresh: tokens.refresh,
-        rol: tokens.rol
-      }));
-      
-      // Limpiar datos de cliente y actualizar contexto para forzar re-render a EmpresaTabs
-      await AsyncStorage.removeItem('cliente_token');
-      await AsyncStorage.removeItem('cliente_id');
+      // Actualizar token local en SecureStore y limpiar sesión de cliente
+      await guardarTokenLocal({ access: tokens.access, refresh: tokens.refresh, rol: tokens.rol });
+      await eliminarClienteToken();
+      await eliminarClienteId();
       
       Alert.alert('¡Felicidades!', 'Tu empresa ha sido registrada con éxito.', [
         { text: 'Ir a mi panel', onPress: () => onUpgradeSuccess(tokens.rol) }

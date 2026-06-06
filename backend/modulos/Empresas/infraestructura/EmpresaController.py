@@ -79,13 +79,19 @@ class PerfilPublicoEmpresaController(APIView):
 
 from rest_framework.permissions import IsAuthenticated
 
+def _verificar_ownership(request, empresa_id):
+    """Devuelve True si el usuario autenticado es dueño de la empresa o es superadmin."""
+    rol = getattr(request.user, 'rol', '')
+    if rol == 'superadmin':
+        return True
+    return str(request.user.usuario_id) == str(empresa_id)
+
 class DetalleEmpresaPrivadoController(APIView):
     permission_classes = [IsAuthenticated]
-    """
-    Endpoint privado para consultar todos los datos de la empresa (para edición).
-    El usuario debe estar autenticado.
-    """
+
     def get(self, request, empresa_id):
+        if not _verificar_ownership(request, empresa_id):
+            return Response({'ok': False, 'error': 'Sin permisos para acceder a esta empresa.'}, status=403)
         try:
             empresa = EmpresaModel.objects.get(id=empresa_id)
             return Response({
@@ -114,18 +120,17 @@ class DetalleEmpresaPrivadoController(APIView):
 
 class ConfigurarWompiController(APIView):
     permission_classes = [IsAuthenticated]
-    
+
     def post(self, request, empresa_id):
+        if not _verificar_ownership(request, empresa_id):
+            return Response({'ok': False, 'error': 'Sin permisos para modificar esta empresa.'}, status=403)
         try:
             empresa = EmpresaModel.objects.get(id=empresa_id)
-            # Validar que el usuario que hace la peticion pertenezca a esta empresa (omitido en MVP simplificado)
-            
             data = request.data
             empresa.wompi_public_key = data.get('wompi_public_key', empresa.wompi_public_key)
             empresa.wompi_integrity_key = data.get('wompi_integrity_key', empresa.wompi_integrity_key)
             empresa.wompi_events_secret = data.get('wompi_events_secret', empresa.wompi_events_secret)
             empresa.save()
-            
             return Response({'ok': True, 'mensaje': 'Llaves de Wompi actualizadas correctamente.'})
         except EmpresaModel.DoesNotExist:
             return Response({'ok': False, 'error': 'Empresa no encontrada.'}, status=404)
