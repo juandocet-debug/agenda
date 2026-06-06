@@ -131,7 +131,8 @@ class ActualizarImagenesEmpresaController(APIView):
         except EmpresaModel.DoesNotExist:
             return Response({'ok': False, 'error': 'Empresa no encontrada'}, status=404)
         except Exception as e:
-            return Response({'ok': False, 'error': str(e)}, status=500)
+            import logging; logging.getLogger(__name__).exception('[ActualizarImagenesEmpresa] Error interno')
+            return Response({'ok': False, 'error': 'Error interno del servidor.'}, status=500)
 
 
 class ActualizarDatosEmpresaController(APIView):

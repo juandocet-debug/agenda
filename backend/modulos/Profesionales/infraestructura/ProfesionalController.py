@@ -1,3 +1,4 @@
+import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -7,6 +8,8 @@ from .DjangoProfesionalRepository import DjangoProfesionalRepository
 from ..aplicacion.CrearProfesional import CrearProfesionalUseCase
 from ..aplicacion.ListarProfesionales import ListarProfesionalesUseCase
 from ..aplicacion.ActualizarProfesional import ActualizarProfesionalUseCase
+
+logger = logging.getLogger(__name__)
 
 class CrearProfesionalController(APIView):
     permission_classes = [IsAuthenticated]
@@ -19,11 +22,11 @@ class CrearProfesionalController(APIView):
     def post(self, request):
         try:
             # En la autenticación actual, el JWT guarda el ID de credencial en user_id.
-            # Como la Credencial se crea con el mismo ID de la Empresa (durante RegistroAutonomo), 
+            # Como la Credencial se crea con el mismo ID de la Empresa (durante RegistroAutonomo),
             # el user_id del token es de hecho el empresa_id.
             empresa_id = str(request.user.usuario_id) # request.user mapeado al modelo Credencial
             rol = getattr(request.user, 'rol', 'empresa')
-            
+
             # TODO: Idealmente validar que sólo rol 'empresa' (o superadmin) pueda hacer esto
             if rol != 'empresa' and rol != 'superadmin':
                 return Response({"ok": False, "error": "No tienes permisos para crear profesionales."}, status=status.HTTP_403_FORBIDDEN)
@@ -38,7 +41,8 @@ class CrearProfesionalController(APIView):
             }, status=status.HTTP_201_CREATED)
 
         except Exception as e:
-            return Response({"ok": False, "error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            logger.exception("[CrearProfesional] Error interno")
+            return Response({"ok": False, "error": "Error interno del servidor."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class ListarProfesionalesController(APIView):
     permission_classes = [IsAuthenticated]
@@ -52,19 +56,20 @@ class ListarProfesionalesController(APIView):
         try:
             empresa_id = str(request.user.usuario_id)
             rol = getattr(request.user, 'rol', 'empresa')
-            
+
             if rol != 'empresa' and rol != 'superadmin':
                 return Response({"ok": False, "error": "No tienes permisos."}, status=status.HTTP_403_FORBIDDEN)
 
             profesionales = self.listar_use_case.ejecutar(empresa_id)
-            
+
             return Response({
                 "ok": True,
                 "datos": [p.dict() for p in profesionales]
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({"ok": False, "error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            logger.exception("[ListarProfesionales] Error interno")
+            return Response({"ok": False, "error": "Error interno del servidor."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 from rest_framework.permissions import AllowAny
 class ProfesionalPublicoController(APIView):
@@ -84,7 +89,8 @@ class ProfesionalPublicoController(APIView):
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({"ok": False, "error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            logger.exception("[ProfesionalPublico] Error interno")
+            return Response({"ok": False, "error": "Error interno del servidor."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class ActualizarProfesionalController(APIView):
@@ -99,7 +105,7 @@ class ActualizarProfesionalController(APIView):
         try:
             empresa_id = str(request.user.usuario_id)
             rol = getattr(request.user, 'rol', 'empresa')
-            
+
             if rol != 'empresa' and rol != 'superadmin':
                 return Response({"ok": False, "error": "No tienes permisos."}, status=status.HTTP_403_FORBIDDEN)
 
@@ -115,4 +121,5 @@ class ActualizarProfesionalController(APIView):
         except ValueError as e:
             return Response({"ok": False, "error": str(e)}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({"ok": False, "error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            logger.exception("[ActualizarProfesional] Error interno")
+            return Response({"ok": False, "error": "Error interno del servidor."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

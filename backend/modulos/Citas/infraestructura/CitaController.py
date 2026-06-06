@@ -1,6 +1,9 @@
+import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 from .DjangoCitaRepository import DjangoCitaRepository
 from modulos.Citas.aplicacion.AgendarCita.AgendarCita import AgendarCita
@@ -74,4 +77,5 @@ class AgendarCitaController(APIView):
         except ValueError as e:
             return Response({'ok': False, 'error': str(e)}, status=400)
         except Exception as e:
-            return Response({'ok': False, 'error': f"Error interno: {str(e)}"}, status=500)
+            logger.exception("[AgendarCitaController] Error interno")
+            return Response({'ok': False, 'error': 'Error interno del servidor.'}, status=500)

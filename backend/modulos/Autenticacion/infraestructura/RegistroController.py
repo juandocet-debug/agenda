@@ -1,6 +1,9 @@
+import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
+
+logger = logging.getLogger(__name__)
 
 from .DjangoAutenticacionRepository import DjangoAutenticacionRepository
 from .DjangoPasswordHasher import DjangoPasswordHasher
@@ -33,4 +36,5 @@ class RegistroController(APIView):
         except ValueError as e:
             return Response({'ok': False, 'error': str(e)}, status=400)
         except Exception as e:
-            return Response({'ok': False, 'error': f"Error interno: {str(e)}"}, status=500)
+            logger.exception("[Registro] Error interno")
+            return Response({'ok': False, 'error': 'Error interno del servidor.'}, status=500)

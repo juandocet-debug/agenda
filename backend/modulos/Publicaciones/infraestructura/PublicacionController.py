@@ -1,3 +1,4 @@
+import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -11,6 +12,8 @@ from ..aplicacion.Interacciones import (
     ListarComentariosUseCase, EliminarComentarioUseCase,
     DarLikeComentarioUseCase,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class UploadImagenPublicacionController(APIView):
@@ -49,7 +52,8 @@ class UploadImagenPublicacionController(APIView):
             return Response({"ok": True, "url": url}, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({"ok": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.exception("[UploadImagenPublicacion] Error interno")
+            return Response({"ok": False, "error": "Error interno del servidor."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class CrearPublicacionController(APIView):
@@ -68,7 +72,8 @@ class CrearPublicacionController(APIView):
         except ValueError as e:
             return Response({"ok": False, "error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({"ok": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.exception("[CrearPublicacion] Error interno")
+            return Response({"ok": False, "error": "Error interno del servidor."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class ListarPublicacionesController(APIView):
@@ -87,7 +92,8 @@ class ListarPublicacionesController(APIView):
             publicaciones = ListarPublicacionesUseCase(repo).ejecutar(empresa_id, usuario_id, limit, offset)
             return Response({"ok": True, "datos": [p.dict() for p in publicaciones]})
         except Exception as e:
-            return Response({"ok": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.exception("[ListarPublicaciones] Error interno")
+            return Response({"ok": False, "error": "Error interno del servidor."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class EliminarPublicacionController(APIView):
@@ -103,7 +109,8 @@ class EliminarPublicacionController(APIView):
             repo.eliminar(publicacion_id)
             return Response({"ok": True, "mensaje": "Eliminada."})
         except Exception as e:
-            return Response({"ok": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.exception("[EliminarPublicacion] Error interno")
+            return Response({"ok": False, "error": "Error interno del servidor."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # --- Interacciones ---
@@ -118,7 +125,8 @@ class LikeController(APIView):
             resultado = DarLikeUseCase(repo).ejecutar(publicacion_id, usuario_id)
             return Response({"ok": True, "datos": resultado})
         except Exception as e:
-            return Response({"ok": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.exception("[LikeController] Error interno")
+            return Response({"ok": False, "error": "Error interno del servidor."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class ComentariosController(APIView):
@@ -130,7 +138,8 @@ class ComentariosController(APIView):
             comentarios = ListarComentariosUseCase(repo).ejecutar(publicacion_id)
             return Response({"ok": True, "datos": [c.dict() for c in comentarios]})
         except Exception as e:
-            return Response({"ok": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.exception("[ComentariosController.get] Error interno")
+            return Response({"ok": False, "error": "Error interno del servidor."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def post(self, request, publicacion_id):
         try:
@@ -157,7 +166,8 @@ class ComentariosController(APIView):
         except ValueError as e:
             return Response({"ok": False, "error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({"ok": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.exception("[ComentariosController.post] Error interno")
+            return Response({"ok": False, "error": "Error interno del servidor."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class EliminarComentarioController(APIView):
@@ -172,7 +182,8 @@ class EliminarComentarioController(APIView):
                 return Response({"ok": False, "error": "No autorizado o no encontrado."}, status=status.HTTP_403_FORBIDDEN)
             return Response({"ok": True, "mensaje": "Comentario eliminado."})
         except Exception as e:
-            return Response({"ok": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.exception("[EliminarComentario] Error interno")
+            return Response({"ok": False, "error": "Error interno del servidor."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class LikeComentarioController(APIView):
@@ -185,4 +196,5 @@ class LikeComentarioController(APIView):
             resultado = DarLikeComentarioUseCase(repo).ejecutar(comentario_id, usuario_id)
             return Response({"ok": True, "datos": resultado})
         except Exception as e:
-            return Response({"ok": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.exception("[LikeComentario] Error interno")
+            return Response({"ok": False, "error": "Error interno del servidor."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

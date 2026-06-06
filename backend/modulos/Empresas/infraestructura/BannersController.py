@@ -61,7 +61,8 @@ class BannersAdminController(APIView):
             )
             return Response({'ok': True, 'mensaje': 'Banner creado', 'id': banner.id}, status=201)
         except Exception as e:
-            return Response({'ok': False, 'error': str(e)}, status=400)
+            import logging; logging.getLogger(__name__).exception('[BannersAdmin.post] Error interno')
+            return Response({'ok': False, 'error': 'Error interno del servidor.'}, status=500)
 
     def put(self, request, banner_id):
         if not self._is_superadmin(request):
@@ -81,7 +82,8 @@ class BannersAdminController(APIView):
         except BannerPublicitarioModel.DoesNotExist:
             return Response({'ok': False, 'error': 'Banner no encontrado'}, status=404)
         except Exception as e:
-            return Response({'ok': False, 'error': str(e)}, status=400)
+            import logging; logging.getLogger(__name__).exception('[BannersAdmin.put] Error interno')
+            return Response({'ok': False, 'error': 'Error interno del servidor.'}, status=500)
 
     def delete(self, request, banner_id):
         if not self._is_superadmin(request):

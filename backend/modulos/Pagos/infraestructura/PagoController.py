@@ -1,7 +1,10 @@
+import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .DjangoPagoRepository import DjangoPagoRepository
 from modulos.Pagos.aplicacion.RegistrarAbono.RegistrarAbono import RegistrarAbono
+
+logger = logging.getLogger(__name__)
 
 class PagoController(APIView):
     def post(self, request, cita_id):
@@ -35,7 +38,8 @@ class PagoController(APIView):
         except ValueError as e:
             return Response({'ok': False, 'error': str(e)}, status=400)
         except Exception as e:
-            return Response({'ok': False, 'error': f"Error interno: {str(e)}"}, status=500)
+            logger.exception("[PagoController] Error interno")
+            return Response({'ok': False, 'error': 'Error interno del servidor.'}, status=500)
 
     def get(self, request, cita_id):
         """Consulta el estado del pago de una cita."""

@@ -245,7 +245,8 @@ class SlotsDisponiblesController(APIView):
         except ValueError as e:
             return Response({'ok': False, 'error': f'Horario mal configurado: {str(e)}'}, status=400)
         except Exception as e:
-            return Response({'ok': False, 'error': f'Error generando slots: {str(e)}'}, status=500)
+            import logging as _log; _log.getLogger(__name__).exception('[SlotsController] Error generando slots')
+            return Response({'ok': False, 'error': 'Error interno del servidor.'}, status=500)
             
         ocupados = _slots_ocupados(empresa_id, profesional_id, fecha_obj, sede_id)
 
@@ -278,7 +279,7 @@ class ReservarGuestController(APIView):
         except Exception as e:
             import logging
             logging.getLogger(__name__).exception('[ReservarGuestController] ERROR 500')
-            return Response({'ok': False, 'error': f'Error interno: {str(e)}'}, status=500)
+            return Response({'ok': False, 'error': 'Error interno del servidor.'}, status=500)
 
     def _procesar_reserva(self, request):
         d = request.data

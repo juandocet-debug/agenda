@@ -49,4 +49,4 @@ class LoginController(APIView):
             return Response({'ok': False, 'error': str(e)}, status=401)
         except Exception as e:
             logger.exception("Error inesperado en login")
-            return Response({'ok': False, 'error': f"Error interno: {str(e)}"}, status=500)
+            return Response({'ok': False, 'error': 'Error interno del servidor.'}, status=500)

@@ -14,6 +14,10 @@ import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
+from rest_framework.throttling import AnonRateThrottle
+
+class RecuperarPasswordThrottle(AnonRateThrottle):
+    scope = 'recuperar_password'
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +36,7 @@ class SolicitarRecuperacionController(APIView):
     Respuesta: siempre 200 (por seguridad, no revela si el email existe).
     """
     permission_classes = [AllowAny]
-    throttle_classes = []
+    throttle_classes = [RecuperarPasswordThrottle]
 
     def post(self, request):
         email = request.data.get('email', '').strip().lower()
@@ -67,7 +71,7 @@ class RestablecerPasswordController(APIView):
     Respuesta: { ok: true, rol: "empresa"|"cliente"|"superadmin" }
     """
     permission_classes = [AllowAny]
-    throttle_classes = []
+    throttle_classes = [RecuperarPasswordThrottle]
 
     def post(self, request):
         token_str = request.data.get('token', '').strip()

@@ -1,6 +1,9 @@
+import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
+
+logger = logging.getLogger(__name__)
 from modulos.Empresas.infraestructura.models import EmpresaModel
 from .DjangoServicioRepository import DjangoServicioRepository
 from modulos.Servicios.aplicacion.CrearServicio.CrearServicio import CrearServicio
@@ -56,7 +59,8 @@ class ServicioController(APIView):
         except ValueError as e:
             return Response({'ok': False, 'error': str(e)}, status=400)
         except Exception as e:
-            return Response({'ok': False, 'error': f"Error interno: {str(e)}"}, status=500)
+            logger.exception("[ServicioController.post] Error interno")
+            return Response({'ok': False, 'error': 'Error interno del servidor.'}, status=500)
 
     def get(self, request):
         """Devuelve el portafolio de una empresa"""
@@ -130,7 +134,8 @@ class ActualizarServicioController(APIView):
             )
             return Response({'ok': True, 'mensaje': 'Servicio actualizado correctamente'}, status=200)
         except Exception as e:
-            return Response({'ok': False, 'error': str(e)}, status=400)
+            logger.exception("[ActualizarServicioController] Error interno")
+            return Response({'ok': False, 'error': 'Error interno del servidor.'}, status=500)
 
     def delete(self, request, servicio_id):
         try:
@@ -140,4 +145,5 @@ class ActualizarServicioController(APIView):
             caso_uso.run(servicio_id=servicio_id, empresa_id=empresa_id)
             return Response({'ok': True, 'mensaje': 'Servicio desactivado correctamente'}, status=200)
         except Exception as e:
-            return Response({'ok': False, 'error': str(e)}, status=400)
+            logger.exception("[EliminarServicioController] Error interno")
+            return Response({'ok': False, 'error': 'Error interno del servidor.'}, status=500)
