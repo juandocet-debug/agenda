@@ -188,6 +188,7 @@ REST_FRAMEWORK = {
         'anon': '60/min',
         'user': '300/min',
         # Throttles específicos definidos en las vistas públicas
+        'login': '10/min',            # Máx 10 intentos de login/min por IP
         'reserva_guest': '10/min',   # Máx 10 reservas/min por IP
         'slots': '60/min',           # Máx 60 consultas de slots/min
         'upload_imagen': '20/min',   # Máx 20 uploads/min

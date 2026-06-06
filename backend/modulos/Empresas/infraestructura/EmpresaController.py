@@ -108,8 +108,8 @@ class DetalleEmpresaPrivadoController(APIView):
                     'moneda': getattr(empresa, 'moneda', 'COP'),
                     'logo_url': getattr(empresa, 'logo_url', ''),
                     'wompi_public_key': getattr(empresa, 'wompi_public_key', ''),
-                    'wompi_integrity_key': getattr(empresa, 'wompi_integrity_key', ''),
-                    'wompi_events_secret': getattr(empresa, 'wompi_events_secret', ''),
+                    # C-3 FIX: NUNCA enviar integrity_key ni events_secret al frontend
+                    'wompi_configurado': bool(getattr(empresa, 'wompi_integrity_key', '')),
                     'mensaje_advertencia': getattr(empresa, 'mensaje_advertencia', ''),
                     'categoria_id': str(empresa.categoria_id) if empresa.categoria_id else None,
                     'categoria_nombre': empresa.categoria.nombre if empresa.categoria_id else '',

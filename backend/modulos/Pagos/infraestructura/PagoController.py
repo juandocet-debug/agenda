@@ -1,14 +1,39 @@
 import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 from .DjangoPagoRepository import DjangoPagoRepository
 from modulos.Pagos.aplicacion.RegistrarAbono.RegistrarAbono import RegistrarAbono
+from modulos.Citas.infraestructura.models import CitaModel
 
 logger = logging.getLogger(__name__)
 
 class PagoController(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def _verificar_ownership(self, request, cita_id):
+        """
+        Verifica que el usuario autenticado sea:
+        - La empresa dueña de la cita, o
+        - El cliente de la cita, o
+        - Un superadmin.
+        """
+        usuario_id = str(request.user.usuario_id)
+        rol = getattr(request.user, 'rol', '')
+        if rol == 'superadmin':
+            return True
+        try:
+            cita = CitaModel.objects.get(id=cita_id)
+            # La empresa dueña o el cliente de la cita
+            return str(cita.empresa_id) == usuario_id or str(cita.cliente_id) == usuario_id
+        except CitaModel.DoesNotExist:
+            return False
+
     def post(self, request, cita_id):
         """Registra un abono a la cita."""
+        if not self._verificar_ownership(request, cita_id):
+            return Response({'ok': False, 'error': 'Sin permisos para este pago.'}, status=403)
+
         data = request.data
         cantidad_abono = data.get('cantidad')
         metodo_pago = data.get('metodo_pago', 'EFECTIVO')
@@ -43,6 +68,9 @@ class PagoController(APIView):
 
     def get(self, request, cita_id):
         """Consulta el estado del pago de una cita."""
+        if not self._verificar_ownership(request, cita_id):
+            return Response({'ok': False, 'error': 'Sin permisos para este pago.'}, status=403)
+
         repo = DjangoPagoRepository()
         pago = repo.obtener_por_cita(cita_id)
         

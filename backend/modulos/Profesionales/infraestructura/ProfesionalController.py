@@ -83,9 +83,11 @@ class ProfesionalPublicoController(APIView):
     def get(self, request, empresa_id):
         try:
             profesionales = self.listar_use_case.ejecutar(empresa_id)
+            # A-4: Cap de 50 profesionales por respuesta — previene payloads gigantes
+            activos = [p.dict() for p in profesionales if p.activo][:50]
             return Response({
                 "ok": True,
-                "datos": [p.dict() for p in profesionales if p.activo]
+                "datos": activos
             }, status=status.HTTP_200_OK)
 
         except Exception as e:

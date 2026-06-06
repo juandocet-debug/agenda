@@ -19,7 +19,12 @@ class ServicioController(APIView):
     def post(self, request):
         data = request.data
         try:
-            empresa_id = data.get('empresa_id')
+            # C-1 FIX: empresa_id del JWT, no del body — previene IDOR
+            rol = getattr(request.user, 'rol', '')
+            if rol not in ('empresa', 'superadmin'):
+                return Response({'ok': False, 'error': 'Sin permisos para crear servicios.'}, status=403)
+            empresa_id = str(request.user.usuario_id)
+
             nombre = data.get('nombre')
             precio = data.get('precio')
             tipo_servicio = data.get('tipo_servicio', 'CITA')
@@ -31,8 +36,8 @@ class ServicioController(APIView):
             precio_90_dias = data.get('precio_90_dias')
             precio_120_dias = data.get('precio_120_dias')
             
-            if not all([empresa_id, nombre, precio is not None]):
-                return Response({'ok': False, 'error': 'Faltan datos requeridos (empresa_id, nombre, precio)'}, status=400)
+            if not all([nombre, precio is not None]):
+                return Response({'ok': False, 'error': 'Faltan datos requeridos (nombre, precio)'}, status=400)
             
             if tipo_servicio == 'CITA' and not duracion:
                 return Response({'ok': False, 'error': 'Las citas requieren duración'}, status=400)

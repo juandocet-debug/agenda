@@ -21,19 +21,32 @@ class SuperAdminEmpresaController(APIView):
     permission_classes = [IsSuperAdmin] 
     
     def get(self, request):
-        from django.db.models import Subquery, OuterRef
-        """Lista todas las empresas registradas para el panel del SuperAdmin."""
+        from django.db.models import Subquery, OuterRef, Count
+        """Lista todas las empresas registradas para el panel del SuperAdmin (paginado)."""
         
+        # A-3: Paginación — ?page=1&page_size=50 (default 50, max 100)
+        try:
+            page = max(1, int(request.query_params.get('page', 1)))
+            page_size = min(100, max(1, int(request.query_params.get('page_size', 50))))
+        except (ValueError, TypeError):
+            page, page_size = 1, 50
+
         # Optimización: Evitar N+1 queries al consultar credenciales por cada empresa
         estado_activo_sq = CredencialModel.objects.filter(usuario_id=OuterRef('id')).values('activo')[:1]
         email_sq = CredencialModel.objects.filter(usuario_id=OuterRef('id')).values('email')[:1]
         username_sq = CredencialModel.objects.filter(usuario_id=OuterRef('id')).values('username')[:1]
         
-        empresas_db = EmpresaModel.objects.annotate(
+        # A-2: annotate para evitar N+1 en noticias.count()
+        empresas_qs = EmpresaModel.objects.annotate(
             credencial_activa=Subquery(estado_activo_sq),
             credencial_email=Subquery(email_sq),
-            credencial_username=Subquery(username_sq)
+            credencial_username=Subquery(username_sq),
+            num_noticias=Count('noticias'),
         ).order_by('-id')
+
+        total = empresas_qs.count()
+        start = (page - 1) * page_size
+        empresas_db = empresas_qs[start:start + page_size]
         
         resultado = []
         
@@ -42,11 +55,8 @@ class SuperAdminEmpresaController(APIView):
             admin_email = getattr(empresa, 'credencial_email', 'Sin correo') or 'Sin correo'
             admin_nombre = getattr(empresa, 'credencial_username', 'Sin asignar') or 'Sin asignar'
                 
-            # Mock de datos analíticos
-            publicaciones = empresa.noticias.count()
-            es_pro = publicaciones > 2 or empresa.profesionales > 2 if hasattr(empresa, 'profesionales') else False
-            tipo_plan = 'Pro' if es_pro else 'Free'
-            actividad_semanal = [12, 19, 15, 25, 22, 30, 28] if es_pro else [2, 5, 3, 8, 4, 10, 7]
+            # A-7 FIX: Usar datos reales, no mock
+            publicaciones = empresa.num_noticias
 
             resultado.append({
                 'id': str(empresa.id),
@@ -58,19 +68,20 @@ class SuperAdminEmpresaController(APIView):
                 'activa': estado_activo,
                 'admin_email': admin_email,
                 'admin_nombre': admin_nombre,
-                'profesionales': 3, 
-                'usuarios': 15,
                 'publicaciones': publicaciones,
-                'likes': publicaciones * 12 + 5,
-                'tipo_plan': tipo_plan,
-                'actividad_semanal': actividad_semanal,
                 'ciudad': empresa.ciudad,
                 'pais': empresa.pais,
                 'direccion': empresa.direccion,
                 'telefono': empresa.telefono,
             })
             
-        return Response({'ok': True, 'datos': resultado}, status=200)
+        return Response({
+            'ok': True,
+            'total': total,
+            'page': page,
+            'page_size': page_size,
+            'datos': resultado,
+        }, status=200)
 
 class ActivarEmpresaController(APIView):
     authentication_classes = [JWTAuthentication]

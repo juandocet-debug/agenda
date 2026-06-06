@@ -2,6 +2,7 @@ import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
+from rest_framework.throttling import AnonRateThrottle
 from rest_framework_simplejwt.tokens import RefreshToken
 
 logger = logging.getLogger(__name__)
@@ -10,8 +11,15 @@ from .DjangoAutenticacionRepository import DjangoAutenticacionRepository
 from .DjangoPasswordHasher import DjangoPasswordHasher
 from modulos.Autenticacion.aplicacion.IniciarSesion.IniciarSesion import IniciarSesion
 
+
+class LoginThrottle(AnonRateThrottle):
+    """Máximo 10 intentos de login por minuto por IP — anti brute-force."""
+    scope = 'login'
+
+
 class LoginController(APIView):
-    permission_classes = [AllowAny] # El login debe ser público
+    permission_classes = [AllowAny]
+    throttle_classes = [LoginThrottle]
 
     def post(self, request):
         email = request.data.get('email')
