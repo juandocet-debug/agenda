@@ -193,6 +193,9 @@ REST_FRAMEWORK = {
         'upload_imagen': '20/min',   # Máx 20 uploads/min
         'recuperar_password': '5/min',
         'registro_empresa': '3/hour',  # Máx 3 registros/hora por IP
+        'registro_cliente': '10/hour', # Máx 10 registros cliente/hora por IP
+        'iniciar_pago': '15/min',     # Máx 15 inicios de pago/min por IP
+        'verificar_pago': '20/min',   # Máx 20 verificaciones/min por IP
     },
 }
 
@@ -228,10 +231,14 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 10_485_760  # 10MB
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
-# En Railway, HTTPS es automático via proxy — activar estas solo si usas HTTPS directo
-# SECURE_SSL_REDIRECT = True
-# SESSION_COOKIE_SECURE = True
-# CSRF_COOKIE_SECURE = True
+# Railway/Vercel manejan HTTPS — activar cookies seguras en producción
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+# SSL redirect lo maneja el proxy de Railway, no Django
+# SECURE_SSL_REDIRECT = not DEBUG
+
+# ── URL del frontend (para redirecciones de pago, etc.) ──────────────────────
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'https://agenda-pi-bice.vercel.app')
 
 # ── Wompi (variables de entorno obligatorias en Railway) ─────────────────────
 WOMPI_PUBLIC_KEY    = os.environ.get('WOMPI_PUBLIC_KEY', '')

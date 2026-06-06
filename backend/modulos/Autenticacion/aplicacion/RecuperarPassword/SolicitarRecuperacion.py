@@ -19,9 +19,10 @@ from modulos.Autenticacion.dominio.AutenticacionRepositoryPort import Autenticac
 from modulos.Autenticacion.dominio.PasswordResetRepositoryPort import PasswordResetRepositoryPort, PasswordResetToken
 from modulos.Autenticacion.dominio.EmailPort import EmailPort
 
+from django.conf import settings
+
 
 _EXPIRACION_MINUTOS = 30
-_FRONTEND_URL = 'https://agenda-pi-bice.vercel.app'
 
 
 class SolicitarRecuperacion:
@@ -62,7 +63,7 @@ class SolicitarRecuperacion:
         self.reset_repo.guardar_token(reset_token)
 
         # Construir link de recuperación según el rol
-        link = f"{_FRONTEND_URL}/reset-password/{token_str}"
+        link = f"{settings.FRONTEND_URL}/reset-password/{token_str}"
 
         tipo_cuenta = "empresa" if credencial.rol == "empresa" else "cliente"
         cuerpo_html = _construir_email_html(link, tipo_cuenta, _EXPIRACION_MINUTOS)

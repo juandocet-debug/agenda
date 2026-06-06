@@ -43,6 +43,14 @@ class UploadImagenThrottle(UserRateThrottle):
     """Máximo 20 uploads por minuto por usuario autenticado."""
     scope = 'upload_imagen'
 
+class IniciarPagoThrottle(AnonRateThrottle):
+    """Máximo 15 inicios de pago por minuto por IP."""
+    scope = 'iniciar_pago'
+
+class VerificarPagoThrottle(AnonRateThrottle):
+    """Máximo 20 verificaciones de pago por minuto por IP."""
+    scope = 'verificar_pago'
+
 from .models import CitaModel, HorarioEmpresaModel
 from modulos.Empresas.infraestructura.models import EmpresaModel
 from modulos.Servicios.infraestructura.models import ServicioModel
@@ -371,7 +379,7 @@ class ReservarGuestController(APIView):
                 f'&amount-in-cents={monto_centavos}'
                 f'&reference={wompi_ref}'
                 f'&signature:integrity={firma_integridad}'
-                f'&redirect-url=https://agenda-pi-bice.vercel.app/pago-exitoso/{cita_id}'
+                f'&redirect-url={settings.FRONTEND_URL}/pago-exitoso/{cita_id}'
             )
 
         CitaModel.objects.create(
@@ -545,6 +553,7 @@ class VerificarPagoWompiController(APIView):
     fue aprobado. Esto resuelve cualquier caso donde el webhook falló.
     """
     permission_classes = [AllowAny]
+    throttle_classes = [VerificarPagoThrottle]
 
     def get(self, request):
         import urllib.request
@@ -626,6 +635,7 @@ class VerificarPagoWompiController(APIView):
 
 class IniciarPagoWompiController(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [IniciarPagoThrottle]
 
     def post(self, request):
         """
@@ -675,7 +685,7 @@ class IniciarPagoWompiController(APIView):
             f'&amount-in-cents={monto_centavos}'
             f'&reference={referencia}'
             f'&signature:integrity={firma_integridad}'
-            f'&redirect-url=https://agenda-pi-bice.vercel.app/pago-exitoso/{cita_id}'
+            f'&redirect-url={settings.FRONTEND_URL}/pago-exitoso/{cita_id}'
         )
 
         return Response({
@@ -747,26 +757,15 @@ class CitasEmpresaController(APIView):
 # --- Citas del Cliente (seguro: requiere JWT de cliente) ---
 
 class CitasClienteController(APIView):
-    permission_classes = [AllowAny]
-
-    def _validar_token_cliente(self, request):
-        auth_header = request.headers.get('Authorization', '')
-        if not auth_header.startswith('Bearer '):
-            return None, 'Token de autenticacion requerido'
-        raw_token = auth_header.split(' ', 1)[1]
-        try:
-            from rest_framework_simplejwt.tokens import AccessToken
-            token_obj = AccessToken(raw_token)
-            if token_obj.get('rol') not in ('cliente',):
-                return None, 'Acceso denegado: se requiere cuenta de cliente'
-            return token_obj.get('user_id') or token_obj.get('usuario_id'), None
-        except Exception:
-            return None, 'Token invalido o expirado'
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        token_user_id, error = self._validar_token_cliente(request)
-        if error:
-            return Response({'ok': False, 'error': error}, status=401)
+        # El usuario ya está autenticado por DRF.
+        # Verificar que tenga rol 'cliente'.
+        token_user_id = getattr(request.user, 'id', None) or getattr(request.user, 'usuario_id', None)
+        token_rol = getattr(request.user, 'rol', None)
+        if token_rol != 'cliente':
+            return Response({'ok': False, 'error': 'Acceso denegado: se requiere cuenta de cliente'}, status=403)
         cliente_id = request.GET.get('cliente_id', '').strip()
         if not cliente_id:
             return Response({'ok': False, 'error': 'cliente_id requerido'}, status=400)

@@ -12,6 +12,7 @@ import uuid
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
+from rest_framework.throttling import AnonRateThrottle
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from modulos.Autenticacion.dominio.Entidades import Credencial
@@ -21,12 +22,18 @@ from .DjangoPasswordHasher import DjangoPasswordHasher
 from .models import CredencialModel
 
 
+class RegistroClienteThrottle(AnonRateThrottle):
+    """Máximo 10 registros de cliente por hora por IP."""
+    scope = 'registro_cliente'
+
+
 class RegistroClienteController(APIView):
     """
     Registro público de clientes finales (usuarios que reservan servicios).
     Al registrarse exitosamente, retorna tokens JWT para auto-login inmediato.
     """
     permission_classes = [AllowAny]
+    throttle_classes = [RegistroClienteThrottle]
 
     def post(self, request):
         nombre = request.data.get('nombre', '').strip()

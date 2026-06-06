@@ -1,8 +1,8 @@
 import { AuthRepository, Credenciales, TokenJWT, RegistroData } from '../../dominio/auth/AuthRepository';
+import { API_BASE } from '../../config/api';
 
-// Usaremos esta IP base para que el simulador o web llegue a localhost.
-// En Android emulator se usaría 10.0.2.2. En Web o iOS simulator: localhost
-const BASE_URL = 'https://agenda-production-ae37.up.railway.app/api';
+// Usamos la constante centralizada API_BASE para todos los endpoints de auth.
+const BASE_URL = `${API_BASE}/api`;
 
 export class DjangoAuthAdapter implements AuthRepository {
   

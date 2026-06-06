@@ -65,3 +65,9 @@ export const eliminarClienteToken = (): Promise<void> => removeSecure('cliente_t
 export const guardarClienteId = (id: string): Promise<void> => setSecure('cliente_id', id);
 export const obtenerClienteId = (): Promise<string | null> => getSecure('cliente_id');
 export const eliminarClienteId = (): Promise<void> => removeSecure('cliente_id');
+
+// cliente_nombre y cliente_email no son secretos — AsyncStorage está bien.
+export const guardarClienteNombre = (nombre: string): Promise<void> => AsyncStorage.setItem('cliente_nombre', nombre);
+export const obtenerClienteNombre = (): Promise<string | null> => AsyncStorage.getItem('cliente_nombre');
+export const guardarClienteEmail = (email: string): Promise<void> => AsyncStorage.setItem('cliente_email', email);
+export const obtenerClienteEmail = (): Promise<string | null> => AsyncStorage.getItem('cliente_email');

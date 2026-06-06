@@ -1,6 +1,7 @@
 import os
 import uuid
 import requests
+from django.contrib.auth.hashers import make_password
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
@@ -63,8 +64,8 @@ class GoogleAuthController(APIView):
         except CredencialModel.DoesNotExist:
             # Crear cuenta de cliente
             usuario_id = str(uuid.uuid4())
-            # Guardamos un password ficticio
-            password_hash = "google-oauth2-no-password" 
+            # Hash inutilizable — impide login con password para cuentas OAuth
+            password_hash = make_password(None)
             
             credencial = Credencial(
                 usuario_id=usuario_id,

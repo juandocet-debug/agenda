@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { guardarClienteToken, obtenerClienteToken } from '../../core/infraestructura/auth/TokenStorageAdapter';
+import { guardarClienteToken, obtenerClienteToken, guardarClienteNombre, obtenerClienteNombre } from '../../core/infraestructura/auth/TokenStorageAdapter';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
   ActivityIndicator, Alert, SafeAreaView, Modal, TextInput,
@@ -151,7 +151,7 @@ export const AgendarPublicoScreen = ({ route, navigation }: any) => {
     obtenerClienteToken().then(t => {
       if (t) setClienteToken(t);
     });
-    AsyncStorage.getItem('cliente_nombre').then(n => {
+    obtenerClienteNombre().then(n => {
       if (n) setClienteNombre(n);
     });
   }, []);
@@ -340,7 +340,7 @@ export const AgendarPublicoScreen = ({ route, navigation }: any) => {
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || 'Credenciales incorrectas.');
       await guardarClienteToken(data.access);
-      await AsyncStorage.setItem('cliente_nombre', data.datos?.nombre || authEmail);
+      await guardarClienteNombre(data.datos?.nombre || authEmail);
       setClienteToken(data.access);
       setClienteNombre(data.datos?.nombre || authEmail);
       setMostrarAuthCliente(false);
@@ -369,7 +369,7 @@ export const AgendarPublicoScreen = ({ route, navigation }: any) => {
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || 'Error al registrarse.');
       await guardarClienteToken(data.access);
-      await AsyncStorage.setItem('cliente_nombre', authNombre);
+      await guardarClienteNombre(authNombre);
       setClienteToken(data.access);
       setClienteNombre(authNombre);
       setMostrarAuthCliente(false);
@@ -396,7 +396,7 @@ export const AgendarPublicoScreen = ({ route, navigation }: any) => {
       if (!data.ok) throw new Error(data.error || 'Error autenticando con Google.');
       
       await guardarClienteToken(data.access);
-      await AsyncStorage.setItem('cliente_nombre', data.datos?.nombre);
+      await guardarClienteNombre(data.datos?.nombre);
       setClienteToken(data.access);
       setClienteNombre(data.datos?.nombre);
       setMostrarAuthCliente(false);
