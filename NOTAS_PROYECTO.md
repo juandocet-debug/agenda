@@ -92,7 +92,7 @@ Agenda/
 - **EAS Owner:** `juandocet`
 - **Android Package:** `com.juandocet.agendapro`
 - **Runtime Version Policy:** `appVersion` (las OTA solo aplican a apps con la misma versión nativa)
-- **Google OAuth Web Client ID:** `776135233648-4cisjd6nonsphm2qklc95irnod7cqtf5.apps.googleusercontent.com`
+- **Google OAuth Web Client ID:** Configurado vía `process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID`
 
 ---
 

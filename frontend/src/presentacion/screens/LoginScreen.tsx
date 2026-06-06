@@ -95,9 +95,9 @@ export const LoginScreen = ({ navigation, route }: any) => {
   const isWeb = Platform.OS === 'web';
   const [request, response, promptAsync] = Google.useAuthRequest(
     isWeb
-      ? { webClientId: '776135233648-4cisjd6nonsphm2qklc95irnod7cqtf5.apps.googleusercontent.com' }
-      : { webClientId: '776135233648-4cisjd6nonsphm2qklc95irnod7cqtf5.apps.googleusercontent.com',
-          androidClientId: '776135233648-4cisjd6nonsphm2qklc95irnod7cqtf5.apps.googleusercontent.com' } // placeholder — no funcional en android pero evita el crash
+      ? { webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID }
+      : { webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
+          androidClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID } // placeholder — no funcional en android pero evita el crash
   );
 
   useEffect(() => {

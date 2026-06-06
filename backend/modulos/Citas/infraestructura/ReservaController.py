@@ -188,8 +188,10 @@ class SlotsDisponiblesController(APIView):
         try:
             return self._get(request)
         except Exception as e:
-            import traceback
-            return Response({'ok': False, 'error': f'CRASH GLOBAL: {str(e)}', 'trace': traceback.format_exc()}, status=500)
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.exception("Error global en SlotsDisponiblesController")
+            return Response({'ok': False, 'error': 'Error interno del servidor.'}, status=500)
 
     def _get(self, request):
         empresa_id = request.query_params.get('empresa_id')

@@ -3,7 +3,7 @@ from .AutenticacionController import LoginController
 from .RegistroController import RegistroController
 from .RegistroClienteController import RegistroClienteController
 from .GoogleAuthController import GoogleAuthController
-from .CrearSuperAdminController import CrearSuperAdminController
+
 from .RecuperarPasswordController import SolicitarRecuperacionController, RestablecerPasswordController
 from modulos.Autenticacion.aplicacion.UpgradeToEmpresa.UpgradeToEmpresaController import UpgradeToEmpresaController
 
@@ -20,6 +20,4 @@ urlpatterns = [
     # Recuperación de contraseña (AllowAny — sin JWT)
     path('recuperar-password/', SolicitarRecuperacionController.as_view(), name='auth_recuperar_password'),
     path('reset-password/', RestablecerPasswordController.as_view(), name='auth_reset_password'),
-    # TEMP DEMO: crear superadmin en producción — ELIMINAR POST-DEMO
-    path('setup-admin/', CrearSuperAdminController.as_view(), name='auth_setup_admin'),
 ]
