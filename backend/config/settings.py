@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'cloudinary',
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'modulos.Autenticacion.infraestructura',
     'modulos.Citas.infraestructura',
@@ -200,7 +201,7 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=2),    # Antes: 1 día (inseguro)
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,                  # Nuevo refresh token en cada uso
-    'BLACKLIST_AFTER_ROTATION': False,              # Sin blacklist (sin Redis por ahora)
+    'BLACKLIST_AFTER_ROTATION': True,               # Invalidar refresh tokens usados
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 

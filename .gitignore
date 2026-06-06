@@ -1,5 +1,6 @@
 node_modules/
 build/
+dist/
 .env
 __pycache__/
 *.pyc
@@ -10,5 +11,6 @@ env/
 .coverage
 htmlcov/
 .DS_Store
+db.sqlite3
 
 .vercel

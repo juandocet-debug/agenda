@@ -13,7 +13,10 @@ import uuid
 import json
 import hmac
 import hashlib
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 from datetime import datetime, date, timedelta, time
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -188,8 +191,6 @@ class SlotsDisponiblesController(APIView):
         try:
             return self._get(request)
         except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
             logger.exception("Error global en SlotsDisponiblesController")
             return Response({'ok': False, 'error': 'Error interno del servidor.'}, status=500)
 
@@ -277,8 +278,7 @@ class ReservarGuestController(APIView):
         try:
             return self._procesar_reserva(request)
         except Exception as e:
-            import logging
-            logging.getLogger(__name__).exception('[ReservarGuestController] ERROR 500')
+            logger.exception('[ReservarGuestController] ERROR 500')
             return Response({'ok': False, 'error': 'Error interno del servidor.'}, status=500)
 
     def _procesar_reserva(self, request):
@@ -404,7 +404,7 @@ class ReservarGuestController(APIView):
                 estado=estado_pago,
             )
         except Exception as pago_err:
-            logging.getLogger(__name__).warning('[ReservarGuestController] AVISO: No se pudo crear PagoModel: %s', pago_err)
+            logger.warning('[ReservarGuestController] AVISO: No se pudo crear PagoModel: %s', pago_err)
 
         # Email desactivado temporalmente para evitar que se quede pensando 1000 horas por timeout SMTP
         # if cliente_email:
@@ -442,8 +442,7 @@ class WompiWebhookController(APIView):
           3. Calcular SHA256 de esa cadena
           4. Comparar con X-Event-Checksum (o signature.checksum)
         """
-        import logging
-        logger = logging.getLogger(__name__)
+
 
         body_raw = request.body
         try:
@@ -548,9 +547,7 @@ class VerificarPagoWompiController(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        import logging
         import urllib.request
-        logger = logging.getLogger(__name__)
 
         cita_id = request.GET.get('cita_id', '').strip()
         if not cita_id:

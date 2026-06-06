@@ -31,6 +31,20 @@ class UpgradeToEmpresaController(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Validar archivo RUT: solo PDF e imágenes, máx 5MB
+        if rut_archivo:
+            ALLOWED_RUT_MIME = {'application/pdf', 'image/jpeg', 'image/png', 'image/webp'}
+            if rut_archivo.content_type not in ALLOWED_RUT_MIME:
+                return Response(
+                    {"error": "Tipo de archivo no permitido. Solo PDF, JPEG, PNG o WebP."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if rut_archivo.size > 5 * 1024 * 1024:  # 5MB
+                return Response(
+                    {"error": "El archivo es demasiado grande. Máximo 5MB."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
         try:
             self.use_case.run(
                 usuario_id=usuario_id,
