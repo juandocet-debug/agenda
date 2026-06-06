@@ -2,6 +2,10 @@ import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
+from rest_framework.throttling import AnonRateThrottle
+
+class RegistroEmpresaThrottle(AnonRateThrottle):
+    scope = 'registro_empresa'
 
 logger = logging.getLogger(__name__)
 
@@ -10,7 +14,8 @@ from .DjangoPasswordHasher import DjangoPasswordHasher
 from modulos.Autenticacion.aplicacion.RegistroAutonomo.RegistrarEmpresaUseCase import RegistrarEmpresaUseCase
 
 class RegistroController(APIView):
-    permission_classes = [AllowAny] # Registro pblico
+    permission_classes = [AllowAny]
+    throttle_classes = [RegistroEmpresaThrottle]
 
     def post(self, request):
         nombre_empresa = request.data.get('nombre_empresa')

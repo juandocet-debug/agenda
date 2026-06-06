@@ -191,6 +191,7 @@ REST_FRAMEWORK = {
         'slots': '60/min',           # Máx 60 consultas de slots/min
         'upload_imagen': '20/min',   # Máx 20 uploads/min
         'recuperar_password': '5/min',
+        'registro_empresa': '3/hour',  # Máx 3 registros/hora por IP
     },
 }
 
