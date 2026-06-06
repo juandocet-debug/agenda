@@ -1,5 +1,6 @@
 import uuid
 from django.db import models
+from encrypted_model_fields.fields import EncryptedCharField
 
 
 class CategoriaModel(models.Model):
@@ -47,10 +48,10 @@ class EmpresaModel(models.Model):
         null=True, blank=True, related_name='empresas', db_column='categoria_id'
     )
     
-    # Credenciales de Wompi (BYOG)
-    wompi_public_key = models.CharField(max_length=100, blank=True, null=True)
-    wompi_integrity_key = models.CharField(max_length=100, blank=True, null=True)
-    wompi_events_secret = models.CharField(max_length=100, blank=True, null=True)
+    # Credenciales de Wompi (BYOG) — cifradas con Fernet en reposo
+    wompi_public_key = EncryptedCharField(max_length=100, blank=True, null=True)
+    wompi_integrity_key = EncryptedCharField(max_length=100, blank=True, null=True)
+    wompi_events_secret = EncryptedCharField(max_length=100, blank=True, null=True)
     
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 

@@ -10,9 +10,12 @@ Seguridad:
   - El endpoint de solicitud siempre devuelve 200 (no revela si el email existe)
   - El token es de un solo uso y expira en 30 minutos
 """
+import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
+
+logger = logging.getLogger(__name__)
 
 from .DjangoAutenticacionRepository import DjangoAutenticacionRepository
 from .DjangoPasswordResetRepository import DjangoPasswordResetRepository
@@ -48,7 +51,7 @@ class SolicitarRecuperacionController(APIView):
             caso_uso.run(email)
         except BaseException as e:
             # BaseException captura también SystemExit (gunicorn timeout en SMTP)
-            print(f"[RecuperarPassword] Error interno (no crítico): {e}")
+            logger.warning("[RecuperarPassword] Error interno (no crítico): %s", e)
 
         # Siempre responder con el mismo mensaje (anti-enumeración de emails)
         return Response({
@@ -92,7 +95,7 @@ class RestablecerPasswordController(APIView):
         except ValueError as e:
             return Response({'ok': False, 'error': str(e)}, status=400)
         except Exception as e:
-            print(f"[RestablecerPassword] Error interno: {e}")
+            logger.exception("[RestablecerPassword] Error interno")
             return Response(
                 {'ok': False, 'error': 'Error interno del servidor. Intenta de nuevo.'},
                 status=500

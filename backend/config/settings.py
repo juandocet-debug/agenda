@@ -15,6 +15,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECRET_KEY DEBE estar en las variables de entorno de Railway. Sin valor por defecto.
 SECRET_KEY = os.environ['SECRET_KEY']
 
+# Clave Fernet para cifrar credenciales de pago en BD. Generar con:
+#   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+FIELD_ENCRYPTION_KEY = os.environ['FIELD_ENCRYPTION_KEY']
+
 # DEBUG siempre False en producción. Activar solo en local con DEBUG=True en .env
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
@@ -51,6 +55,7 @@ INSTALLED_APPS = [
     'modulos.Profesionales.infraestructura',
     'modulos.Publicaciones.infraestructura',
     'modulos.Sedes.infraestructura',
+    'encrypted_model_fields',
 ]
 
 MIDDLEWARE = [
@@ -134,15 +139,19 @@ if os.environ.get('CLOUDINARY_URL'):
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # ── CORS — solo orígenes permitidos ──────────────────────────────────────────
-CORS_ALLOW_ALL_ORIGINS = False  # Solo los orígenes listados abajo tienen acceso
-_CORS_BASE = [
+CORS_ALLOW_ALL_ORIGINS = False
+_CORS_PROD = [
     'https://agenda-pi-bice.vercel.app',
     'https://dist-nine-gold-65.vercel.app',
+]
+_CORS_DEV = [
     'http://localhost:8081',
     'http://localhost:19006',
     'http://127.0.0.1:8081',
 ]
-# Lee la URL del frontend desde la variable de Railway y la añade si existe
+_CORS_BASE = _CORS_PROD + (_CORS_DEV if DEBUG else [])
+
+# URL dinámica del frontend inyectada desde Railway
 _FRONTEND_URL = os.environ.get('FRONTEND_URL', '').strip().rstrip('/')
 if _FRONTEND_URL and _FRONTEND_URL not in _CORS_BASE:
     _CORS_BASE.append(_FRONTEND_URL)

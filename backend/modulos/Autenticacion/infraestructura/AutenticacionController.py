@@ -1,7 +1,10 @@
+import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
+
+logger = logging.getLogger(__name__)
 
 from .DjangoAutenticacionRepository import DjangoAutenticacionRepository
 from .DjangoPasswordHasher import DjangoPasswordHasher
@@ -23,7 +26,7 @@ class LoginController(APIView):
 
         try:
             usuario_id, rol = caso_uso.run(identificador=email, password_plano=password)
-            print(f"Login exitoso: usuario_id={usuario_id}, rol={rol}")
+            logger.info("Login exitoso: usuario_id=%s rol=%s", usuario_id, rol)
             
             # Generar JWT con claims personalizados (usuario_id + rol)
             refresh = RefreshToken()
@@ -42,8 +45,8 @@ class LoginController(APIView):
             }, status=200)
 
         except ValueError as e:
-            print(f"ValueError: {e}")
+            logger.warning("Login fallido (credenciales inválidas): %s", e)
             return Response({'ok': False, 'error': str(e)}, status=401)
         except Exception as e:
-            print(f"Exception: {e}")
+            logger.exception("Error inesperado en login")
             return Response({'ok': False, 'error': f"Error interno: {str(e)}"}, status=500)

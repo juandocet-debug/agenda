@@ -276,8 +276,8 @@ class ReservarGuestController(APIView):
         try:
             return self._procesar_reserva(request)
         except Exception as e:
-            import traceback
-            print('[ReservarGuestController] ERROR 500:', traceback.format_exc())
+            import logging
+            logging.getLogger(__name__).exception('[ReservarGuestController] ERROR 500')
             return Response({'ok': False, 'error': f'Error interno: {str(e)}'}, status=500)
 
     def _procesar_reserva(self, request):
@@ -403,7 +403,7 @@ class ReservarGuestController(APIView):
                 estado=estado_pago,
             )
         except Exception as pago_err:
-            print(f'[ReservarGuestController] AVISO: No se pudo crear PagoModel: {pago_err}')
+            logging.getLogger(__name__).warning('[ReservarGuestController] AVISO: No se pudo crear PagoModel: %s', pago_err)
 
         # Email desactivado temporalmente para evitar que se quede pensando 1000 horas por timeout SMTP
         # if cliente_email:
