@@ -37,10 +37,12 @@ class UploadImagenPublicacionController(APIView):
             if archivo.size > 8 * 1024 * 1024:
                 return Response({"ok": False, "error": "La imagen no puede superar 8MB."}, status=status.HTTP_400_BAD_REQUEST)
 
+            from django.conf import settings as django_settings
             import cloudinary.uploader
+            _folder = 'agenda/dev/publicaciones' if django_settings.DEBUG else 'agenda/publicaciones'
             resultado = cloudinary.uploader.upload(
                 archivo,
-                folder='agenda/publicaciones',
+                folder=_folder,
                 transformation=[
                     {'width': 1080, 'crop': 'limit', 'quality': 'auto:good', 'fetch_format': 'auto'}
                 ],

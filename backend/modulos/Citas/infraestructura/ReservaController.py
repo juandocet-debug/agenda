@@ -777,17 +777,20 @@ class CitasClienteController(APIView):
             return Response({'ok': False, 'error': 'Acceso denegado'}, status=403)
         # Solo mostrar citas pagadas: CONFIRMADA o COMPLETADA
         # Las PROGRAMADA son reservas sin pago y no deben aparecer
-        citas = CitaModel.objects.filter(
+        citas = list(CitaModel.objects.filter(
             cliente_id=cliente_id,
             estado__in=['CONFIRMADA', 'COMPLETADA'],
-        ).order_by('-fecha', '-hora_inicio')[:50]
+        ).order_by('-fecha', '-hora_inicio')[:50])
+
+        servicio_ids = {str(c.servicio_id) for c in citas}
+        empresa_ids = {str(c.empresa_id) for c in citas}
         servicios_map = {}
         empresas_map = {}
         try:
-            for serv in ServicioModel.objects.all():
+            for serv in ServicioModel.objects.filter(id__in=servicio_ids):
                 servicios_map[str(serv.id)] = serv.nombre
-            for emp in EmpresaModel.objects.all():
-                empresas_map[str(emp.id)] = emp.nombre_empresa
+            for emp in EmpresaModel.objects.filter(id__in=empresa_ids):
+                empresas_map[str(emp.id)] = emp.nombre
         except Exception:
             pass
         citas_ids = [str(c.id) for c in citas]

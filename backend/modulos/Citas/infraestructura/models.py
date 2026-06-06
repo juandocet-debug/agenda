@@ -9,7 +9,7 @@ class CitaModel(models.Model):
     ]
 
     id = models.CharField(max_length=36, primary_key=True)
-    empresa_id = models.CharField(max_length=36)
+    empresa_id = models.CharField(max_length=36, db_index=True)
     profesional_id = models.CharField(max_length=50, blank=True, null=True)
     servicio_id = models.CharField(max_length=50)
     # Sede (sucursal) donde se agenda la cita. Null = sede única / sin sedes.
@@ -22,7 +22,7 @@ class CitaModel(models.Model):
     cliente_email = models.EmailField(blank=True, null=True)
 
     # Horario
-    fecha = models.DateField()
+    fecha = models.DateField(db_index=True)
     hora_inicio = models.TimeField()
     hora_fin = models.TimeField()
 
